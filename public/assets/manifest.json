@@ -1,0 +1,59 @@
+{
+  "resources/css/app.css": {
+    "file": "css/app-xx8E-Zut.css",
+    "name": "app",
+    "names": [
+      "app.css"
+    ],
+    "src": "resources/css/app.css",
+    "isEntry": true
+  },
+  "resources/js/app.js": {
+    "file": "js/app-DoWy1-mL.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true
+  },
+  "resources/js/pages/audit-logs.js": {
+    "file": "js/audit-logs-DYJra3vz.js",
+    "name": "audit-logs",
+    "src": "resources/js/pages/audit-logs.js",
+    "isEntry": true
+  },
+  "resources/js/pages/backups.js": {
+    "file": "js/backups-B5OTy4hr.js",
+    "name": "backups",
+    "src": "resources/js/pages/backups.js",
+    "isEntry": true
+  },
+  "resources/js/pages/dashboard.js": {
+    "file": "js/dashboard-DtLgR90c.js",
+    "name": "dashboard",
+    "src": "resources/js/pages/dashboard.js",
+    "isEntry": true
+  },
+  "resources/js/pages/roles.js": {
+    "file": "js/roles-1jV-dAhs.js",
+    "name": "roles",
+    "src": "resources/js/pages/roles.js",
+    "isEntry": true
+  },
+  "resources/js/plugins/datatables.js": {
+    "file": "js/datatables-BnCKqsdS.js",
+    "name": "datatables",
+    "src": "resources/js/plugins/datatables.js",
+    "isEntry": true
+  },
+  "resources/js/plugins/flatpickr.js": {
+    "file": "js/flatpickr-Bs0-i8m9.js",
+    "name": "flatpickr",
+    "src": "resources/js/plugins/flatpickr.js",
+    "isEntry": true
+  },
+  "resources/js/plugins/select2.js": {
+    "file": "js/select2-CnR9kfmn.js",
+    "name": "select2",
+    "src": "resources/js/plugins/select2.js",
+    "isEntry": true
+  }
+}

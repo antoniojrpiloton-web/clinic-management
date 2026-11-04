@@ -1,0 +1,1 @@
+document.addEventListener(`DOMContentLoaded`,()=>{document.querySelector(`[data-has-pending="1"]`)&&setTimeout(()=>window.location.reload(),1e4)});

@@ -1,0 +1,13 @@
+var{escapeHtml:e}=window.App,t={text:t=>e(t??`—`),badge:t=>t?`<span class="badge badge-pill badge-${e(t.color)}">${e(t.text)}</span>`:``,badges:t=>(t??[]).map(t=>`<span class="badge badge-pill badge-gray me-1">${e(t)}</span>`).join(``)||`<span class="text-muted">—</span>`,user:t=>`
+        <div class="d-flex align-items-center gap-2">
+            <span class="avatar">${e(t.initials)}</span>
+            <div class="lh-sm">
+                <div class="fw-semibold text-dark">${e(t.name)}</div>
+                <small class="text-muted">${e(t.email)}</small>
+            </div>
+        </div>`,actions:t=>{if(!t)return``;let n=[];return t.view&&n.push(`<button type="button" class="btn btn-sm btn-outline-forest" data-view-url="${e(t.view)}" title="View"><i class="bi bi-eye"></i> View</button>`),t.edit&&n.push(`<a href="${e(t.edit)}" class="btn btn-sm btn-outline-forest" title="Edit"><i class="bi bi-pencil-square"></i></a>`),t.delete&&n.push(`
+                <form method="POST" action="${e(t.delete)}" class="d-inline" data-confirm="${e(t.label)} will be permanently deleted.">
+                    <input type="hidden" name="_token" value="${e(window.App.csrfToken)}">
+                    <input type="hidden" name="_method" value="DELETE">
+                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                </form>`),`<div class="d-inline-flex gap-1">${n.join(``)}</div>`}};function n(e){let n=e.dataset.url,r=e.dataset.filters?document.getElementById(e.dataset.filters):null,i={pageLength:Number(e.dataset.pageLength||25),lengthMenu:[10,25,50,100],autoWidth:!1,language:{search:``,searchPlaceholder:`Search...`,emptyTable:`No records found`,processing:`<div class="spinner-border spinner-border-sm text-success" role="status"></div> Loading…`}};if(n){let a=JSON.parse(e.dataset.columns||`[]`);Object.assign(i,{serverSide:!0,processing:!0,searchDelay:400,order:[],ajax:{url:n,headers:{"X-Requested-With":`XMLHttpRequest`},data:e=>(r&&new FormData(r).forEach((t,n)=>{e[n]=t}),e)},columns:a.map(e=>({data:e.data,title:e.title,orderable:e.orderable??!1,searchable:!1,className:e.className??``,render:(n,r,i)=>(t[e.renderType??e.type??`text`]??t.text)(n,i)}))})}else i.order=[],i.columnDefs=[{targets:`no-sort`,orderable:!1}];let a=new window.DataTable(e,i);if(r){let e=()=>a.ajax.reload();r.addEventListener(`change`,e),r.addEventListener(`submit`,t=>{t.preventDefault(),e()}),r.addEventListener(`reset`,()=>setTimeout(e))}return a}document.addEventListener(`DOMContentLoaded`,()=>{document.querySelectorAll(`table[data-datatable]`).forEach(n)});

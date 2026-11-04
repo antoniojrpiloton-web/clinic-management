@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 165" fill="none">
+    <!-- Background clock & plant -->
+    <circle cx="196" cy="48" r="14" stroke="#d9dee3" stroke-width="2" fill="#fff"/>
+    <path d="M196 41v8l5 3" stroke="#a1acb8" stroke-width="2" stroke-linecap="round"/>
+    <path d="M204 148c0-18 10-32 10-32s6 14 2 32" fill="#03c3ec" opacity="0.85"/>
+    <path d="M198 148c-6-15-2-28-2-28s10 10 8 28" fill="#696cff" opacity="0.75"/>
+    <rect x="194" y="146" width="20" height="14" rx="3" fill="#e7e7ff"/>
+    <!-- Desk line -->
+    <line x1="20" y1="160" x2="225" y2="160" stroke="#d9dee3" stroke-width="3" stroke-linecap="round"/>
+    <!-- Person torso (Sneat indigo shirt) -->
+    <path d="M112 92c0-10 8-18 18-18h20c10 0 18 8 18 18v68h-56V92z" fill="#696cff"/>
+    <!-- Medical cross badge on shirt -->
+    <rect x="145" y="102" width="12" height="12" rx="3" fill="#e7e7ff"/>
+    <path d="M151 105v6M148 108h6" stroke="#696cff" stroke-width="2" stroke-linecap="round"/>
+    <!-- Neck & head -->
+    <rect x="133" y="62" width="14" height="16" rx="6" fill="#ffcdb2"/>
+    <circle cx="140" cy="48" r="16" fill="#ffcdb2"/>
+    <!-- Hair & beard -->
+    <path d="M124 44c0-12 8-20 18-20 9 0 16 6 16 16 0 2-1 4-2 5-3-5-8-7-15-7-8 0-14 3-17 6z" fill="#233446"/>
+    <path d="M128 52c2 7 7 11 12 11s10-4 12-11" stroke="#233446" stroke-width="3.5" stroke-linecap="round"/>
+    <!-- Eyes -->
+    <circle cx="135" cy="47" r="1.8" fill="#233446"/>
+    <circle cx="145" cy="47" r="1.8" fill="#233446"/>
+    <!-- Arms -->
+    <path d="M112 98l-22 32h18l12-18" fill="#ffcdb2"/>
+    <!-- Laptop -->
+    <rect x="64" y="114" width="54" height="36" rx="4" fill="#b4bdc6"/>
+    <rect x="67" y="117" width="48" height="30" rx="2" fill="#d9dee3"/>
+    <circle cx="91" cy="132" r="4" fill="#ffffff"/>
+    <rect x="52" y="150" width="76" height="6" rx="3" fill="#8592a3"/>
+</svg>
+

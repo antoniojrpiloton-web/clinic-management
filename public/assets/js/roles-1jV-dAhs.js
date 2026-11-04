@@ -1,0 +1,1 @@
+document.addEventListener(`DOMContentLoaded`,()=>{document.querySelectorAll(`[data-permission-toggle]`).forEach(e=>{e.addEventListener(`click`,()=>{let t=e.dataset.permissionToggle,n=t===`all`?`input[name="permissions[]"]`:`input[name="permissions[]"][data-group="${t}"]`,r=[...document.querySelectorAll(n)],i=r.some(e=>!e.checked);r.forEach(e=>{e.checked=i})})})});

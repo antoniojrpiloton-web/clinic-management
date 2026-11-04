@@ -1,0 +1,79 @@
+<?php
+
+namespace App\Models;
+
+use App\Services\SettingService;
+use Database\Factories\AuditLogFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\MassPrunable;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
+
+#[Fillable(['user_id', 'event', 'description', 'subject_type', 'subject_id', 'properties', 'ip_address', 'user_agent', 'created_at'])]
+class AuditLog extends Model
+{
+    /** @use HasFactory<AuditLogFactory> */
+    use HasFactory, MassPrunable;
+
+    public const UPDATED_AT = null;
+
+    /**
+     * Entries older than the configured retention period are pruned.
+     *
+     * @return Builder<AuditLog>
+     */
+    public function prunable(): Builder
+    {
+        $days = max(30, (int) app(SettingService::class)->get('audit_log_retention_days', 365));
+
+        return static::where('created_at', '<', now()->subDays($days));
+    }
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'properties' => 'array',
+            'created_at' => 'datetime',
+        ];
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * @return MorphTo<Model, $this>
+     */
+    public function subject(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
+    /**
+     * Bootstrap contextual color for the event badge.
+     */
+    public function eventColor(): string
+    {
+        return match ($this->event) {
+            'created' => 'success',
+            'updated' => 'primary',
+            'deleted' => 'danger',
+            'login' => 'info',
+            'logout' => 'secondary',
+            'login_failed' => 'warning',
+            default => 'dark',
+        };
+    }
+}
