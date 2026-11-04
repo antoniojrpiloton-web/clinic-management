@@ -9,16 +9,19 @@ class SettingService
 {
     public const CACHE_KEY = 'app.settings';
 
-    /**
-     * Default values used when a setting has not been stored yet.
-     *
-     * @var array<string, array{group: string, value: string|null}>
-     */
     public const DEFAULTS = [
-        'clinic_name' => ['group' => 'general', 'value' => 'NVC Clinic'],
-        'clinic_email' => ['group' => 'general', 'value' => null],
-        'clinic_phone' => ['group' => 'general', 'value' => null],
-        'clinic_address' => ['group' => 'general', 'value' => null],
+        'university_name' => ['group' => 'university', 'value' => 'Surigao del Norte State University'],
+        'university_short_name' => ['group' => 'university', 'value' => 'SNSU'],
+        'university_campus' => ['group' => 'university', 'value' => 'Main Campus, Surigao City'],
+        'university_address' => ['group' => 'university', 'value' => 'Narciso Street, Surigao City, Surigao del Norte, Philippines'],
+        'university_president' => ['group' => 'university', 'value' => 'Dr. Gregorio Z. Gamboa Jr.'],
+        'university_website' => ['group' => 'university', 'value' => 'https://snsu.edu.ph'],
+        'clinic_name' => ['group' => 'general', 'value' => 'SNSU University Clinic'],
+        'clinic_head' => ['group' => 'general', 'value' => 'Dr. Maria Elena Santos, MD'],
+        'clinic_license_no' => ['group' => 'general', 'value' => 'DOH-R13-CLN-2026-088'],
+        'clinic_email' => ['group' => 'general', 'value' => 'clinic@snsu.edu.ph'],
+        'clinic_phone' => ['group' => 'general', 'value' => '+63 (86) 826-0135'],
+        'clinic_address' => ['group' => 'general', 'value' => 'Ground Floor, Student Services Center, SNSU Main Campus'],
         'date_format' => ['group' => 'general', 'value' => 'M d, Y'],
         'table_page_length' => ['group' => 'general', 'value' => '25'],
         'backup_enabled' => ['group' => 'backup', 'value' => '1'],
@@ -26,18 +29,8 @@ class SettingService
         'audit_log_retention_days' => ['group' => 'security', 'value' => '365'],
     ];
 
-    /**
-     * Request-level memoized settings.
-     *
-     * @var array<string, string|null>|null
-     */
     protected ?array $settings = null;
 
-    /**
-     * Get every setting merged with defaults.
-     *
-     * @return array<string, string|null>
-     */
     public function all(): array
     {
         if ($this->settings !== null) {
@@ -56,11 +49,6 @@ class SettingService
         return $this->all()[$key] ?? $default;
     }
 
-    /**
-     * Persist multiple settings and flush the cache.
-     *
-     * @param  array<string, mixed>  $values
-     */
     public function set(array $values): void
     {
         foreach ($values as $key => $value) {

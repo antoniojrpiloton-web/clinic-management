@@ -1,17 +1,5 @@
-/**
- * Clinic Management - core application script (vanilla ES6).
- *
- * Loaded on every authenticated and guest page. Plugin-specific code lives in
- * resources/js/plugins and page-specific code in resources/js/pages; those
- * files are only loaded by the views that need them.
- */
-
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
 
-/**
- * Show a notification using Toastr when available, falling back to a
- * Bootstrap toast so the core bundle does not depend on jQuery.
- */
 function notify(type, message, title = '') {
     if (window.toastr) {
         window.toastr.options = {
@@ -21,12 +9,10 @@ function notify(type, message, title = '') {
             timeOut: 4000,
         };
         window.toastr[type === 'danger' ? 'error' : type](message, title);
-
         return;
     }
 
     let container = document.getElementById('app-toast-container');
-
     if (!container) {
         container = document.createElement('div');
         container.id = 'app-toast-container';
@@ -46,9 +32,6 @@ function notify(type, message, title = '') {
     window.bootstrap.Toast.getOrCreateInstance(toast, { delay: 4000 }).show();
 }
 
-/**
- * Ask for confirmation using SweetAlert2 when loaded, otherwise window.confirm.
- */
 async function confirmAction({ title = 'Are you sure?', text = '', confirmText = 'Yes, continue', icon = 'warning' } = {}) {
     if (window.Swal) {
         const result = await window.Swal.fire({
@@ -58,7 +41,7 @@ async function confirmAction({ title = 'Are you sure?', text = '', confirmText =
             showCancelButton: true,
             confirmButtonText: confirmText,
             cancelButtonText: 'Cancel',
-            confirmButtonColor: '#dc3545',
+            confirmButtonColor: '#2563eb',
             reverseButtons: true,
             focusCancel: true,
         });
@@ -69,9 +52,6 @@ async function confirmAction({ title = 'Are you sure?', text = '', confirmText =
     return window.confirm(text ? `${title}\n\n${text}` : title);
 }
 
-/**
- * fetch() wrapper that sends the CSRF token and expects JSON or HTML.
- */
 async function request(url, options = {}) {
     const response = await fetch(url, {
         credentials: 'same-origin',
@@ -91,9 +71,6 @@ async function request(url, options = {}) {
     return response;
 }
 
-/**
- * Escape a value for safe insertion into HTML strings.
- */
 function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>"']/g, (char) => ({
         '&': '&amp;',
@@ -106,52 +83,34 @@ function escapeHtml(value) {
 
 window.App = { notify, confirmAction, request, escapeHtml, csrfToken };
 
-/* ---------------------------------------------------------------------
- | Global behaviours (event delegation, no plugin initialisation)
- * ------------------------------------------------------------------- */
 document.addEventListener('DOMContentLoaded', () => {
-    // Sidebar toggle for small screens.
     document.querySelectorAll('[data-toggle="sidebar"]').forEach((button) => {
-        button.addEventListener('click', () => document.body.classList.toggle('sidebar-open'));
+        button.addEventListener('click', () => {
+            document.querySelector('.app-sidebar')?.classList.toggle('show');
+            document.querySelector('.sidebar-backdrop')?.classList.toggle('show');
+        });
     });
 
-    // Server flash messages.
     const flash = document.getElementById('flash-messages');
-
     if (flash) {
         JSON.parse(flash.textContent).forEach(({ type, message }) => notify(type, message));
     }
 
-    // Bootstrap tooltips (only when present on the page).
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((element) => {
         window.bootstrap.Tooltip.getOrCreateInstance(element);
     });
 
-    // Topbar quick search (Ctrl+/ shortcut + live sidebar menu filter).
-    const navSearch = document.getElementById('global-nav-search');
-
-    if (navSearch) {
-        document.addEventListener('keydown', (event) => {
-            if ((event.ctrlKey || event.metaKey) && event.key === '/') {
-                event.preventDefault();
-                navSearch.focus();
-            }
-        });
-
-        navSearch.addEventListener('input', () => {
-            const term = navSearch.value.trim().toLowerCase();
-            document.querySelectorAll('.app-sidebar .menu-item').forEach((item) => {
-                const match = !term || item.textContent.toLowerCase().includes(term);
-                item.classList.toggle('d-none', !match);
-            });
-        });
-    }
+    const searchInputs = document.querySelectorAll('.topbar-search-box input');
+    document.addEventListener('keydown', (event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+            event.preventDefault();
+            searchInputs[0]?.focus();
+        }
+    });
 });
 
-// Confirm before submitting any form marked with data-confirm.
 document.addEventListener('submit', async (event) => {
     const form = event.target;
-
     if (!(form instanceof HTMLFormElement) || !form.dataset.confirm || form.dataset.confirmed) {
         return;
     }
@@ -161,7 +120,7 @@ document.addEventListener('submit', async (event) => {
     const confirmed = await confirmAction({
         title: form.dataset.confirmTitle ?? 'Are you sure?',
         text: form.dataset.confirm,
-        confirmText: form.dataset.confirmButton ?? 'Yes, delete it',
+        confirmText: form.dataset.confirmButton ?? 'Yes, proceed',
     });
 
     if (confirmed) {
@@ -170,17 +129,14 @@ document.addEventListener('submit', async (event) => {
     }
 });
 
-// Prevent double submissions.
 document.addEventListener('submit', (event) => {
     const form = event.target;
-
     if (!(form instanceof HTMLFormElement) || event.defaultPrevented) {
         return;
     }
 
     form.querySelectorAll('button[type="submit"]:not([data-no-disable])').forEach((button) => {
         button.disabled = true;
-
         if (button.dataset.loadingText) {
             button.innerHTML = `<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>${escapeHtml(button.dataset.loadingText)}`;
         }

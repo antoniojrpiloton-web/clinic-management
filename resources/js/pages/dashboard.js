@@ -1,63 +1,135 @@
-/**
- * Dashboard charts (Chart.js) styled after the SNSU Executive Intelligence System.
- */
 document.addEventListener('DOMContentLoaded', () => {
     const { Chart } = window;
-    const data = JSON.parse(document.getElementById('dashboard-chart-data')?.textContent ?? '{}');
+    const rawData = document.getElementById('dashboard-chart-data')?.textContent;
+    const data = JSON.parse(rawData ?? '{}');
 
     Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
-    Chart.defaults.color = '#64748b';
+    Chart.defaults.color = '#94a3b8';
 
-    // 1. Sign-in Activity Overview (SNSU Deep Green & Emerald columns)
-    const loginCanvas = document.getElementById('login-trend-chart');
+    const revenueCanvas = document.getElementById('revenue-overview-chart');
+    if (revenueCanvas && data.months) {
+        const ctx = revenueCanvas.getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 0, 260);
+        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.3)');
+        gradient.addColorStop(0.8, 'rgba(59, 130, 246, 0.05)');
+        gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
 
-    if (loginCanvas && data.logins) {
-        new Chart(loginCanvas, {
-            type: 'bar',
+        new Chart(revenueCanvas, {
+            type: 'line',
             data: {
-                labels: data.logins.labels,
+                labels: data.months,
                 datasets: [{
-                    label: 'Sign-ins',
-                    data: data.logins.values,
-                    backgroundColor: '#005a36',
-                    hoverBackgroundColor: '#059669',
-                    borderRadius: 4,
-                    barThickness: 14,
+                    label: 'Revenue',
+                    data: data.revenue_overview ?? [],
+                    borderColor: '#3b82f6',
+                    borderWidth: 2.5,
+                    fill: true,
+                    backgroundColor: gradient,
+                    tension: 0.45,
+                    pointRadius: 0,
+                    pointHoverRadius: 5,
+                    pointHoverBackgroundColor: '#2563eb',
+                    pointHoverBorderColor: '#ffffff',
+                    pointHoverBorderWidth: 2,
                 }],
             },
             options: {
+                responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#0f172a',
+                        titleColor: '#ffffff',
+                        bodyColor: '#e2e8f0',
+                        padding: 10,
+                        cornerRadius: 8,
+                    },
+                },
                 scales: {
                     y: {
                         beginAtZero: true,
-                        ticks: { precision: 0 },
+                        suggestedMax: 6000,
+                        ticks: {
+                            stepSize: 1500,
+                            callback: (value) => value.toLocaleString(),
+                        },
                         grid: { color: '#f1f5f9' },
+                        border: { display: false },
                     },
-                    x: { grid: { display: false } },
+                    x: {
+                        grid: { display: false },
+                        border: { display: false },
+                    },
                 },
             },
         });
     }
 
-    // 2. Role Distribution Doughnut
-    const rolesCanvas = document.getElementById('roles-chart');
-
-    if (rolesCanvas && data.roles) {
-        new Chart(rolesCanvas, {
-            type: 'doughnut',
+    const profitCanvas = document.getElementById('profit-expenses-chart');
+    if (profitCanvas && data.months) {
+        new Chart(profitCanvas, {
+            type: 'bar',
             data: {
-                labels: data.roles.map((role) => role.label),
-                datasets: [{
-                    data: data.roles.map((role) => role.value),
-                    backgroundColor: ['#005a36', '#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#64748b'],
-                    borderWidth: 0,
-                }],
+                labels: data.months,
+                datasets: [
+                    {
+                        label: 'expenses',
+                        data: data.expenses ?? [],
+                        backgroundColor: '#475569',
+                        borderRadius: 2,
+                        barPercentage: 0.65,
+                        categoryPercentage: 0.65,
+                    },
+                    {
+                        label: 'profit',
+                        data: data.profit ?? [],
+                        backgroundColor: '#2563eb',
+                        borderRadius: 2,
+                        barPercentage: 0.65,
+                        categoryPercentage: 0.65,
+                    },
+                ],
             },
             options: {
+                responsive: true,
                 maintainAspectRatio: false,
-                cutout: '72%',
-                plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        align: 'center',
+                        labels: {
+                            boxWidth: 12,
+                            boxHeight: 12,
+                            padding: 15,
+                            color: '#334155',
+                            font: { size: 12, weight: '500' },
+                        },
+                    },
+                    tooltip: {
+                        backgroundColor: '#0f172a',
+                        titleColor: '#ffffff',
+                        bodyColor: '#e2e8f0',
+                        padding: 10,
+                        cornerRadius: 8,
+                    },
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        suggestedMax: 10000,
+                        ticks: {
+                            stepSize: 2500,
+                            callback: (value) => value.toLocaleString(),
+                        },
+                        grid: { color: '#f1f5f9' },
+                        border: { display: false },
+                    },
+                    x: {
+                        grid: { display: false },
+                        border: { display: false },
+                    },
+                },
             },
         });
     }

@@ -10,14 +10,15 @@ class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
         $this->call([
             RolesAndPermissionsSeeder::class,
             SettingsSeeder::class,
+            AcademicStructureSeeder::class,
+            ClinicianSeeder::class,
+            PatientSeeder::class,
+            MedicineAndInventorySeeder::class,
         ]);
 
         $superAdmins = [

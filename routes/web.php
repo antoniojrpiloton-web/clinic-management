@@ -1,17 +1,31 @@
 <?php
 
+use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\BackupController;
+use App\Http\Controllers\ClinicianController;
+use App\Http\Controllers\CollegeController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\MedicalProfileController;
+use App\Http\Controllers\MedicineCategoryController;
+use App\Http\Controllers\MedicineController;
+use App\Http\Controllers\MedicineDispensingController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PatientController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\PhysicalExaminationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\Select2Controller;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\StudentController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -32,27 +46,101 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth', 'active'])->group(function () {
     Route::redirect('/', '/dashboard');
     Route::post('logout', [LoginController::class, 'destroy'])->name('logout');
-
     Route::get('dashboard', DashboardController::class)->name('dashboard');
 
-    Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::controller(ProfileController::class)->prefix('profile')->name('profile.')->group(function () {
+        Route::get('/', 'edit')->name('edit');
+        Route::put('/', 'update')->name('update');
+    });
 
-    Route::post('notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
-    Route::get('notifications/{notification}', [NotificationController::class, 'show'])->name('notifications.show');
+    Route::controller(NotificationController::class)->prefix('notifications')->name('notifications.')->group(function () {
+        Route::post('read-all', 'markAllAsRead')->name('read-all');
+        Route::get('{notification}', 'show')->name('show');
+    });
+
+    Route::controller(Select2Controller::class)->prefix('select2')->name('select2.')->group(function () {
+        Route::get('patients', 'patients')->name('patients');
+        Route::get('clinicians', 'clinicians')->name('clinicians');
+        Route::get('colleges', 'colleges')->name('colleges');
+        Route::get('programs', 'programs')->name('programs');
+        Route::get('academic-years', 'academicYears')->name('academic-years');
+        Route::get('users', 'users')->name('users');
+        Route::get('roles', 'roles')->name('roles');
+        Route::get('medicines', 'medicines')->name('medicines');
+        Route::get('medicine-batches', 'medicineBatches')->name('medicine-batches');
+    });
+
+    Route::resource('clinicians', ClinicianController::class);
+
+    Route::controller(PatientController::class)->prefix('patients')->name('patients.')->group(function () {
+        Route::get('check-duplicate', 'checkDuplicate')->name('check-duplicate');
+        Route::get('import', 'importForm')->name('import');
+        Route::post('import', 'importProcess')->name('import.process');
+    });
+    Route::resource('patients', PatientController::class);
+
+    Route::resource('students', StudentController::class)->except('show');
+    Route::resource('employees', EmployeeController::class)->except('show');
+
+    Route::controller(MedicalProfileController::class)->prefix('patients/{patient}/medical-profile')->name('medical-profiles.')->group(function () {
+        Route::get('/', 'show')->name('show');
+        Route::get('edit', 'edit')->name('edit');
+        Route::put('/', 'update')->name('update');
+    });
+
+    Route::controller(PhysicalExaminationController::class)->prefix('physical-examinations')->name('physical-examinations.')->group(function () {
+        Route::get('{physicalExamination}/print-pe', 'printPe')->name('print-pe');
+        Route::get('{physicalExamination}/print-certificate', 'printCertificate')->name('print-certificate');
+        Route::get('{physicalExamination}/print-exemption', 'printExemption')->name('print-exemption');
+        Route::get('{physicalExamination}/print-referral', 'printReferral')->name('print-referral');
+    });
+    Route::resource('physical-examinations', PhysicalExaminationController::class);
+
+    Route::resource('medicine-categories', MedicineCategoryController::class)->except(['create', 'edit', 'show']);
+    Route::resource('medicines', MedicineController::class);
+
+    Route::controller(InventoryController::class)->prefix('inventory')->name('inventory.')->group(function () {
+        Route::get('stock-in', 'stockInForm')->name('stock-in');
+        Route::post('stock-in', 'stockInProcess')->name('stock-in.process');
+        Route::get('stock-out', 'stockOutForm')->name('stock-out');
+        Route::post('stock-out', 'stockOutProcess')->name('stock-out.process');
+        Route::get('expirations', 'expirations')->name('expirations');
+        Route::post('batches/{batch}/dispose', 'disposeBatch')->name('batches.dispose');
+        Route::get('transactions', 'transactions')->name('transactions');
+        Route::get('reports', 'reports')->name('reports');
+    });
+
+    Route::controller(MedicineDispensingController::class)->prefix('inventory/dispensings')->name('inventory.dispensings.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::get('{dispensing}', 'show')->name('show');
+        Route::get('{dispensing}/print', 'printSlip')->name('print');
+    });
+
+    Route::post('academic-years/{academicYear}/set-current', [AcademicYearController::class, 'setCurrent'])->name('academic-years.set-current');
+    Route::resource('academic-years', AcademicYearController::class)->except(['create', 'edit', 'show']);
+    Route::resource('colleges', CollegeController::class)->except(['create', 'edit', 'show']);
+    Route::resource('programs', ProgramController::class)->except(['create', 'edit', 'show']);
 
     Route::resource('users', UserController::class)->except('show');
     Route::resource('roles', RoleController::class)->except('show');
     Route::resource('permissions', PermissionController::class)->except('show');
 
-    Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
-    Route::get('audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('audit-logs.show');
+    Route::controller(AuditLogController::class)->prefix('audit-logs')->name('audit-logs.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('{auditLog}', 'show')->name('show');
+    });
 
-    Route::get('settings', [SettingController::class, 'edit'])->name('settings.edit');
-    Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
+    Route::controller(SettingController::class)->prefix('settings')->name('settings.')->group(function () {
+        Route::get('/', 'edit')->name('edit');
+        Route::put('/', 'update')->name('update');
+    });
 
-    Route::get('backups', [BackupController::class, 'index'])->name('backups.index');
-    Route::post('backups', [BackupController::class, 'store'])->name('backups.store');
-    Route::get('backups/{backup}/download', [BackupController::class, 'download'])->name('backups.download');
-    Route::delete('backups/{backup}', [BackupController::class, 'destroy'])->name('backups.destroy');
+    Route::controller(BackupController::class)->prefix('backups')->name('backups.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/', 'store')->name('store');
+        Route::get('{backup}/download', 'download')->name('download');
+        Route::delete('{backup}', 'destroy')->name('destroy');
+    });
 });

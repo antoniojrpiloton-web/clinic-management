@@ -10,11 +10,6 @@ use Spatie\Permission\PermissionRegistrar;
 
 class RolesAndPermissionsSeeder extends Seeder
 {
-    /**
-     * Application permissions grouped by module.
-     *
-     * @var array<string, list<string>>
-     */
     public const PERMISSIONS = [
         'dashboard' => ['view'],
         'users' => ['view', 'create', 'edit', 'delete'],
@@ -23,11 +18,21 @@ class RolesAndPermissionsSeeder extends Seeder
         'audit-logs' => ['view'],
         'settings' => ['manage'],
         'backups' => ['view', 'create', 'download', 'delete'],
+        'academic-years' => ['view', 'create', 'edit', 'delete'],
+        'colleges' => ['view', 'create', 'edit', 'delete'],
+        'programs' => ['view', 'create', 'edit', 'delete'],
+        'clinicians' => ['view', 'create', 'edit', 'delete'],
+        'patients' => ['view', 'create', 'edit', 'delete', 'import'],
+        'students' => ['view', 'create', 'edit', 'delete', 'import'],
+        'employees' => ['view', 'create', 'edit', 'delete', 'import'],
+        'physical-examinations' => ['view', 'create', 'edit', 'delete', 'print'],
+        'medical-profiles' => ['view', 'edit'],
+        'medical-certificates' => ['view', 'create', 'print'],
+        'medicines' => ['view', 'create', 'edit', 'delete'],
+        'medicine-categories' => ['view', 'create', 'edit', 'delete'],
+        'inventory' => ['view', 'stock-in', 'stock-out', 'dispense', 'reports'],
     ];
 
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         app(PermissionRegistrar::class)->forgetCachedPermissions();
@@ -49,11 +54,43 @@ class RolesAndPermissionsSeeder extends Seeder
             'audit-logs.view',
             'settings.manage',
             'backups.view', 'backups.create', 'backups.download',
+            'academic-years.view', 'academic-years.create', 'academic-years.edit', 'academic-years.delete',
+            'colleges.view', 'colleges.create', 'colleges.edit', 'colleges.delete',
+            'programs.view', 'programs.create', 'programs.edit', 'programs.delete',
+            'clinicians.view', 'clinicians.create', 'clinicians.edit', 'clinicians.delete',
+            'patients.view', 'patients.create', 'patients.edit', 'patients.delete', 'patients.import',
+            'students.view', 'students.create', 'students.edit', 'students.delete', 'students.import',
+            'employees.view', 'employees.create', 'employees.edit', 'employees.delete', 'employees.import',
+            'physical-examinations.view', 'physical-examinations.create', 'physical-examinations.edit', 'physical-examinations.delete', 'physical-examinations.print',
+            'medical-profiles.view', 'medical-profiles.edit',
+            'medical-certificates.view', 'medical-certificates.create', 'medical-certificates.print',
+            'medicines.view', 'medicines.create', 'medicines.edit', 'medicines.delete',
+            'medicine-categories.view', 'medicine-categories.create', 'medicine-categories.edit', 'medicine-categories.delete',
+            'inventory.view', 'inventory.stock-in', 'inventory.stock-out', 'inventory.dispense', 'inventory.reports',
         ]);
 
-        foreach (['Doctor', 'Nurse', 'Receptionist'] as $role) {
-            Role::findOrCreate($role, 'web')->syncPermissions(['dashboard.view']);
+        foreach (['Doctor', 'Nurse'] as $role) {
+            Role::findOrCreate($role, 'web')->syncPermissions([
+                'dashboard.view',
+                'clinicians.view', 'clinicians.create', 'clinicians.edit',
+                'patients.view', 'patients.create', 'patients.edit',
+                'students.view', 'students.create', 'students.edit',
+                'employees.view', 'employees.create', 'employees.edit',
+                'physical-examinations.view', 'physical-examinations.create', 'physical-examinations.edit', 'physical-examinations.print',
+                'medical-profiles.view', 'medical-profiles.edit',
+                'medical-certificates.view', 'medical-certificates.create', 'medical-certificates.print',
+                'medicines.view', 'medicines.create', 'medicines.edit',
+                'inventory.view', 'inventory.stock-in', 'inventory.stock-out', 'inventory.dispense', 'inventory.reports',
+            ]);
         }
+
+        Role::findOrCreate('Receptionist', 'web')->syncPermissions([
+            'dashboard.view',
+            'patients.view', 'patients.create', 'patients.edit',
+            'students.view', 'students.create', 'students.edit',
+            'employees.view', 'employees.create', 'employees.edit',
+            'physical-examinations.view',
+        ]);
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
     }

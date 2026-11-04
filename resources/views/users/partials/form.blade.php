@@ -55,12 +55,13 @@
             name="roles[]"
             multiple
             data-select2
+            data-ajax-url="{{ route('select2.roles') }}"
             data-placeholder="Select one or more roles"
             @class(['form-select', 'is-invalid' => $errors->has('roles') || $errors->has('roles.*')])
             required
         >
-            @foreach ($roles as $role)
-                <option value="{{ $role }}" @selected(in_array($role, $selectedRoles, true))>{{ $role }}</option>
+            @foreach ($selectedRoles as $roleName)
+                <option value="{{ $roleName }}" selected>{{ $roleName }}</option>
             @endforeach
         </select>
         @error('roles')

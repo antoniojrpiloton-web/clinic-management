@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -19,9 +20,6 @@ class BackupController extends Controller implements HasMiddleware
 {
     public function __construct(protected AuditLogger $auditLogger, protected BackupService $backupService) {}
 
-    /**
-     * @return list<Middleware>
-     */
     public static function middleware(): array
     {
         return [
@@ -32,9 +30,6 @@ class BackupController extends Controller implements HasMiddleware
         ];
     }
 
-    /**
-     * List backups with server-side pagination.
-     */
     public function index(): View
     {
         $backups = Backup::query()
@@ -42,16 +37,43 @@ class BackupController extends Controller implements HasMiddleware
             ->latest()
             ->paginate(15);
 
+        $dbName = config('database.connections.'.config('database.default').'.database');
+        $dbStats = rescue(function () use ($dbName): array {
+            $row = DB::selectOne(
+                'SELECT COUNT(*) as table_count, COALESCE(SUM(data_length + index_length), 0) as total_size, COALESCE(SUM(table_rows), 0) as total_rows FROM information_schema.tables WHERE table_schema = ?',
+                [$dbName]
+            );
+            $version = DB::selectOne('SELECT VERSION() as v')?->v ?? 'MySQL';
+
+            return [
+                'name' => (string) $dbName,
+                'driver' => config('database.default'),
+                'host' => config('database.connections.'.config('database.default').'.host', '127.0.0.1'),
+                'port' => config('database.connections.'.config('database.default').'.port', 3306),
+                'version' => (string) $version,
+                'table_count' => (int) ($row->table_count ?? 0),
+                'total_size' => (int) ($row->total_size ?? 0),
+                'total_rows' => (int) ($row->total_rows ?? 0),
+            ];
+        }, [
+            'name' => (string) $dbName,
+            'driver' => 'mysql',
+            'host' => '127.0.0.1',
+            'port' => 3306,
+            'version' => 'MySQL 8',
+            'table_count' => 0,
+            'total_size' => 0,
+            'total_rows' => 0,
+        ]);
+
         return view('backups.index', [
             'backups' => $backups,
+            'dbStats' => $dbStats,
             'hasPending' => $backups->getCollection()->contains('status', Backup::STATUS_PENDING),
             'queueIsSync' => config('queue.default') === 'sync',
         ]);
     }
 
-    /**
-     * Queue a new database backup.
-     */
     public function store(Request $request): RedirectResponse
     {
         $backup = Backup::create([
@@ -68,9 +90,6 @@ class BackupController extends Controller implements HasMiddleware
         return redirect()->route('backups.index')->with('success', 'Backup has been queued and will be available shortly.');
     }
 
-    /**
-     * Download a completed backup file.
-     */
     public function download(Backup $backup): StreamedResponse|RedirectResponse
     {
         if (! $backup->isCompleted() || ! $this->backupService->exists($backup)) {
@@ -82,9 +101,6 @@ class BackupController extends Controller implements HasMiddleware
         return Storage::disk('local')->download($this->backupService->path($backup));
     }
 
-    /**
-     * Delete a backup and its file.
-     */
     public function destroy(Backup $backup): RedirectResponse
     {
         $this->auditLogger->log('deleted', 'Deleted backup '.($backup->filename ?? "#{$backup->id}"), $backup);

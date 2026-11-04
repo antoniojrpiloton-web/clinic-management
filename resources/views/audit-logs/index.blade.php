@@ -16,11 +16,8 @@
 
                 <div class="col-sm-6 col-md-3">
                     <label for="filter-user" class="form-label mb-1">User</label>
-                    <select id="filter-user" name="user_id" class="form-select form-select-sm" data-select2 data-allow-clear data-placeholder="All users">
+                    <select id="filter-user" name="user_id" class="form-select form-select-sm" data-select2 data-ajax-url="{{ route('select2.users') }}" data-allow-clear="true" data-placeholder="All users">
                         <option value=""></option>
-                        @foreach ($users as $user)
-                            <option value="{{ $user->id }}">{{ $user->name }}</option>
-                        @endforeach
                     </select>
                 </div>
 

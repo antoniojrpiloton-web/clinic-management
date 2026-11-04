@@ -7,8 +7,7 @@ use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
 use App\Services\AuditLogger;
 use App\Services\SettingService;
-use App\Support\DataTableResponse;
-use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,6 +17,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Spatie\Permission\Models\Role;
+use Yajra\DataTables\Facades\DataTables;
 
 class UserController extends Controller implements HasMiddleware
 {
@@ -57,30 +57,109 @@ class UserController extends Controller implements HasMiddleware
             ->select(['id', 'name', 'email', 'phone', 'is_active', 'last_login_at', 'created_at'])
             ->with('roles:id,name');
 
-        return DataTableResponse::make($request, $query, fn (User $user): array => [
-            'name' => ['name' => $user->name, 'email' => $user->email, 'initials' => $user->initials()],
-            'phone' => $user->phone ?? '—',
-            'roles' => $user->roles->pluck('name'),
-            'status' => $user->is_active
-                ? ['text' => 'Active', 'color' => 'success']
-                : ['text' => 'Inactive', 'color' => 'secondary'],
-            'last_login_at' => $user->last_login_at?->diffForHumans() ?? 'Never',
-            'created_at' => $user->created_at->format($dateFormat),
-            'actions' => [
-                'edit' => $canEdit ? route('users.edit', $user) : null,
-                'delete' => $canDelete && $user->isNot($actor) ? route('users.destroy', $user) : null,
-                'label' => $user->name,
-            ],
-        ])
-            ->searchable(['name', 'email', 'phone'])
-            ->orderable(['name' => 'name', 'status' => 'is_active', 'last_login_at' => 'last_login_at', 'created_at' => 'created_at'])
-            ->defaultOrder('created_at', 'desc')
-            ->filter(function (Builder $query, Request $request): void {
-                $query
-                    ->when($request->filled('role'), fn (Builder $q) => $q->role($request->string('role')->toString()))
-                    ->when($request->filled('status'), fn (Builder $q) => $q->where('is_active', $request->input('status') === 'active'));
+        return DataTables::eloquent($query)
+            ->filter(function (Builder $query) use ($request): void {
+                if ($request->filled('role')) {
+                    $query->role($request->string('role')->toString());
+                }
+
+                if ($request->filled('status')) {
+                    $query->where('is_active', $request->input('status') === 'active');
+                }
+
+                if ($search = $request->input('search.value')) {
+                    $query->where(function (Builder $q) use ($search): void {
+                        $q->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%");
+                    });
+                }
             })
-            ->toResponse();
+            ->addColumn('user_card', function (User $user): string {
+                $initials = e($user->initials());
+                $name = e($user->name);
+                $email = e($user->email);
+
+                return <<<HTML
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="avatar">{$initials}</span>
+                        <div class="lh-sm">
+                            <div class="fw-bold text-dark">{$name}</div>
+                            <small class="text-muted"><i class="bi bi-envelope me-1"></i>{$email}</small>
+                        </div>
+                    </div>
+                HTML;
+            })
+            ->addColumn('roles_badges', function (User $user): string {
+                return $user->roles->map(function ($role): string {
+                    $roleName = e($role->name);
+
+                    return "<span class=\"badge badge-pill badge-gray me-1\">{$roleName}</span>";
+                })->implode('') ?: '<span class="text-muted">—</span>';
+            })
+            ->addColumn('status_badge', function (User $user): string {
+                return $user->is_active
+                    ? '<span class="badge badge-pill badge-forest"><i class="bi bi-check2-circle me-1"></i>Active</span>'
+                    : '<span class="badge badge-pill badge-gray">Inactive</span>';
+            })
+            ->addColumn('last_login_formatted', function (User $user): string {
+                if (! $user->last_login_at) {
+                    return '<span class="text-muted">Never</span>';
+                }
+
+                return '<span class="text-dark fw-medium">'.e($user->last_login_at->diffForHumans()).'</span>';
+            })
+            ->addColumn('created_formatted', function (User $user) use ($dateFormat): string {
+                return '<span class="text-muted small">'.e($user->created_at->format($dateFormat)).'</span>';
+            })
+            ->addColumn('actions', function (User $user) use ($actor, $canEdit, $canDelete): string {
+                $editUrl = $canEdit ? route('users.edit', $user) : null;
+                $deleteUrl = ($canDelete && $user->isNot($actor)) ? route('users.destroy', $user) : null;
+                $csrf = csrf_field();
+                $method = method_field('DELETE');
+                $userName = e($user->name);
+
+                $dropdownItems = '';
+                if ($editUrl) {
+                    $dropdownItems .= "<li><a class=\"dropdown-item py-1\" href=\"{$editUrl}\"><i class=\"bi bi-pencil-square me-2 text-primary\"></i>Edit Details</a></li>";
+                }
+                if ($deleteUrl) {
+                    $dropdownItems .= <<<HTML
+                        <li><hr class="dropdown-divider my-1"></li>
+                        <li>
+                            <form method="POST" action="{$deleteUrl}" data-confirm="{$userName} will be permanently removed.">
+                                {$csrf}
+                                {$method}
+                                <button type="submit" class="dropdown-item py-1 text-danger">
+                                    <i class="bi bi-trash me-2"></i>Delete User
+                                </button>
+                            </form>
+                        </li>
+                    HTML;
+                }
+
+                $primaryAction = $editUrl
+                    ? "<a href=\"{$editUrl}\" class=\"btn btn-sm btn-outline-forest py-1 px-2 d-inline-flex align-items-center gap-1\"><i class=\"bi bi-eye\"></i> View</a>"
+                    : '<button type="button" class="btn btn-sm btn-outline-forest py-1 px-2 d-inline-flex align-items-center gap-1"><i class="bi bi-eye"></i> View</button>';
+
+                return <<<HTML
+                    <div class="btn-group">
+                        {$primaryAction}
+                        <button type="button" class="btn btn-sm btn-outline-forest dropdown-toggle dropdown-toggle-split py-1 px-2" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="visually-hidden">Toggle Dropdown</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border py-1" style="min-width: 170px; font-size: 0.82rem;">
+                            {$dropdownItems}
+                        </ul>
+                    </div>
+                HTML;
+            })
+            ->rawColumns(['user_card', 'roles_badges', 'status_badge', 'last_login_formatted', 'created_formatted', 'actions'])
+            ->orderColumn('user_card', 'name $1')
+            ->orderColumn('status_badge', 'is_active $1')
+            ->orderColumn('last_login_formatted', 'last_login_at $1')
+            ->orderColumn('created_formatted', 'created_at $1')
+            ->make(true);
     }
 
     /**
