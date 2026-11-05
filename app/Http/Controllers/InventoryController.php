@@ -7,7 +7,7 @@ use App\Models\Medicine;
 use App\Models\MedicineBatch;
 use App\Models\MedicineCategory;
 use App\Services\AuditLogger;
-use Carbon\Carbon;
+use App\Support\IdObfuscator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -32,7 +32,8 @@ class InventoryController extends Controller implements HasMiddleware
     public function stockInForm(Request $request): View
     {
         $medicineId = $request->query('medicine_id');
-        $preselectedMedicine = $medicineId ? Medicine::find($medicineId) : null;
+        $resolvedMedicineId = $medicineId ? IdObfuscator::decodeOrRaw($medicineId, Medicine::class) : null;
+        $preselectedMedicine = $resolvedMedicineId ? Medicine::find($resolvedMedicineId) : null;
         $medicines = Medicine::active()->orderBy('generic_name')->get();
 
         return view('inventory.stock-in', compact('medicines', 'preselectedMedicine'));
@@ -110,7 +111,8 @@ class InventoryController extends Controller implements HasMiddleware
     public function stockOutForm(Request $request): View
     {
         $medicineId = $request->query('medicine_id');
-        $preselectedMedicine = $medicineId ? Medicine::with('batches')->find($medicineId) : null;
+        $resolvedMedicineId = $medicineId ? IdObfuscator::decodeOrRaw($medicineId, Medicine::class) : null;
+        $preselectedMedicine = $resolvedMedicineId ? Medicine::with('batches')->find($resolvedMedicineId) : null;
         $medicines = Medicine::active()->with('activeBatches')->orderBy('generic_name')->get();
 
         return view('inventory.stock-out', compact('medicines', 'preselectedMedicine'));
@@ -222,7 +224,7 @@ class InventoryController extends Controller implements HasMiddleware
                 'quantity' => -$qtyToDispose,
                 'quantity_before' => $beforeStock,
                 'quantity_after' => $afterStock,
-                'reason' => "Expired medicine write-off and safe medical disposal",
+                'reason' => 'Expired medicine write-off and safe medical disposal',
                 'user_id' => auth()->id(),
                 'transaction_date' => now(),
             ]);
@@ -296,4 +298,3 @@ class InventoryController extends Controller implements HasMiddleware
         ));
     }
 }
-

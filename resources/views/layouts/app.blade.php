@@ -14,7 +14,14 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ? "{$title} — {$clinicName}" : $clinicName }}</title>
 
-    <link rel="icon" type="image/svg+xml" href="{{ asset('assets/images/logo.svg') }}">
+    @php
+        $faviconUrl = ! empty($appSettings['logo_compact'])
+            ? asset('storage/'.$appSettings['logo_compact'])
+            : (! empty($appSettings['logo_primary'])
+                ? asset('storage/'.$appSettings['logo_primary'])
+                : asset('assets/images/logo.svg'));
+    @endphp
+    <link rel="icon" href="{{ $faviconUrl }}">
     <link rel="stylesheet" href="{{ asset('assets/fonts/inter/inter.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/plugins/bootstrap/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/plugins/bootstrap-icons/bootstrap-icons.min.css') }}">

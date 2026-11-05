@@ -87,4 +87,3 @@ class MedicineCategoryController extends Controller implements HasMiddleware
             ->with('success', "Medicine category {$name} removed successfully.");
     }
 }
-

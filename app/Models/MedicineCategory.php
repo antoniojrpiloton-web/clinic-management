@@ -32,4 +32,3 @@ class MedicineCategory extends Model
         return $query->where('is_active', true);
     }
 }
-

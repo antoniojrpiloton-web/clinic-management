@@ -106,7 +106,7 @@ class MedicineController extends Controller implements HasMiddleware
                 ->addColumn('actions', function (Medicine $m) {
                     $viewUrl = route('medicines.show', $m);
                     $editUrl = route('medicines.edit', $m);
-                    $stockInUrl = route('inventory.stock-in', ['medicine_id' => $m->id]);
+                    $stockInUrl = route('inventory.stock-in', ['medicine_id' => $m->getRouteKey()]);
                     $deleteUrl = route('medicines.destroy', $m);
                     $csrf = csrf_token();
 
@@ -260,4 +260,3 @@ class MedicineController extends Controller implements HasMiddleware
             ->with('success', "Medicine {$name} removed from masterlist.");
     }
 }
-

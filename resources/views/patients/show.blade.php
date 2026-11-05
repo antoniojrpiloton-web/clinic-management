@@ -42,7 +42,7 @@
                 </div>
 
                 <div class="d-flex flex-wrap gap-2">
-                    <a href="{{ route('physical-examinations.create', ['patient_id' => $patient->id]) }}" class="btn btn-primary btn-sm px-3 py-2">
+                    <a href="{{ route('physical-examinations.create', ['patient_id' => $patient->getRouteKey()]) }}" class="btn btn-primary btn-sm px-3 py-2">
                         <i class="bi bi-file-earmark-plus me-1"></i> New Physical Exam
                     </a>
                     <a href="{{ route('medical-profiles.show', $patient) }}" class="btn btn-outline-primary btn-sm px-3 py-2">
@@ -229,7 +229,7 @@
                         <i class="bi bi-file-earmark-medical text-primary"></i>
                         <span class="fw-bold text-dark">Physical Examination &amp; Clinical History</span>
                     </div>
-                    <a href="{{ route('physical-examinations.create', ['patient_id' => $patient->id]) }}" class="btn btn-sm btn-outline-primary">
+                    <a href="{{ route('physical-examinations.create', ['patient_id' => $patient->getRouteKey()]) }}" class="btn btn-sm btn-outline-primary">
                         <i class="bi bi-plus-circle me-1"></i> New Examination
                     </a>
                 </div>
@@ -293,7 +293,7 @@
                             <i class="bi bi-clipboard-pulse fs-1 d-block mb-2 text-secondary"></i>
                             <div class="fw-semibold">No physical examinations conducted yet.</div>
                             <div class="small mt-1">Record the initial annual or entrance physical examination for this patient.</div>
-                            <a href="{{ route('physical-examinations.create', ['patient_id' => $patient->id]) }}" class="btn btn-sm btn-primary mt-3">
+                            <a href="{{ route('physical-examinations.create', ['patient_id' => $patient->getRouteKey()]) }}" class="btn btn-sm btn-primary mt-3">
                                 <i class="bi bi-plus-circle me-1"></i> Conduct Physical Examination
                             </a>
                         </div>

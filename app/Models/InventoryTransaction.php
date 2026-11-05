@@ -86,4 +86,3 @@ class InventoryTransaction extends Model
         return sprintf('%s%05d', $prefix, $next);
     }
 }
-

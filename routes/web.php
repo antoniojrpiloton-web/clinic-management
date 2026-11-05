@@ -8,10 +8,15 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\ClinicianController;
+use App\Http\Controllers\ClinicVisitController;
 use App\Http\Controllers\CollegeController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DentalConsultationController;
+use App\Http\Controllers\EmergencyRecordController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\FirstAidRecordController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\MedicalConsultationController;
 use App\Http\Controllers\MedicalProfileController;
 use App\Http\Controllers\MedicineCategoryController;
 use App\Http\Controllers\MedicineController;
@@ -20,6 +25,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PhysicalExaminationController;
+use App\Http\Controllers\PhysicalExamScheduleController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\RoleController;
@@ -27,6 +33,8 @@ use App\Http\Controllers\Select2Controller;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\UserController;
+use App\Models\ClinicVisit;
+use App\Models\PhysicalExamScheduleAttendee;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -95,6 +103,37 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('{physicalExamination}/print-referral', 'printReferral')->name('print-referral');
     });
     Route::resource('physical-examinations', PhysicalExaminationController::class);
+
+    Route::controller(ClinicVisitController::class)->prefix('clinic-visits')->name('clinic-visits.')->group(function () {
+        Route::get('{clinicVisit}/print', 'printSlip')->name('print');
+        Route::get('{clinicVisit}/print-certificate', 'printCertificate')->name('print-certificate');
+        Route::get('{clinicVisit}/print-referral', 'printReferral')->name('print-referral');
+    });
+    Route::resource('clinic-visits', ClinicVisitController::class);
+
+    Route::model('medical_consultation', ClinicVisit::class);
+    Route::model('dental_consultation', ClinicVisit::class);
+    Route::model('emergency_record', ClinicVisit::class);
+    Route::model('first_aid_record', ClinicVisit::class);
+    Route::model('attendee', PhysicalExamScheduleAttendee::class);
+
+    Route::resource('medical-consultations', MedicalConsultationController::class);
+
+    Route::controller(DentalConsultationController::class)->prefix('dental-consultations')->name('dental-consultations.')->group(function () {
+        Route::get('{dental_consultation}/print-card', 'printCard')->name('print-card');
+    });
+    Route::resource('dental-consultations', DentalConsultationController::class);
+    Route::resource('emergency-records', EmergencyRecordController::class);
+    Route::resource('first-aid-records', FirstAidRecordController::class);
+
+    Route::controller(PhysicalExamScheduleController::class)->prefix('physical-exam-schedules')->name('physical-exam-schedules.')->group(function () {
+        Route::get('{physicalExamSchedule}/print-roster', 'printRoster')->name('print-roster');
+        Route::post('{physicalExamSchedule}/attendees', 'addAttendee')->name('add-attendee');
+        Route::post('{physicalExamSchedule}/populate-attendees', 'populateAttendees')->name('populate-attendees');
+        Route::post('{physicalExamSchedule}/attendees/{attendee}/status', 'updateAttendeeStatus')->name('update-attendee-status');
+        Route::delete('{physicalExamSchedule}/attendees/{attendee}', 'removeAttendee')->name('remove-attendee');
+    });
+    Route::resource('physical-exam-schedules', PhysicalExamScheduleController::class);
 
     Route::resource('medicine-categories', MedicineCategoryController::class)->except(['create', 'edit', 'show']);
     Route::resource('medicines', MedicineController::class);

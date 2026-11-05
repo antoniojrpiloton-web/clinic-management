@@ -84,10 +84,10 @@
     </div>
 
     <div class="text-center mb-3">
-        <div class="inst-title">{{ $settings['university_name'] ?? 'Northwestern Visayan Colleges' }}</div>
-        <div class="dept-title">{{ $settings['clinic_name'] ?? 'HEALTH SERVICES DEPARTMENT' }}</div>
-        <div class="dept-sub">{{ $settings['clinic_address'] ?? '2nd Floor, Room 201 and Room 202, ASQ Building' }}</div>
-        <div class="dept-sub">{{ $settings['clinic_address_line2'] ?? 'Capitol Site, Kalibo, Aklan' }}</div>
+        <div class="inst-title">{{ $settings['university_name'] ?? 'Surigao del Norte State University' }}</div>
+        <div class="dept-title">{{ $settings['clinic_name'] ?? 'SNSU University Clinic' }}</div>
+        <div class="dept-sub">{{ $settings['clinic_address'] ?? 'Ground Floor, Student Services Center, SNSU Main Campus' }}</div>
+        <div class="dept-sub">{{ $settings['university_address'] ?? 'Narciso Street, Surigao City, Surigao del Norte, Philippines' }}</div>
     </div>
 
     <div class="form-title">MEDICAL REFERRAL FORM</div>
@@ -165,9 +165,9 @@
     <div class="clearfix">
         <div class="signature-section">
             <div style="height: 45px;"></div>
-            <div class="doc-name">{{ $exam->examiner_name ?: ($settings['clinic_physician'] ?? 'DR. VICENTE S. QUIMPO, MD') }}</div>
+            <div class="doc-name">{{ $exam->examiner_name ?: ($settings['clinic_head'] ?? 'Dr. Maria Elena Santos, MD') }}</div>
             <div>School Physician</div>
-            <div>License #: {{ $exam->examiner_license_number ?: ($settings['clinic_physician_license'] ?? '0052551') }}</div>
+            <div>License #: {{ $exam->examiner_license_number ?: ($settings['clinic_license_no'] ?? 'DOH-R13-CLN-2026-088') }}</div>
         </div>
     </div>
 

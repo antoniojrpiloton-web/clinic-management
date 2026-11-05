@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS `audit_logs` (
   KEY `audit_logs_subject_type_subject_id_index` (`subject_type`,`subject_id`),
   KEY `audit_logs_event_created_at_index` (`event`,`created_at`),
   KEY `audit_logs_created_at_index` (`created_at`)
-) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Dumping data for table clinic_management.audit_logs: 3 rows
 DELETE FROM `audit_logs`;
@@ -74,7 +74,16 @@ INSERT INTO `audit_logs` (`id`, `user_id`, `event`, `description`, `subject_type
 	(1, 2, 'login', 'Super Admin (SNSU) logged in', 'App\\Models\\User', 2, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36', '2026-11-04 09:38:14'),
 	(2, 2, 'login', 'Super Admin (SNSU) signed in via Google', 'App\\Models\\User', 2, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36', '2026-11-04 09:38:14'),
 	(3, 2, 'updated', 'Updated healthcare provider DR. CARMINA V. DELOS REYES, MD', 'App\\Models\\Clinician', 2, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36', '2026-11-04 09:41:15'),
-	(4, 2, 'stock_out', 'Deducted 50 tablets from Cetirizine Dihydrochloride (Alnix) 10mg Tablet (gbbfg)', 'App\\Models\\MedicineBatch', 4, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36', '2026-11-04 09:50:05');
+	(4, 2, 'stock_out', 'Deducted 50 tablets from Cetirizine Dihydrochloride (Alnix) 10mg Tablet (gbbfg)', 'App\\Models\\MedicineBatch', 4, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36', '2026-11-04 09:50:05'),
+	(5, 2, 'login', 'Super Admin (SNSU) logged in', 'App\\Models\\User', 2, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36', '2026-11-04 16:34:55'),
+	(6, 1, 'login', 'System Administrator logged in', 'App\\Models\\User', 1, NULL, '127.0.0.1', 'Symfony', '2026-11-04 17:09:54'),
+	(7, 2, 'updated', 'Updated Dental Consultation VIS-20261105-0002', 'App\\Models\\ClinicVisit', 2, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36', '2026-11-04 17:14:43'),
+	(8, 2, 'updated', 'Updated application settings', NULL, NULL, '{"new": {"table_page_length": "10"}, "old": {"table_page_length": "25"}}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36', '2026-11-04 17:47:33'),
+	(9, 2, 'updated', 'Updated application settings and generated logo variants', NULL, NULL, '{"new": {"logo_seal": "logos/seal_VqVtysYh2ELq.png", "logo_large": "logos/large_VqVtysYh2ELq.png", "logo_small": "logos/small_VqVtysYh2ELq.png", "logo_medium": "logos/medium_VqVtysYh2ELq.png", "logo_compact": "logos/small_VqVtysYh2ELq.png", "logo_favicon": "logos/favicon_VqVtysYh2ELq.png", "logo_primary": "logos/large_VqVtysYh2ELq.png", "logo_original": "logos/original_VqVtysYh2ELq.png", "logo_grayscale": "logos/grayscale_VqVtysYh2ELq.png", "logo_watermark": "logos/watermark_VqVtysYh2ELq.png", "logo_transparent": "logos/transparent_VqVtysYh2ELq.png"}, "old": {"logo_seal": null, "logo_large": null, "logo_small": null, "logo_medium": null, "logo_compact": null, "logo_favicon": null, "logo_primary": null, "logo_original": null, "logo_grayscale": null, "logo_watermark": null, "logo_transparent": null}}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36', '2026-11-04 18:08:00'),
+	(10, 2, 'updated', 'Updated application settings and generated logo variants', NULL, NULL, '{"new": {"university_name": "Agusan del Sur State University", "university_campus": "Main Campus, San Teodoro, Bunawan, Agusan del Sur", "university_address": "San Teodoro, Bunawan, Agusan del Sur", "university_website": "https://adssu.edu.ph", "university_president": "DR. JO E. CAPISTRANO", "university_short_name": "ADSSU"}, "old": {"university_name": "Surigao del Norte State University", "university_campus": "Main Campus, Surigao City", "university_address": "Narciso Street, Surigao City, Surigao del Norte, Philippines", "university_website": "https://snsu.edu.ph", "university_president": "Dr. Gregorio Z. Gamboa Jr.", "university_short_name": "SNSU"}}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36', '2026-11-04 18:09:31'),
+	(11, 2, 'updated', 'Updated application settings and generated logo variants', NULL, NULL, '{"new": {"clinic_name": "ADSSU University Clinic"}, "old": {"clinic_name": "SNSU University Clinic"}}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36', '2026-11-04 18:09:53'),
+	(12, 2, 'updated', 'Updated application settings and generated logo variants', NULL, NULL, '{"new": {"logo_seal": "logos/seal_bBdiv3jNqXvK.png", "logo_large": "logos/large_bBdiv3jNqXvK.png", "logo_small": "logos/small_bBdiv3jNqXvK.png", "logo_medium": "logos/medium_bBdiv3jNqXvK.png", "logo_compact": "logos/small_bBdiv3jNqXvK.png", "logo_favicon": "logos/favicon_bBdiv3jNqXvK.png", "logo_primary": "logos/large_bBdiv3jNqXvK.png", "logo_original": "logos/original_bBdiv3jNqXvK.png", "logo_grayscale": "logos/grayscale_bBdiv3jNqXvK.png", "logo_watermark": "logos/watermark_bBdiv3jNqXvK.png", "logo_transparent": "logos/transparent_bBdiv3jNqXvK.png"}, "old": {"logo_seal": "logos/seal_VqVtysYh2ELq.png", "logo_large": "logos/large_VqVtysYh2ELq.png", "logo_small": "logos/small_VqVtysYh2ELq.png", "logo_medium": "logos/medium_VqVtysYh2ELq.png", "logo_compact": "logos/small_VqVtysYh2ELq.png", "logo_favicon": "logos/favicon_VqVtysYh2ELq.png", "logo_primary": "logos/large_VqVtysYh2ELq.png", "logo_original": "logos/original_VqVtysYh2ELq.png", "logo_grayscale": "logos/grayscale_VqVtysYh2ELq.png", "logo_watermark": "logos/watermark_VqVtysYh2ELq.png", "logo_transparent": "logos/transparent_VqVtysYh2ELq.png"}}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36', '2026-11-04 18:12:38'),
+	(13, 2, 'updated', 'Updated application settings and generated logo variants', NULL, NULL, '{"new": {"logo_seal": "logos/seal_TnAmkr657YLw.png", "logo_large": "logos/large_TnAmkr657YLw.png", "logo_small": "logos/small_TnAmkr657YLw.png", "logo_medium": "logos/medium_TnAmkr657YLw.png", "logo_compact": "logos/small_TnAmkr657YLw.png", "logo_favicon": "logos/favicon_TnAmkr657YLw.png", "logo_primary": "logos/large_TnAmkr657YLw.png", "logo_original": "logos/original_TnAmkr657YLw.png", "logo_grayscale": "logos/grayscale_TnAmkr657YLw.png", "logo_watermark": "logos/watermark_TnAmkr657YLw.png", "logo_transparent": "logos/transparent_TnAmkr657YLw.png"}, "old": {"logo_seal": "logos/seal_bBdiv3jNqXvK.png", "logo_large": "logos/large_bBdiv3jNqXvK.png", "logo_small": "logos/small_bBdiv3jNqXvK.png", "logo_medium": "logos/medium_bBdiv3jNqXvK.png", "logo_compact": "logos/small_bBdiv3jNqXvK.png", "logo_favicon": "logos/favicon_bBdiv3jNqXvK.png", "logo_primary": "logos/large_bBdiv3jNqXvK.png", "logo_original": "logos/original_bBdiv3jNqXvK.png", "logo_grayscale": "logos/grayscale_bBdiv3jNqXvK.png", "logo_watermark": "logos/watermark_bBdiv3jNqXvK.png", "logo_transparent": "logos/transparent_bBdiv3jNqXvK.png"}}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36', '2026-11-04 18:14:14');
 /*!40000 ALTER TABLE `audit_logs` ENABLE KEYS */;
 
 -- Dumping structure for table clinic_management.backups
@@ -114,8 +123,10 @@ CREATE TABLE IF NOT EXISTS `cache` (
 DELETE FROM `cache`;
 /*!40000 ALTER TABLE `cache` DISABLE KEYS */;
 INSERT INTO `cache` (`key`, `value`, `expiration`) VALUES
-	('nclinicassist-cache-spatie.permission.cache', 'a:3:{s:5:"alias";a:4:{s:1:"a";s:2:"id";s:1:"b";s:4:"name";s:1:"c";s:10:"guard_name";s:1:"r";s:5:"roles";}s:11:"permissions";a:73:{i:0;a:4:{s:1:"a";i:1;s:1:"b";s:14:"dashboard.view";s:1:"c";s:3:"web";s:1:"r";a:4:{i:0;i:2;i:1;i:3;i:2;i:4;i:3;i:5;}}i:1;a:4:{s:1:"a";i:2;s:1:"b";s:10:"users.view";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:2;a:4:{s:1:"a";i:3;s:1:"b";s:12:"users.create";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:3;a:4:{s:1:"a";i:4;s:1:"b";s:10:"users.edit";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:4;a:4:{s:1:"a";i:5;s:1:"b";s:12:"users.delete";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:5;a:4:{s:1:"a";i:6;s:1:"b";s:10:"roles.view";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:6;a:3:{s:1:"a";i:7;s:1:"b";s:12:"roles.create";s:1:"c";s:3:"web";}i:7;a:3:{s:1:"a";i:8;s:1:"b";s:10:"roles.edit";s:1:"c";s:3:"web";}i:8;a:3:{s:1:"a";i:9;s:1:"b";s:12:"roles.delete";s:1:"c";s:3:"web";}i:9;a:3:{s:1:"a";i:10;s:1:"b";s:16:"permissions.view";s:1:"c";s:3:"web";}i:10;a:3:{s:1:"a";i:11;s:1:"b";s:18:"permissions.create";s:1:"c";s:3:"web";}i:11;a:3:{s:1:"a";i:12;s:1:"b";s:16:"permissions.edit";s:1:"c";s:3:"web";}i:12;a:3:{s:1:"a";i:13;s:1:"b";s:18:"permissions.delete";s:1:"c";s:3:"web";}i:13;a:4:{s:1:"a";i:14;s:1:"b";s:15:"audit-logs.view";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:14;a:4:{s:1:"a";i:15;s:1:"b";s:15:"settings.manage";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:15;a:4:{s:1:"a";i:16;s:1:"b";s:12:"backups.view";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:16;a:4:{s:1:"a";i:17;s:1:"b";s:14:"backups.create";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:17;a:4:{s:1:"a";i:18;s:1:"b";s:16:"backups.download";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:18;a:3:{s:1:"a";i:19;s:1:"b";s:14:"backups.delete";s:1:"c";s:3:"web";}i:19;a:4:{s:1:"a";i:20;s:1:"b";s:19:"academic-years.view";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:20;a:4:{s:1:"a";i:21;s:1:"b";s:21:"academic-years.create";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:21;a:4:{s:1:"a";i:22;s:1:"b";s:19:"academic-years.edit";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:22;a:4:{s:1:"a";i:23;s:1:"b";s:21:"academic-years.delete";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:23;a:4:{s:1:"a";i:24;s:1:"b";s:13:"colleges.view";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:24;a:4:{s:1:"a";i:25;s:1:"b";s:15:"colleges.create";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:25;a:4:{s:1:"a";i:26;s:1:"b";s:13:"colleges.edit";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:26;a:4:{s:1:"a";i:27;s:1:"b";s:15:"colleges.delete";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:27;a:4:{s:1:"a";i:28;s:1:"b";s:13:"programs.view";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:28;a:4:{s:1:"a";i:29;s:1:"b";s:15:"programs.create";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:29;a:4:{s:1:"a";i:30;s:1:"b";s:13:"programs.edit";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:30;a:4:{s:1:"a";i:31;s:1:"b";s:15:"programs.delete";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:31;a:4:{s:1:"a";i:32;s:1:"b";s:15:"clinicians.view";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:32;a:4:{s:1:"a";i:33;s:1:"b";s:17:"clinicians.create";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:33;a:4:{s:1:"a";i:34;s:1:"b";s:15:"clinicians.edit";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:34;a:4:{s:1:"a";i:35;s:1:"b";s:17:"clinicians.delete";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:35;a:4:{s:1:"a";i:36;s:1:"b";s:13:"patients.view";s:1:"c";s:3:"web";s:1:"r";a:4:{i:0;i:2;i:1;i:3;i:2;i:4;i:3;i:5;}}i:36;a:4:{s:1:"a";i:37;s:1:"b";s:15:"patients.create";s:1:"c";s:3:"web";s:1:"r";a:4:{i:0;i:2;i:1;i:3;i:2;i:4;i:3;i:5;}}i:37;a:4:{s:1:"a";i:38;s:1:"b";s:13:"patients.edit";s:1:"c";s:3:"web";s:1:"r";a:4:{i:0;i:2;i:1;i:3;i:2;i:4;i:3;i:5;}}i:38;a:4:{s:1:"a";i:39;s:1:"b";s:15:"patients.delete";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:39;a:4:{s:1:"a";i:40;s:1:"b";s:15:"patients.import";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:40;a:4:{s:1:"a";i:41;s:1:"b";s:13:"students.view";s:1:"c";s:3:"web";s:1:"r";a:4:{i:0;i:2;i:1;i:3;i:2;i:4;i:3;i:5;}}i:41;a:4:{s:1:"a";i:42;s:1:"b";s:15:"students.create";s:1:"c";s:3:"web";s:1:"r";a:4:{i:0;i:2;i:1;i:3;i:2;i:4;i:3;i:5;}}i:42;a:4:{s:1:"a";i:43;s:1:"b";s:13:"students.edit";s:1:"c";s:3:"web";s:1:"r";a:4:{i:0;i:2;i:1;i:3;i:2;i:4;i:3;i:5;}}i:43;a:4:{s:1:"a";i:44;s:1:"b";s:15:"students.delete";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:44;a:4:{s:1:"a";i:45;s:1:"b";s:15:"students.import";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:45;a:4:{s:1:"a";i:46;s:1:"b";s:14:"employees.view";s:1:"c";s:3:"web";s:1:"r";a:4:{i:0;i:2;i:1;i:3;i:2;i:4;i:3;i:5;}}i:46;a:4:{s:1:"a";i:47;s:1:"b";s:16:"employees.create";s:1:"c";s:3:"web";s:1:"r";a:4:{i:0;i:2;i:1;i:3;i:2;i:4;i:3;i:5;}}i:47;a:4:{s:1:"a";i:48;s:1:"b";s:14:"employees.edit";s:1:"c";s:3:"web";s:1:"r";a:4:{i:0;i:2;i:1;i:3;i:2;i:4;i:3;i:5;}}i:48;a:4:{s:1:"a";i:49;s:1:"b";s:16:"employees.delete";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:49;a:4:{s:1:"a";i:50;s:1:"b";s:16:"employees.import";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:50;a:4:{s:1:"a";i:51;s:1:"b";s:26:"physical-examinations.view";s:1:"c";s:3:"web";s:1:"r";a:4:{i:0;i:2;i:1;i:3;i:2;i:4;i:3;i:5;}}i:51;a:4:{s:1:"a";i:52;s:1:"b";s:28:"physical-examinations.create";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:52;a:4:{s:1:"a";i:53;s:1:"b";s:26:"physical-examinations.edit";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:53;a:4:{s:1:"a";i:54;s:1:"b";s:28:"physical-examinations.delete";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:54;a:4:{s:1:"a";i:55;s:1:"b";s:27:"physical-examinations.print";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:55;a:4:{s:1:"a";i:56;s:1:"b";s:21:"medical-profiles.view";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:56;a:4:{s:1:"a";i:57;s:1:"b";s:21:"medical-profiles.edit";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:57;a:4:{s:1:"a";i:58;s:1:"b";s:25:"medical-certificates.view";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:58;a:4:{s:1:"a";i:59;s:1:"b";s:27:"medical-certificates.create";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:59;a:4:{s:1:"a";i:60;s:1:"b";s:26:"medical-certificates.print";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:60;a:4:{s:1:"a";i:61;s:1:"b";s:14:"medicines.view";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:61;a:4:{s:1:"a";i:62;s:1:"b";s:16:"medicines.create";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:62;a:4:{s:1:"a";i:63;s:1:"b";s:14:"medicines.edit";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:63;a:4:{s:1:"a";i:64;s:1:"b";s:16:"medicines.delete";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:64;a:4:{s:1:"a";i:65;s:1:"b";s:24:"medicine-categories.view";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:65;a:4:{s:1:"a";i:66;s:1:"b";s:26:"medicine-categories.create";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:66;a:4:{s:1:"a";i:67;s:1:"b";s:24:"medicine-categories.edit";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:67;a:4:{s:1:"a";i:68;s:1:"b";s:26:"medicine-categories.delete";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:68;a:4:{s:1:"a";i:69;s:1:"b";s:14:"inventory.view";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:69;a:4:{s:1:"a";i:70;s:1:"b";s:18:"inventory.stock-in";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:70;a:4:{s:1:"a";i:71;s:1:"b";s:19:"inventory.stock-out";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:71;a:4:{s:1:"a";i:72;s:1:"b";s:18:"inventory.dispense";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:72;a:4:{s:1:"a";i:73;s:1:"b";s:17:"inventory.reports";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}}s:5:"roles";a:4:{i:0;a:3:{s:1:"a";i:2;s:1:"b";s:13:"Administrator";s:1:"c";s:3:"web";}i:1;a:3:{s:1:"a";i:3;s:1:"b";s:6:"Doctor";s:1:"c";s:3:"web";}i:2;a:3:{s:1:"a";i:4;s:1:"b";s:5:"Nurse";s:1:"c";s:3:"web";}i:3;a:3:{s:1:"a";i:5;s:1:"b";s:12:"Receptionist";s:1:"c";s:3:"web";}}}', 1793900622),
-	('nclinicassist-cache-app.settings', 'a:17:{s:15:"university_name";s:34:"Surigao del Norte State University";s:21:"university_short_name";s:4:"SNSU";s:17:"university_campus";s:25:"Main Campus, Surigao City";s:18:"university_address";s:60:"Narciso Street, Surigao City, Surigao del Norte, Philippines";s:20:"university_president";s:26:"Dr. Gregorio Z. Gamboa Jr.";s:18:"university_website";s:19:"https://snsu.edu.ph";s:11:"clinic_name";s:22:"SNSU University Clinic";s:11:"clinic_head";s:26:"Dr. Maria Elena Santos, MD";s:17:"clinic_license_no";s:20:"DOH-R13-CLN-2026-088";s:12:"clinic_email";s:18:"clinic@snsu.edu.ph";s:12:"clinic_phone";s:17:"+63 (86) 826-0135";s:14:"clinic_address";s:55:"Ground Floor, Student Services Center, SNSU Main Campus";s:11:"date_format";s:6:"M d, Y";s:17:"table_page_length";s:2:"25";s:14:"backup_enabled";s:1:"1";s:21:"backup_retention_days";s:2:"30";s:24:"audit_log_retention_days";s:3:"365";}', 2109174222);
+	('nclinicassist-cache-spatie.permission.cache', 'a:3:{s:5:"alias";a:4:{s:1:"a";s:2:"id";s:1:"b";s:4:"name";s:1:"c";s:10:"guard_name";s:1:"r";s:5:"roles";}s:11:"permissions";a:97:{i:0;a:4:{s:1:"a";i:1;s:1:"b";s:14:"dashboard.view";s:1:"c";s:3:"web";s:1:"r";a:4:{i:0;i:2;i:1;i:3;i:2;i:4;i:3;i:5;}}i:1;a:4:{s:1:"a";i:2;s:1:"b";s:10:"users.view";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:2;a:4:{s:1:"a";i:3;s:1:"b";s:12:"users.create";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:3;a:4:{s:1:"a";i:4;s:1:"b";s:10:"users.edit";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:4;a:4:{s:1:"a";i:5;s:1:"b";s:12:"users.delete";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:5;a:4:{s:1:"a";i:6;s:1:"b";s:10:"roles.view";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:6;a:3:{s:1:"a";i:7;s:1:"b";s:12:"roles.create";s:1:"c";s:3:"web";}i:7;a:3:{s:1:"a";i:8;s:1:"b";s:10:"roles.edit";s:1:"c";s:3:"web";}i:8;a:3:{s:1:"a";i:9;s:1:"b";s:12:"roles.delete";s:1:"c";s:3:"web";}i:9;a:3:{s:1:"a";i:10;s:1:"b";s:16:"permissions.view";s:1:"c";s:3:"web";}i:10;a:3:{s:1:"a";i:11;s:1:"b";s:18:"permissions.create";s:1:"c";s:3:"web";}i:11;a:3:{s:1:"a";i:12;s:1:"b";s:16:"permissions.edit";s:1:"c";s:3:"web";}i:12;a:3:{s:1:"a";i:13;s:1:"b";s:18:"permissions.delete";s:1:"c";s:3:"web";}i:13;a:4:{s:1:"a";i:14;s:1:"b";s:15:"audit-logs.view";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:14;a:4:{s:1:"a";i:15;s:1:"b";s:15:"settings.manage";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:15;a:4:{s:1:"a";i:16;s:1:"b";s:12:"backups.view";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:16;a:4:{s:1:"a";i:17;s:1:"b";s:14:"backups.create";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:17;a:4:{s:1:"a";i:18;s:1:"b";s:16:"backups.download";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:18;a:3:{s:1:"a";i:19;s:1:"b";s:14:"backups.delete";s:1:"c";s:3:"web";}i:19;a:4:{s:1:"a";i:20;s:1:"b";s:19:"academic-years.view";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:20;a:4:{s:1:"a";i:21;s:1:"b";s:21:"academic-years.create";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:21;a:4:{s:1:"a";i:22;s:1:"b";s:19:"academic-years.edit";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:22;a:4:{s:1:"a";i:23;s:1:"b";s:21:"academic-years.delete";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:23;a:4:{s:1:"a";i:24;s:1:"b";s:13:"colleges.view";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:24;a:4:{s:1:"a";i:25;s:1:"b";s:15:"colleges.create";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:25;a:4:{s:1:"a";i:26;s:1:"b";s:13:"colleges.edit";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:26;a:4:{s:1:"a";i:27;s:1:"b";s:15:"colleges.delete";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:27;a:4:{s:1:"a";i:28;s:1:"b";s:13:"programs.view";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:28;a:4:{s:1:"a";i:29;s:1:"b";s:15:"programs.create";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:29;a:4:{s:1:"a";i:30;s:1:"b";s:13:"programs.edit";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:30;a:4:{s:1:"a";i:31;s:1:"b";s:15:"programs.delete";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:31;a:4:{s:1:"a";i:32;s:1:"b";s:15:"clinicians.view";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:32;a:4:{s:1:"a";i:33;s:1:"b";s:17:"clinicians.create";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:33;a:4:{s:1:"a";i:34;s:1:"b";s:15:"clinicians.edit";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:34;a:4:{s:1:"a";i:35;s:1:"b";s:17:"clinicians.delete";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:35;a:4:{s:1:"a";i:36;s:1:"b";s:13:"patients.view";s:1:"c";s:3:"web";s:1:"r";a:4:{i:0;i:2;i:1;i:3;i:2;i:4;i:3;i:5;}}i:36;a:4:{s:1:"a";i:37;s:1:"b";s:15:"patients.create";s:1:"c";s:3:"web";s:1:"r";a:4:{i:0;i:2;i:1;i:3;i:2;i:4;i:3;i:5;}}i:37;a:4:{s:1:"a";i:38;s:1:"b";s:13:"patients.edit";s:1:"c";s:3:"web";s:1:"r";a:4:{i:0;i:2;i:1;i:3;i:2;i:4;i:3;i:5;}}i:38;a:4:{s:1:"a";i:39;s:1:"b";s:15:"patients.delete";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:39;a:4:{s:1:"a";i:40;s:1:"b";s:15:"patients.import";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:40;a:4:{s:1:"a";i:41;s:1:"b";s:13:"students.view";s:1:"c";s:3:"web";s:1:"r";a:4:{i:0;i:2;i:1;i:3;i:2;i:4;i:3;i:5;}}i:41;a:4:{s:1:"a";i:42;s:1:"b";s:15:"students.create";s:1:"c";s:3:"web";s:1:"r";a:4:{i:0;i:2;i:1;i:3;i:2;i:4;i:3;i:5;}}i:42;a:4:{s:1:"a";i:43;s:1:"b";s:13:"students.edit";s:1:"c";s:3:"web";s:1:"r";a:4:{i:0;i:2;i:1;i:3;i:2;i:4;i:3;i:5;}}i:43;a:4:{s:1:"a";i:44;s:1:"b";s:15:"students.delete";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:44;a:4:{s:1:"a";i:45;s:1:"b";s:15:"students.import";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:45;a:4:{s:1:"a";i:46;s:1:"b";s:14:"employees.view";s:1:"c";s:3:"web";s:1:"r";a:4:{i:0;i:2;i:1;i:3;i:2;i:4;i:3;i:5;}}i:46;a:4:{s:1:"a";i:47;s:1:"b";s:16:"employees.create";s:1:"c";s:3:"web";s:1:"r";a:4:{i:0;i:2;i:1;i:3;i:2;i:4;i:3;i:5;}}i:47;a:4:{s:1:"a";i:48;s:1:"b";s:14:"employees.edit";s:1:"c";s:3:"web";s:1:"r";a:4:{i:0;i:2;i:1;i:3;i:2;i:4;i:3;i:5;}}i:48;a:4:{s:1:"a";i:49;s:1:"b";s:16:"employees.delete";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:49;a:4:{s:1:"a";i:50;s:1:"b";s:16:"employees.import";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:50;a:4:{s:1:"a";i:51;s:1:"b";s:26:"physical-examinations.view";s:1:"c";s:3:"web";s:1:"r";a:4:{i:0;i:2;i:1;i:3;i:2;i:4;i:3;i:5;}}i:51;a:4:{s:1:"a";i:52;s:1:"b";s:28:"physical-examinations.create";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:52;a:4:{s:1:"a";i:53;s:1:"b";s:26:"physical-examinations.edit";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:53;a:4:{s:1:"a";i:54;s:1:"b";s:28:"physical-examinations.delete";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:54;a:4:{s:1:"a";i:55;s:1:"b";s:27:"physical-examinations.print";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:55;a:4:{s:1:"a";i:56;s:1:"b";s:21:"medical-profiles.view";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:56;a:4:{s:1:"a";i:57;s:1:"b";s:21:"medical-profiles.edit";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:57;a:4:{s:1:"a";i:58;s:1:"b";s:25:"medical-certificates.view";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:58;a:4:{s:1:"a";i:59;s:1:"b";s:27:"medical-certificates.create";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:59;a:4:{s:1:"a";i:60;s:1:"b";s:26:"medical-certificates.print";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:60;a:4:{s:1:"a";i:61;s:1:"b";s:14:"medicines.view";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:61;a:4:{s:1:"a";i:62;s:1:"b";s:16:"medicines.create";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:62;a:4:{s:1:"a";i:63;s:1:"b";s:14:"medicines.edit";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:63;a:4:{s:1:"a";i:64;s:1:"b";s:16:"medicines.delete";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:64;a:4:{s:1:"a";i:65;s:1:"b";s:24:"medicine-categories.view";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:65;a:4:{s:1:"a";i:66;s:1:"b";s:26:"medicine-categories.create";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:66;a:4:{s:1:"a";i:67;s:1:"b";s:24:"medicine-categories.edit";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:67;a:4:{s:1:"a";i:68;s:1:"b";s:26:"medicine-categories.delete";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:68;a:4:{s:1:"a";i:69;s:1:"b";s:14:"inventory.view";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:69;a:4:{s:1:"a";i:70;s:1:"b";s:18:"inventory.stock-in";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:70;a:4:{s:1:"a";i:71;s:1:"b";s:19:"inventory.stock-out";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:71;a:4:{s:1:"a";i:72;s:1:"b";s:18:"inventory.dispense";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:72;a:4:{s:1:"a";i:73;s:1:"b";s:17:"inventory.reports";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:73;a:4:{s:1:"a";i:74;s:1:"b";s:18:"clinic-visits.view";s:1:"c";s:3:"web";s:1:"r";a:4:{i:0;i:2;i:1;i:3;i:2;i:4;i:3;i:5;}}i:74;a:4:{s:1:"a";i:75;s:1:"b";s:20:"clinic-visits.create";s:1:"c";s:3:"web";s:1:"r";a:4:{i:0;i:2;i:1;i:3;i:2;i:4;i:3;i:5;}}i:75;a:4:{s:1:"a";i:76;s:1:"b";s:18:"clinic-visits.edit";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:76;a:4:{s:1:"a";i:77;s:1:"b";s:20:"clinic-visits.delete";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:77;a:4:{s:1:"a";i:78;s:1:"b";s:26:"medical-consultations.view";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:78;a:4:{s:1:"a";i:79;s:1:"b";s:28:"medical-consultations.create";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:79;a:4:{s:1:"a";i:80;s:1:"b";s:26:"medical-consultations.edit";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:80;a:4:{s:1:"a";i:81;s:1:"b";s:28:"medical-consultations.delete";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:81;a:4:{s:1:"a";i:82;s:1:"b";s:25:"dental-consultations.view";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:82;a:4:{s:1:"a";i:83;s:1:"b";s:27:"dental-consultations.create";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:83;a:4:{s:1:"a";i:84;s:1:"b";s:25:"dental-consultations.edit";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:84;a:4:{s:1:"a";i:85;s:1:"b";s:27:"dental-consultations.delete";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:85;a:4:{s:1:"a";i:86;s:1:"b";s:22:"emergency-records.view";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:86;a:4:{s:1:"a";i:87;s:1:"b";s:24:"emergency-records.create";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:87;a:4:{s:1:"a";i:88;s:1:"b";s:22:"emergency-records.edit";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:88;a:4:{s:1:"a";i:89;s:1:"b";s:24:"emergency-records.delete";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:89;a:4:{s:1:"a";i:90;s:1:"b";s:22:"first-aid-records.view";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:90;a:4:{s:1:"a";i:91;s:1:"b";s:24:"first-aid-records.create";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:91;a:4:{s:1:"a";i:92;s:1:"b";s:22:"first-aid-records.edit";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:92;a:4:{s:1:"a";i:93;s:1:"b";s:24:"first-aid-records.delete";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}i:93;a:4:{s:1:"a";i:94;s:1:"b";s:28:"physical-exam-schedules.view";s:1:"c";s:3:"web";s:1:"r";a:4:{i:0;i:2;i:1;i:3;i:2;i:4;i:3;i:5;}}i:94;a:4:{s:1:"a";i:95;s:1:"b";s:30:"physical-exam-schedules.create";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:95;a:4:{s:1:"a";i:96;s:1:"b";s:28:"physical-exam-schedules.edit";s:1:"c";s:3:"web";s:1:"r";a:3:{i:0;i:2;i:1;i:3;i:2;i:4;}}i:96;a:4:{s:1:"a";i:97;s:1:"b";s:30:"physical-exam-schedules.delete";s:1:"c";s:3:"web";s:1:"r";a:1:{i:0;i:2;}}}s:5:"roles";a:4:{i:0;a:3:{s:1:"a";i:2;s:1:"b";s:13:"Administrator";s:1:"c";s:3:"web";}i:1;a:3:{s:1:"a";i:3;s:1:"b";s:6:"Doctor";s:1:"c";s:3:"web";}i:2;a:3:{s:1:"a";i:4;s:1:"b";s:5:"Nurse";s:1:"c";s:3:"web";}i:3;a:3:{s:1:"a";i:5;s:1:"b";s:12:"Receptionist";s:1:"c";s:3:"web";}}}', 1793926994),
+	('nclinicassist-cache-dashboard.stats', 'a:13:{s:11:"total_users";i:3;s:12:"active_users";i:3;s:5:"roles";i:5;s:7:"backups";i:0;s:12:"audit_events";i:13;s:13:"total_revenue";s:10:"$45,231.89";s:14:"revenue_growth";s:6:"+20.1%";s:13:"users_display";s:5:"2,350";s:12:"users_growth";s:6:"+15.3%";s:14:"orders_display";s:5:"1,234";s:13:"orders_growth";s:5:"-4.2%";s:15:"conversion_rate";s:5:"3.42%";s:17:"conversion_growth";s:5:"+8.7%";}', 1793847691),
+	('nclinicassist-cache-dashboard.charts', 'a:6:{s:6:"months";a:12:{i:0;s:3:"Jan";i:1;s:3:"Feb";i:2;s:3:"Mar";i:3;s:3:"Apr";i:4;s:3:"May";i:5;s:3:"Jun";i:6;s:3:"Jul";i:7;s:3:"Aug";i:8;s:3:"Sep";i:9;s:3:"Oct";i:10;s:3:"Nov";i:11;s:3:"Dec";}s:16:"revenue_overview";a:12:{i:0;i:3800;i:1;i:2600;i:2;i:2800;i:3;i:2200;i:4;i:2600;i:5;i:3100;i:6;i:3900;i:7;i:3600;i:8;i:4600;i:9;i:5000;i:10;i:5300;i:11;i:5900;}s:8:"expenses";a:12:{i:0;i:1500;i:1;i:1350;i:2;i:9500;i:3;i:1100;i:4;i:1200;i:5;i:1300;i:6;i:1500;i:7;i:1600;i:8;i:1450;i:9;i:1700;i:10;i:2100;i:11;i:2500;}s:6:"profit";a:12:{i:0;i:2400;i:1;i:1200;i:2;i:1500;i:3;i:3800;i:4;i:4700;i:5;i:3700;i:6;i:4200;i:7;i:5100;i:8;i:4000;i:9;i:5300;i:10;i:6100;i:11;i:7000;}s:6:"logins";a:2:{s:6:"labels";a:14:{i:0;s:6:"Oct 23";i:1;s:6:"Oct 24";i:2;s:6:"Oct 25";i:3;s:6:"Oct 26";i:4;s:6:"Oct 27";i:5;s:6:"Oct 28";i:6;s:6:"Oct 29";i:7;s:6:"Oct 30";i:8;s:6:"Oct 31";i:9;s:6:"Nov 01";i:10;s:6:"Nov 02";i:11;s:6:"Nov 03";i:12;s:6:"Nov 04";i:13;s:6:"Nov 05";}s:6:"values";a:14:{i:0;i:0;i:1;i:0;i:2;i:0;i:3;i:0;i:4;i:0;i:5;i:0;i:6;i:0;i:7;i:0;i:8;i:0;i:9;i:0;i:10;i:0;i:11;i:0;i:12;i:2;i:13;i:2;}}s:5:"roles";a:5:{i:0;a:2:{s:5:"label";s:13:"Administrator";s:5:"value";i:0;}i:1;a:2:{s:5:"label";s:6:"Doctor";s:5:"value";i:0;}i:2;a:2:{s:5:"label";s:5:"Nurse";s:5:"value";i:0;}i:3;a:2:{s:5:"label";s:12:"Receptionist";s:5:"value";i:0;}i:4;a:2:{s:5:"label";s:11:"Super Admin";s:5:"value";i:3;}}}', 1793847692),
+	('nclinicassist-cache-app.settings', 'a:32:{s:15:"university_name";s:31:"Agusan del Sur State University";s:21:"university_short_name";s:5:"ADSSU";s:17:"university_campus";s:49:"Main Campus, San Teodoro, Bunawan, Agusan del Sur";s:18:"university_address";s:36:"San Teodoro, Bunawan, Agusan del Sur";s:20:"university_president";s:20:"DR. JO E. CAPISTRANO";s:18:"university_website";s:20:"https://adssu.edu.ph";s:11:"clinic_name";s:23:"ADSSU University Clinic";s:11:"clinic_head";s:26:"Dr. Maria Elena Santos, MD";s:17:"clinic_license_no";s:20:"DOH-R13-CLN-2026-088";s:12:"clinic_email";s:18:"clinic@snsu.edu.ph";s:12:"clinic_phone";s:17:"+63 (86) 826-0135";s:14:"clinic_address";s:55:"Ground Floor, Student Services Center, SNSU Main Campus";s:11:"date_format";s:6:"M d, Y";s:17:"table_page_length";s:2:"10";s:14:"backup_enabled";s:1:"1";s:21:"backup_retention_days";s:2:"30";s:24:"audit_log_retention_days";s:3:"365";s:18:"logo_print_enabled";s:1:"1";s:18:"logo_print_variant";s:4:"seal";s:15:"logo_print_size";s:6:"medium";s:19:"logo_print_position";s:4:"left";s:13:"logo_original";s:31:"logos/original_TnAmkr657YLw.png";s:10:"logo_large";s:28:"logos/large_TnAmkr657YLw.png";s:12:"logo_primary";s:28:"logos/large_TnAmkr657YLw.png";s:11:"logo_medium";s:29:"logos/medium_TnAmkr657YLw.png";s:10:"logo_small";s:28:"logos/small_TnAmkr657YLw.png";s:12:"logo_compact";s:28:"logos/small_TnAmkr657YLw.png";s:12:"logo_favicon";s:30:"logos/favicon_TnAmkr657YLw.png";s:16:"logo_transparent";s:34:"logos/transparent_TnAmkr657YLw.png";s:9:"logo_seal";s:27:"logos/seal_TnAmkr657YLw.png";s:14:"logo_grayscale";s:32:"logos/grayscale_TnAmkr657YLw.png";s:14:"logo_watermark";s:32:"logos/watermark_TnAmkr657YLw.png";}', 2109204855);
 /*!40000 ALTER TABLE `cache` ENABLE KEYS */;
 
 -- Dumping structure for table clinic_management.cache_locks
@@ -167,6 +178,68 @@ INSERT INTO `clinicians` (`id`, `user_id`, `name`, `type`, `title`, `license_num
 	(5, NULL, 'DR. ROBERTO TAN, DMD', 'Dentist', 'University Dentist', '0034120', 'PTR-AKL-2026-8915', 'Dental Medicine & Oral Surgery', '+63 922 555 6677', 'roberto.tan@nvc.edu.ph', 1, '2026-11-04 09:37:50', '2026-11-04 09:37:50');
 /*!40000 ALTER TABLE `clinicians` ENABLE KEYS */;
 
+-- Dumping structure for table clinic_management.clinic_visits
+DROP TABLE IF EXISTS `clinic_visits`;
+CREATE TABLE IF NOT EXISTS `clinic_visits` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `visit_number` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `patient_id` bigint unsigned NOT NULL,
+  `visit_type` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `visit_category` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'walk_in',
+  `patient_classification` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `classification_label` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `college_id` bigint unsigned DEFAULT NULL,
+  `program_id` bigint unsigned DEFAULT NULL,
+  `academic_year_id` bigint unsigned DEFAULT NULL,
+  `year_level` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `office_department` varchar(120) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `visit_date` datetime NOT NULL,
+  `time_out` datetime DEFAULT NULL,
+  `chief_complaint` text COLLATE utf8mb4_unicode_ci,
+  `systolic` smallint unsigned DEFAULT NULL,
+  `diastolic` smallint unsigned DEFAULT NULL,
+  `pulse_rate` smallint unsigned DEFAULT NULL,
+  `respiratory_rate` smallint unsigned DEFAULT NULL,
+  `temperature` decimal(4,1) DEFAULT NULL,
+  `oxygen_saturation` smallint unsigned DEFAULT NULL,
+  `weight_kg` decimal(5,2) DEFAULT NULL,
+  `height_cm` decimal(5,2) DEFAULT NULL,
+  `pain_scale` tinyint unsigned DEFAULT NULL,
+  `clinician_id` bigint unsigned DEFAULT NULL,
+  `recorded_by` bigint unsigned DEFAULT NULL,
+  `disposition` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `status` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'completed',
+  `remarks` text COLLATE utf8mb4_unicode_ci,
+  `physical_examination_id` bigint unsigned DEFAULT NULL,
+  `medicine_dispensing_id` bigint unsigned DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `clinic_visits_visit_number_unique` (`visit_number`),
+  KEY `clinic_visits_patient_id_foreign` (`patient_id`),
+  KEY `clinic_visits_college_id_foreign` (`college_id`),
+  KEY `clinic_visits_program_id_foreign` (`program_id`),
+  KEY `clinic_visits_academic_year_id_foreign` (`academic_year_id`),
+  KEY `clinic_visits_clinician_id_foreign` (`clinician_id`),
+  KEY `clinic_visits_recorded_by_foreign` (`recorded_by`),
+  KEY `clinic_visits_physical_examination_id_foreign` (`physical_examination_id`),
+  KEY `clinic_visits_medicine_dispensing_id_foreign` (`medicine_dispensing_id`),
+  KEY `clinic_visits_visit_type_index` (`visit_type`),
+  KEY `clinic_visits_patient_classification_index` (`patient_classification`),
+  KEY `clinic_visits_visit_date_index` (`visit_date`),
+  KEY `clinic_visits_status_index` (`status`)
+) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dumping data for table clinic_management.clinic_visits: 4 rows
+DELETE FROM `clinic_visits`;
+/*!40000 ALTER TABLE `clinic_visits` DISABLE KEYS */;
+INSERT INTO `clinic_visits` (`id`, `visit_number`, `patient_id`, `visit_type`, `visit_category`, `patient_classification`, `classification_label`, `college_id`, `program_id`, `academic_year_id`, `year_level`, `office_department`, `visit_date`, `time_out`, `chief_complaint`, `systolic`, `diastolic`, `pulse_rate`, `respiratory_rate`, `temperature`, `oxygen_saturation`, `weight_kg`, `height_cm`, `pain_scale`, `clinician_id`, `recorded_by`, `disposition`, `status`, `remarks`, `physical_examination_id`, `medicine_dispensing_id`, `created_at`, `updated_at`) VALUES
+	(1, 'VIS-20261105-0001', 1, 'medical', 'walk_in', 'student', 'Student • BSIT • 2nd Year • CCIS', 1, 1, 1, '2nd Year', NULL, '2026-11-04 20:50:29', '2026-11-04 22:20:29', 'Moderate fever (38.4°C), non-productive cough, and body malaise for 2 days.', 110, 70, 88, 19, 38.4, 98, NULL, NULL, 3, 1, 1, 'sent_home', 'completed', 'Advised oral hydration and bed rest for 2 days.', NULL, NULL, '2026-11-04 16:50:29', '2026-11-04 16:50:29'),
+	(2, 'VIS-20261105-0002', 2, 'dental', 'scheduled', 'student', 'Student • BSN • 3rd Year • CHS', 3, 5, 1, '3rd Year', NULL, '2026-11-04 21:50:00', '2026-11-04 22:50:00', 'Occasional sensitivity to cold drinks on lower right molar.', 120, 80, 76, 16, 36.6, 99, NULL, NULL, 2, 2, 1, 'back_to_class', 'completed', 'Composite restoration completed uneventfully.', NULL, NULL, '2026-11-04 16:50:29', '2026-11-04 17:14:43'),
+	(3, 'VIS-20261105-0003', 3, 'emergency', 'emergency_call', 'employee', 'Employee • Faculty • Assistant Professor IV • Department of Computer Science', 1, NULL, NULL, NULL, 'Department of Computer Science', '2026-11-04 22:50:29', '2026-11-04 23:50:29', 'Sudden episode of syncope and loss of consciousness during university assembly.', 90, 60, 96, 20, 36.4, 96, NULL, NULL, 0, 1, 1, 'observation', 'completed', 'Regained full consciousness within 2 minutes. Vital signs stabilized after oral rehydration.', NULL, NULL, '2026-11-04 16:50:29', '2026-11-04 16:50:29'),
+	(4, 'VIS-20261105-0004', 4, 'first_aid', 'walk_in', 'employee', 'Employee • Non-Teaching / Staff • Administrative Officer II • Office of the University Registrar', NULL, NULL, NULL, NULL, 'Office of the University Registrar', '2026-11-04 23:50:29', '2026-11-05 00:20:29', 'Abrasion wound on right knee and forearm following a slip and fall along the corridor walkway.', 115, 75, 80, 18, 36.7, 99, NULL, NULL, 4, 3, 1, 'back_to_class', 'completed', 'Dressing clean and dry. Advised to keep wound dry for 24 hours.', NULL, NULL, '2026-11-04 16:50:29', '2026-11-04 16:50:29');
+/*!40000 ALTER TABLE `clinic_visits` ENABLE KEYS */;
+
 -- Dumping structure for table clinic_management.colleges
 DROP TABLE IF EXISTS `colleges`;
 CREATE TABLE IF NOT EXISTS `colleges` (
@@ -192,6 +265,109 @@ INSERT INTO `colleges` (`id`, `code`, `name`, `dean`, `description`, `is_active`
 	(3, 'CHS', 'College of Health Sciences and Nursing', 'Dr. Patricia Ramos, RN, MD', 'Healthcare programs, Nursing, and Allied Clinical Services', 1, '2026-11-04 09:37:50', '2026-11-04 09:37:50');
 /*!40000 ALTER TABLE `colleges` ENABLE KEYS */;
 
+-- Dumping structure for table clinic_management.dental_consultations
+DROP TABLE IF EXISTS `dental_consultations`;
+CREATE TABLE IF NOT EXISTS `dental_consultations` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `clinic_visit_id` bigint unsigned NOT NULL,
+  `oral_examination_findings` text COLLATE utf8mb4_unicode_ci,
+  `tooth_chart` json DEFAULT NULL,
+  `procedures` json DEFAULT NULL,
+  `teeth_involved` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `anesthesia_used` varchar(120) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `diagnosis` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `treatment_rendered` text COLLATE utf8mb4_unicode_ci,
+  `recommendations` text COLLATE utf8mb4_unicode_ci,
+  `oral_hygiene_status` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `previous_dental_treatment` text COLLATE utf8mb4_unicode_ci,
+  `dental_treatment_frequency` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `last_dental_visit` date DEFAULT NULL,
+  `dental_fears` tinyint(1) NOT NULL DEFAULT '0',
+  `dental_concerns` text COLLATE utf8mb4_unicode_ci,
+  `has_toothache` tinyint(1) NOT NULL DEFAULT '0',
+  `has_bleeding_gums` tinyint(1) NOT NULL DEFAULT '0',
+  `has_bad_breath` tinyint(1) NOT NULL DEFAULT '0',
+  `has_tooth_sensitivity` tinyint(1) NOT NULL DEFAULT '0',
+  `has_jaw_pain` tinyint(1) NOT NULL DEFAULT '0',
+  `has_loose_teeth` tinyint(1) NOT NULL DEFAULT '0',
+  `has_swelling` tinyint(1) NOT NULL DEFAULT '0',
+  `systemic_diabetes` tinyint(1) NOT NULL DEFAULT '0',
+  `systemic_hypertension` tinyint(1) NOT NULL DEFAULT '0',
+  `systemic_heart_disease` tinyint(1) NOT NULL DEFAULT '0',
+  `systemic_bleeding_disorder` tinyint(1) NOT NULL DEFAULT '0',
+  `systemic_allergies` tinyint(1) NOT NULL DEFAULT '0',
+  `systemic_allergy_details` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `soft_tissue_lips` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `soft_tissue_cheeks` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `soft_tissue_tongue` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `soft_tissue_palate` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `soft_tissue_gingiva` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `soft_tissue_floor_of_mouth` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `periodontal_status` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `calculus_index` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `gingival_index` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `plaque_index` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `dmft_decayed` tinyint unsigned DEFAULT NULL,
+  `dmft_missing` tinyint unsigned DEFAULT NULL,
+  `dmft_filled` tinyint unsigned DEFAULT NULL,
+  `dmfs_decayed` tinyint unsigned DEFAULT NULL,
+  `dmfs_missing` tinyint unsigned DEFAULT NULL,
+  `dmfs_filled` tinyint unsigned DEFAULT NULL,
+  `treatment_plan` text COLLATE utf8mb4_unicode_ci,
+  `priority_level` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `primary_tooth_chart` json DEFAULT NULL,
+  `follow_up_date` date DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `dental_consultations_clinic_visit_id_unique` (`clinic_visit_id`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dumping data for table clinic_management.dental_consultations: 1 rows
+DELETE FROM `dental_consultations`;
+/*!40000 ALTER TABLE `dental_consultations` DISABLE KEYS */;
+INSERT INTO `dental_consultations` (`id`, `clinic_visit_id`, `oral_examination_findings`, `tooth_chart`, `procedures`, `teeth_involved`, `anesthesia_used`, `diagnosis`, `treatment_rendered`, `recommendations`, `oral_hygiene_status`, `previous_dental_treatment`, `dental_treatment_frequency`, `last_dental_visit`, `dental_fears`, `dental_concerns`, `has_toothache`, `has_bleeding_gums`, `has_bad_breath`, `has_tooth_sensitivity`, `has_jaw_pain`, `has_loose_teeth`, `has_swelling`, `systemic_diabetes`, `systemic_hypertension`, `systemic_heart_disease`, `systemic_bleeding_disorder`, `systemic_allergies`, `systemic_allergy_details`, `soft_tissue_lips`, `soft_tissue_cheeks`, `soft_tissue_tongue`, `soft_tissue_palate`, `soft_tissue_gingiva`, `soft_tissue_floor_of_mouth`, `periodontal_status`, `calculus_index`, `gingival_index`, `plaque_index`, `dmft_decayed`, `dmft_missing`, `dmft_filled`, `dmfs_decayed`, `dmfs_missing`, `dmfs_filled`, `treatment_plan`, `priority_level`, `primary_tooth_chart`, `follow_up_date`, `created_at`, `updated_at`) VALUES
+	(1, 2, NULL, '{"46": "F"}', '["Oral Examination / Consultation", "Permanent Filling (Restoration)"]', '#46 (Lower Right 1st Molar)', 'Lidocaine 2% with 1:100,000 Epinephrine 1.8mL', 'Dental Caries, Class I (Tooth 46)', 'Caries excavation under local anesthesia, cavity conditioning, and light-cured composite resin restoration. Occlusion checked and adjusted.', 'Avoid chewing hard foods for 2 hours. Maintain twice daily brushing and dental flossing.', 'Good', NULL, NULL, NULL, 0, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2027-05-05', '2026-11-04 16:50:29', '2026-11-04 17:14:43');
+/*!40000 ALTER TABLE `dental_consultations` ENABLE KEYS */;
+
+-- Dumping structure for table clinic_management.emergency_records
+DROP TABLE IF EXISTS `emergency_records`;
+CREATE TABLE IF NOT EXISTS `emergency_records` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `clinic_visit_id` bigint unsigned NOT NULL,
+  `incident_datetime` datetime DEFAULT NULL,
+  `incident_location` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `emergency_nature` varchar(60) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `triage_level` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `level_of_consciousness` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `gcs_score` tinyint unsigned DEFAULT NULL,
+  `incident_description` text COLLATE utf8mb4_unicode_ci,
+  `interventions` json DEFAULT NULL,
+  `intervention_notes` text COLLATE utf8mb4_unicode_ci,
+  `ambulance_called` tinyint(1) NOT NULL DEFAULT '0',
+  `transferred_to_hospital` tinyint(1) NOT NULL DEFAULT '0',
+  `hospital_name` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `transport_mode` varchar(60) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `transferred_at` datetime DEFAULT NULL,
+  `guardian_notified` tinyint(1) NOT NULL DEFAULT '0',
+  `notified_person` varchar(120) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `notified_at` datetime DEFAULT NULL,
+  `incident_report_number` varchar(60) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `outcome` varchar(60) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `emergency_records_clinic_visit_id_unique` (`clinic_visit_id`),
+  KEY `emergency_records_triage_level_index` (`triage_level`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dumping data for table clinic_management.emergency_records: 1 rows
+DELETE FROM `emergency_records`;
+/*!40000 ALTER TABLE `emergency_records` DISABLE KEYS */;
+INSERT INTO `emergency_records` (`id`, `clinic_visit_id`, `incident_datetime`, `incident_location`, `emergency_nature`, `triage_level`, `level_of_consciousness`, `gcs_score`, `incident_description`, `interventions`, `intervention_notes`, `ambulance_called`, `transferred_to_hospital`, `hospital_name`, `transport_mode`, `transferred_at`, `guardian_notified`, `notified_person`, `notified_at`, `incident_report_number`, `outcome`, `created_at`, `updated_at`) VALUES
+	(1, 3, '2026-11-04 22:35:29', 'University Gymnasium Main Stage', 'Syncope / Loss of Consciousness', 'yellow', 'alert', 15, 'Student collapsed while standing in line during the morning assembly under warm ambient temperature. Denies head trauma or convulsions.', '["Oxygen Therapy", "Recovery Position", "Monitoring of Vital Signs"]', 'Placed in Trendelenburg position. Humidified O2 at 3 LPM via nasal cannula given. Blood glucose checked (92 mg/dL - normal). Patient regained alertness.', 0, 0, NULL, NULL, NULL, 1, 'Carla Villanueva', '2026-11-04 22:50:29', 'IR-2026-001', 'Stabilized and Discharged', '2026-11-04 16:50:29', '2026-11-04 16:50:29');
+/*!40000 ALTER TABLE `emergency_records` ENABLE KEYS */;
+
 -- Dumping structure for table clinic_management.failed_jobs
 DROP TABLE IF EXISTS `failed_jobs`;
 CREATE TABLE IF NOT EXISTS `failed_jobs` (
@@ -211,6 +387,33 @@ CREATE TABLE IF NOT EXISTS `failed_jobs` (
 DELETE FROM `failed_jobs`;
 /*!40000 ALTER TABLE `failed_jobs` DISABLE KEYS */;
 /*!40000 ALTER TABLE `failed_jobs` ENABLE KEYS */;
+
+-- Dumping structure for table clinic_management.first_aid_records
+DROP TABLE IF EXISTS `first_aid_records`;
+CREATE TABLE IF NOT EXISTS `first_aid_records` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `clinic_visit_id` bigint unsigned NOT NULL,
+  `injury_type` varchar(60) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `body_part` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `incident_location` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `incident_cause` varchar(190) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `first_aid_given` json DEFAULT NULL,
+  `treatment_notes` text COLLATE utf8mb4_unicode_ci,
+  `supplies_used` text COLLATE utf8mb4_unicode_ci,
+  `was_referred` tinyint(1) NOT NULL DEFAULT '0',
+  `referred_to` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `first_aid_records_clinic_visit_id_unique` (`clinic_visit_id`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dumping data for table clinic_management.first_aid_records: 1 rows
+DELETE FROM `first_aid_records`;
+/*!40000 ALTER TABLE `first_aid_records` DISABLE KEYS */;
+INSERT INTO `first_aid_records` (`id`, `clinic_visit_id`, `injury_type`, `body_part`, `incident_location`, `incident_cause`, `first_aid_given`, `treatment_notes`, `supplies_used`, `was_referred`, `referred_to`, `created_at`, `updated_at`) VALUES
+	(1, 4, 'Abrasion / Scratch', 'Right knee and right forearm', 'Academic Building 2, 2nd Floor Corridor', 'Slipped on wet floor tile after rain shower', '["Wound Cleaning", "Antiseptic Applied", "Dressing / Bandage Applied"]', 'Wound irrigated with sterile saline solution. Povidone-iodine antiseptic applied. Covered with sterile non-adherent gauze pad and hypoallergenic tape.', 'Normal Saline Solution 50mL, Betadine 10% solution, Gauze pads 4x4 (3 pcs), Micropore tape', 0, NULL, '2026-11-04 16:50:29', '2026-11-04 16:50:29');
+/*!40000 ALTER TABLE `first_aid_records` ENABLE KEYS */;
 
 -- Dumping structure for table clinic_management.inventory_transactions
 DROP TABLE IF EXISTS `inventory_transactions`;
@@ -298,6 +501,36 @@ CREATE TABLE IF NOT EXISTS `job_batches` (
 DELETE FROM `job_batches`;
 /*!40000 ALTER TABLE `job_batches` DISABLE KEYS */;
 /*!40000 ALTER TABLE `job_batches` ENABLE KEYS */;
+
+-- Dumping structure for table clinic_management.medical_consultations
+DROP TABLE IF EXISTS `medical_consultations`;
+CREATE TABLE IF NOT EXISTS `medical_consultations` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `clinic_visit_id` bigint unsigned NOT NULL,
+  `history_of_present_illness` text COLLATE utf8mb4_unicode_ci,
+  `physical_findings` text COLLATE utf8mb4_unicode_ci,
+  `diagnosis` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `icd_code` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `treatment_plan` text COLLATE utf8mb4_unicode_ci,
+  `medications_prescribed` text COLLATE utf8mb4_unicode_ci,
+  `advice` text COLLATE utf8mb4_unicode_ci,
+  `medical_certificate_issued` tinyint(1) NOT NULL DEFAULT '0',
+  `rest_days` smallint unsigned DEFAULT NULL,
+  `referred_to` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `referral_reason` text COLLATE utf8mb4_unicode_ci,
+  `follow_up_date` date DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `medical_consultations_clinic_visit_id_unique` (`clinic_visit_id`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dumping data for table clinic_management.medical_consultations: 1 rows
+DELETE FROM `medical_consultations`;
+/*!40000 ALTER TABLE `medical_consultations` DISABLE KEYS */;
+INSERT INTO `medical_consultations` (`id`, `clinic_visit_id`, `history_of_present_illness`, `physical_findings`, `diagnosis`, `icd_code`, `treatment_plan`, `medications_prescribed`, `advice`, `medical_certificate_issued`, `rest_days`, `referred_to`, `referral_reason`, `follow_up_date`, `created_at`, `updated_at`) VALUES
+	(1, 1, 'Patient reports gradual onset of body malaise and dry cough 48 hours prior to consult. No shortness of breath.', 'Pharyngeal erythema (+), clear breath sounds, supple neck, soft non-tender abdomen.', 'Acute Upper Respiratory Tract Infection (URTI)', 'J06.9', 'Paracetamol 500mg tab q4h PRN for fever. Cetirizine 10mg tab OD at bedtime. Increase fluid intake.', 'Paracetamol 500mg #10, Cetirizine 10mg #5', 'Adequate sleep, wear mask, return to clinic if fever persists beyond 3 days.', 1, 2, NULL, NULL, '2026-11-08', '2026-11-04 16:50:29', '2026-11-04 16:50:29');
+/*!40000 ALTER TABLE `medical_consultations` ENABLE KEYS */;
 
 -- Dumping structure for table clinic_management.medical_profiles
 DROP TABLE IF EXISTS `medical_profiles`;
@@ -504,7 +737,7 @@ CREATE TABLE IF NOT EXISTS `migrations` (
   `migration` varchar(191) COLLATE utf8mb4_unicode_ci NOT NULL,
   `batch` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Dumping data for table clinic_management.migrations: 16 rows
 DELETE FROM `migrations`;
@@ -525,7 +758,9 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 	(13, '2026_11_04_153500_create_clinicians_table', 1),
 	(14, '2026_11_04_154301_create_patients_and_profiles_tables', 1),
 	(15, '2026_11_04_161355_create_medical_profiles_and_physical_examinations_tables', 1),
-	(16, '2026_11_04_170000_create_medicines_and_inventory_tables', 1);
+	(16, '2026_11_04_170000_create_medicines_and_inventory_tables', 1),
+	(17, '2026_11_05_004154_create_clinic_operations_tables', 2),
+	(18, '2026_11_05_021925_add_oral_health_fields_to_dental_consultations', 3);
 /*!40000 ALTER TABLE `migrations` ENABLE KEYS */;
 
 -- Dumping structure for table clinic_management.model_has_permissions
@@ -665,7 +900,7 @@ CREATE TABLE IF NOT EXISTS `permissions` (
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `permissions_name_guard_name_unique` (`name`,`guard_name`)
-) ENGINE=MyISAM AUTO_INCREMENT=74 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=98 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Dumping data for table clinic_management.permissions: 73 rows
 DELETE FROM `permissions`;
@@ -743,7 +978,31 @@ INSERT INTO `permissions` (`id`, `name`, `guard_name`, `created_at`, `updated_at
 	(70, 'inventory.stock-in', 'web', '2026-11-04 09:37:50', '2026-11-04 09:37:50'),
 	(71, 'inventory.stock-out', 'web', '2026-11-04 09:37:50', '2026-11-04 09:37:50'),
 	(72, 'inventory.dispense', 'web', '2026-11-04 09:37:50', '2026-11-04 09:37:50'),
-	(73, 'inventory.reports', 'web', '2026-11-04 09:37:50', '2026-11-04 09:37:50');
+	(73, 'inventory.reports', 'web', '2026-11-04 09:37:50', '2026-11-04 09:37:50'),
+	(74, 'clinic-visits.view', 'web', '2026-11-04 16:50:26', '2026-11-04 16:50:26'),
+	(75, 'clinic-visits.create', 'web', '2026-11-04 16:50:26', '2026-11-04 16:50:26'),
+	(76, 'clinic-visits.edit', 'web', '2026-11-04 16:50:26', '2026-11-04 16:50:26'),
+	(77, 'clinic-visits.delete', 'web', '2026-11-04 16:50:26', '2026-11-04 16:50:26'),
+	(78, 'medical-consultations.view', 'web', '2026-11-04 16:50:26', '2026-11-04 16:50:26'),
+	(79, 'medical-consultations.create', 'web', '2026-11-04 16:50:26', '2026-11-04 16:50:26'),
+	(80, 'medical-consultations.edit', 'web', '2026-11-04 16:50:27', '2026-11-04 16:50:27'),
+	(81, 'medical-consultations.delete', 'web', '2026-11-04 16:50:27', '2026-11-04 16:50:27'),
+	(82, 'dental-consultations.view', 'web', '2026-11-04 16:50:27', '2026-11-04 16:50:27'),
+	(83, 'dental-consultations.create', 'web', '2026-11-04 16:50:27', '2026-11-04 16:50:27'),
+	(84, 'dental-consultations.edit', 'web', '2026-11-04 16:50:27', '2026-11-04 16:50:27'),
+	(85, 'dental-consultations.delete', 'web', '2026-11-04 16:50:27', '2026-11-04 16:50:27'),
+	(86, 'emergency-records.view', 'web', '2026-11-04 16:50:27', '2026-11-04 16:50:27'),
+	(87, 'emergency-records.create', 'web', '2026-11-04 16:50:27', '2026-11-04 16:50:27'),
+	(88, 'emergency-records.edit', 'web', '2026-11-04 16:50:27', '2026-11-04 16:50:27'),
+	(89, 'emergency-records.delete', 'web', '2026-11-04 16:50:27', '2026-11-04 16:50:27'),
+	(90, 'first-aid-records.view', 'web', '2026-11-04 16:50:27', '2026-11-04 16:50:27'),
+	(91, 'first-aid-records.create', 'web', '2026-11-04 16:50:28', '2026-11-04 16:50:28'),
+	(92, 'first-aid-records.edit', 'web', '2026-11-04 16:50:28', '2026-11-04 16:50:28'),
+	(93, 'first-aid-records.delete', 'web', '2026-11-04 16:50:28', '2026-11-04 16:50:28'),
+	(94, 'physical-exam-schedules.view', 'web', '2026-11-04 16:50:28', '2026-11-04 16:50:28'),
+	(95, 'physical-exam-schedules.create', 'web', '2026-11-04 16:50:28', '2026-11-04 16:50:28'),
+	(96, 'physical-exam-schedules.edit', 'web', '2026-11-04 16:50:28', '2026-11-04 16:50:28'),
+	(97, 'physical-exam-schedules.delete', 'web', '2026-11-04 16:50:28', '2026-11-04 16:50:28');
 /*!40000 ALTER TABLE `permissions` ENABLE KEYS */;
 
 -- Dumping structure for table clinic_management.physical_examinations
@@ -811,6 +1070,79 @@ INSERT INTO `physical_examinations` (`id`, `pe_number`, `patient_id`, `academic_
 	(3, 'PE-2026-00003', 3, 1, NULL, 1, 'DR. VICENTE S. QUIMPO, MD', '0052551', '2026-10-25', 'Annual Physical Exam', 120, 80, 74, 18, 36.6, 99, 165.00, 58.50, 21.49, 'Normal', '20/20', '20/20', 0, 'Normal', 'Normal', 'Conscious, coherent, ambulatory, well-nourished', '{"status": "normal", "remarks": "Good skin turgor, no jaundice, no pallor"}', '{"status": "normal", "remarks": "Anicteric sclerae, pink palpebral conjunctivae"}', '{"status": "normal", "remarks": "Supple, no palpable lymphadenopathy"}', '{"status": "normal", "remarks": "Clear breath sounds, symmetrical chest expansion"}', '{"status": "normal", "remarks": "Normal rate, regular rhythm, no murmurs"}', '{"status": "normal", "remarks": "Flat, soft, non-tender, no organomegaly"}', '{"status": "normal", "remarks": "Full range of motion, normal gait"}', '{"status": "normal", "remarks": "Grossly intact motor and sensory function"}', '{"status": "normal", "remarks": "Good oral hygiene"}', 'Normal chest radiograph, no active lung infiltrates', '2026-10-15', 'CBC, Urinalysis, and routine screening normal', 'Essentially normal physical examination findings', 'Maintain balanced diet, regular exercise, adequate hydration', 'Class A', '{"to_work": "fit", "to_travel": "fit", "work_immersion": "fit", "other_requirements": "fit", "on_the_job_training": "fit", "physical_activities": "fit"}', 'completed', '2026-11-04 09:37:50', '2026-11-04 09:37:50'),
 	(4, 'PE-2026-00004', 4, 1, NULL, 1, 'DR. VICENTE S. QUIMPO, MD', '0052551', '2026-10-21', 'Annual Physical Exam', 120, 80, 74, 18, 36.6, 99, 165.00, 58.50, 21.49, 'Normal', '20/20', '20/20', 0, 'Normal', 'Normal', 'Conscious, coherent, ambulatory, well-nourished', '{"status": "normal", "remarks": "Good skin turgor, no jaundice, no pallor"}', '{"status": "normal", "remarks": "Anicteric sclerae, pink palpebral conjunctivae"}', '{"status": "normal", "remarks": "Supple, no palpable lymphadenopathy"}', '{"status": "normal", "remarks": "Clear breath sounds, symmetrical chest expansion"}', '{"status": "normal", "remarks": "Normal rate, regular rhythm, no murmurs"}', '{"status": "normal", "remarks": "Flat, soft, non-tender, no organomegaly"}', '{"status": "normal", "remarks": "Full range of motion, normal gait"}', '{"status": "normal", "remarks": "Grossly intact motor and sensory function"}', '{"status": "normal", "remarks": "Good oral hygiene"}', 'Normal chest radiograph, no active lung infiltrates', '2026-10-15', 'CBC, Urinalysis, and routine screening normal', 'Essentially normal physical examination findings', 'Maintain balanced diet, regular exercise, adequate hydration', 'Class A', '{"to_work": "fit", "to_travel": "fit", "work_immersion": "fit", "other_requirements": "fit", "on_the_job_training": "fit", "physical_activities": "fit"}', 'completed', '2026-11-04 09:37:50', '2026-11-04 09:37:50');
 /*!40000 ALTER TABLE `physical_examinations` ENABLE KEYS */;
+
+-- Dumping structure for table clinic_management.physical_exam_schedules
+DROP TABLE IF EXISTS `physical_exam_schedules`;
+CREATE TABLE IF NOT EXISTS `physical_exam_schedules` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `schedule_number` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `title` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `purpose` varchar(80) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Annual Physical Exam',
+  `target_classification` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'student',
+  `academic_year_id` bigint unsigned DEFAULT NULL,
+  `college_id` bigint unsigned DEFAULT NULL,
+  `program_id` bigint unsigned DEFAULT NULL,
+  `year_level` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `office_department` varchar(120) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `scheduled_date` date NOT NULL,
+  `start_time` time DEFAULT NULL,
+  `end_time` time DEFAULT NULL,
+  `venue` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `capacity` int unsigned DEFAULT NULL,
+  `clinician_id` bigint unsigned DEFAULT NULL,
+  `status` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'scheduled',
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `created_by` bigint unsigned DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `physical_exam_schedules_schedule_number_unique` (`schedule_number`),
+  KEY `physical_exam_schedules_academic_year_id_foreign` (`academic_year_id`),
+  KEY `physical_exam_schedules_college_id_foreign` (`college_id`),
+  KEY `physical_exam_schedules_program_id_foreign` (`program_id`),
+  KEY `physical_exam_schedules_clinician_id_foreign` (`clinician_id`),
+  KEY `physical_exam_schedules_created_by_foreign` (`created_by`),
+  KEY `physical_exam_schedules_target_classification_index` (`target_classification`),
+  KEY `physical_exam_schedules_scheduled_date_index` (`scheduled_date`),
+  KEY `physical_exam_schedules_status_index` (`status`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dumping data for table clinic_management.physical_exam_schedules: 1 rows
+DELETE FROM `physical_exam_schedules`;
+/*!40000 ALTER TABLE `physical_exam_schedules` DISABLE KEYS */;
+INSERT INTO `physical_exam_schedules` (`id`, `schedule_number`, `title`, `purpose`, `target_classification`, `academic_year_id`, `college_id`, `program_id`, `year_level`, `office_department`, `scheduled_date`, `start_time`, `end_time`, `venue`, `capacity`, `clinician_id`, `status`, `notes`, `created_by`, `created_at`, `updated_at`) VALUES
+	(1, 'PES-2026-0001', 'College of Engineering & Information Technology Annual PE Screening', 'Annual Physical Exam', 'student', 1, 1, NULL, '1st Year', NULL, '2026-11-08', '08:00:00', '16:00:00', 'University Health Services Department - Examination Room 1', 60, 1, 'scheduled', 'Students are advised to fast for 8 hours prior if blood chemistry is included. Bring student ID.', 1, '2026-11-04 16:50:29', '2026-11-04 16:50:29');
+/*!40000 ALTER TABLE `physical_exam_schedules` ENABLE KEYS */;
+
+-- Dumping structure for table clinic_management.physical_exam_schedule_attendees
+DROP TABLE IF EXISTS `physical_exam_schedule_attendees`;
+CREATE TABLE IF NOT EXISTS `physical_exam_schedule_attendees` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `physical_exam_schedule_id` bigint unsigned NOT NULL,
+  `patient_id` bigint unsigned NOT NULL,
+  `status` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `physical_examination_id` bigint unsigned DEFAULT NULL,
+  `clinic_visit_id` bigint unsigned DEFAULT NULL,
+  `attended_at` datetime DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `pes_att_unique` (`physical_exam_schedule_id`,`patient_id`),
+  KEY `fk_pes_att_pat` (`patient_id`),
+  KEY `fk_pes_att_pe` (`physical_examination_id`),
+  KEY `fk_pes_att_vis` (`clinic_visit_id`),
+  KEY `physical_exam_schedule_attendees_status_index` (`status`)
+) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dumping data for table clinic_management.physical_exam_schedule_attendees: 4 rows
+DELETE FROM `physical_exam_schedule_attendees`;
+/*!40000 ALTER TABLE `physical_exam_schedule_attendees` DISABLE KEYS */;
+INSERT INTO `physical_exam_schedule_attendees` (`id`, `physical_exam_schedule_id`, `patient_id`, `status`, `physical_examination_id`, `clinic_visit_id`, `attended_at`, `created_at`, `updated_at`) VALUES
+	(1, 1, 1, 'attended', NULL, NULL, '2026-11-05 01:10:19', '2026-11-04 16:50:29', '2026-11-04 17:10:19'),
+	(2, 1, 2, 'attended', NULL, NULL, '2026-11-05 02:47:08', '2026-11-04 16:50:29', '2026-11-04 18:47:08'),
+	(3, 1, 3, 'attended', NULL, NULL, '2026-11-05 02:46:46', '2026-11-04 16:50:29', '2026-11-04 18:46:46'),
+	(4, 1, 4, 'attended', NULL, NULL, '2026-11-05 02:46:48', '2026-11-04 16:50:29', '2026-11-04 18:46:48');
+/*!40000 ALTER TABLE `physical_exam_schedule_attendees` ENABLE KEYS */;
 
 -- Dumping structure for table clinic_management.programs
 DROP TABLE IF EXISTS `programs`;
@@ -1012,7 +1344,70 @@ INSERT INTO `role_has_permissions` (`permission_id`, `role_id`) VALUES
 	(72, 4),
 	(73, 2),
 	(73, 3),
-	(73, 4);
+	(73, 4),
+	(74, 2),
+	(74, 3),
+	(74, 4),
+	(74, 5),
+	(75, 2),
+	(75, 3),
+	(75, 4),
+	(75, 5),
+	(76, 2),
+	(76, 3),
+	(76, 4),
+	(77, 2),
+	(78, 2),
+	(78, 3),
+	(78, 4),
+	(79, 2),
+	(79, 3),
+	(79, 4),
+	(80, 2),
+	(80, 3),
+	(80, 4),
+	(81, 2),
+	(82, 2),
+	(82, 3),
+	(82, 4),
+	(83, 2),
+	(83, 3),
+	(83, 4),
+	(84, 2),
+	(84, 3),
+	(84, 4),
+	(85, 2),
+	(86, 2),
+	(86, 3),
+	(86, 4),
+	(87, 2),
+	(87, 3),
+	(87, 4),
+	(88, 2),
+	(88, 3),
+	(88, 4),
+	(89, 2),
+	(90, 2),
+	(90, 3),
+	(90, 4),
+	(91, 2),
+	(91, 3),
+	(91, 4),
+	(92, 2),
+	(92, 3),
+	(92, 4),
+	(93, 2),
+	(94, 2),
+	(94, 3),
+	(94, 4),
+	(94, 5),
+	(95, 2),
+	(95, 3),
+	(95, 4),
+	(96, 2),
+	(96, 3),
+	(96, 4),
+	(97, 2);
 /*!40000 ALTER TABLE `role_has_permissions` ENABLE KEYS */;
 
 -- Dumping structure for table clinic_management.sessions
@@ -1033,7 +1428,12 @@ CREATE TABLE IF NOT EXISTS `sessions` (
 DELETE FROM `sessions`;
 /*!40000 ALTER TABLE `sessions` DISABLE KEYS */;
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-	('zjHeLuNh8KcoyIf3gtN07s9X06blguUeDtSknRgg', 2, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36', 'eyJfdG9rZW4iOiI1N1dkZGx3ZndCeTRFTkRoMmd4ZHRPNnJudEJvY1hjVzVFTVNiTk91IiwidXJsIjpbXSwiX3ByZXZpb3VzIjp7InVybCI6Imh0dHA6XC9cL2NsaW5pYy5kZXYuY29tXC9wYXRpZW50cyIsInJvdXRlIjoicGF0aWVudHMuaW5kZXgifSwiX2ZsYXNoIjp7Im9sZCI6W10sIm5ldyI6W119LCJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI6MiwicGFzc3dvcmRfaGFzaF93ZWIiOiI0N2MwZDEzNjMwODhlNjY3ZWViNWI1OThkMmJjYWE2ODc3NjIyNjA5ZjI3M2UxZjg1ZTliY2ZjYTMzNDlmM2ZlIn0=', 1793814740);
+	('Sk7TtivYKnVjoxFHggvAeCKm5pbhCXy1jCo4zt5F', NULL, '127.0.0.1', 'Symfony', 'eyJfdG9rZW4iOiJ2Qmt1RTZPWkZ3T2hFQ1hCcEpyaUhQVmpjeUh6U21KM3VvQ1NVVmR6IiwidXJsIjp7ImludGVuZGVkIjoiaHR0cDpcL1wvbG9jYWxob3N0XC9tZWRpY2FsLWNvbnN1bHRhdGlvbnNcLzEifSwiX3ByZXZpb3VzIjp7InVybCI6Imh0dHA6XC9cL2xvY2FsaG9zdFwvbWVkaWNhbC1jb25zdWx0YXRpb25zXC8xIiwicm91dGUiOiJtZWRpY2FsLWNvbnN1bHRhdGlvbnMuc2hvdyJ9LCJfZmxhc2giOnsib2xkIjpbXSwibmV3IjpbXX19', 1793841026),
+	('uvj8MR8phM5C9JfvOuOsasAC2403iiefQK7rQT8t', 1, '127.0.0.1', 'Symfony', 'eyJfdG9rZW4iOiI0ZFc1TVcwbGdBdktFejlZVUlrdUNXcENQSTZrNTk3ZGRtNnBHQ3l5IiwibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiOjEsIl9wcmV2aW91cyI6eyJ1cmwiOiJodHRwOlwvXC9sb2NhbGhvc3RcL21lZGljYWwtY29uc3VsdGF0aW9uc1wvMSIsInJvdXRlIjoibWVkaWNhbC1jb25zdWx0YXRpb25zLnNob3cifSwiX2ZsYXNoIjp7Im9sZCI6W10sIm5ldyI6W119fQ==', 1793841036),
+	('4aDgxD9SrLAmPRListun5zD8p3K42vDQsJJBJ8XC', 2, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36 Edg/156.0.0.0', 'eyJfdG9rZW4iOiJiRHpCcTM4QklpcUtNb21UcDQxUHEyc0p2VTNCWmk3U255TU1WSlE1IiwibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiOjIsIl9wcmV2aW91cyI6eyJ1cmwiOiJodHRwOlwvXC9jbGluaWMuZGV2LmNvbVwvY2xpbmljLXZpc2l0c1wvYVNHUVFNc1FcL3ByaW50Iiwicm91dGUiOiJjbGluaWMtdmlzaXRzLnByaW50In0sIl9mbGFzaCI6eyJvbGQiOltdLCJuZXciOltdfX0=', 1793847626),
+	('tWH5plASsi0dERfyDLXzDCVSGUS7N3tTKmyq6yGk', NULL, '127.0.0.1', 'Symfony', 'eyJfdG9rZW4iOiJ5TjJyc2YwdmZMeWVHSlJHODVhd0R6ZlZUUE1XZDNyVmVXQkM1bk9WIiwidXJsIjp7ImludGVuZGVkIjoiaHR0cDpcL1wvbG9jYWxob3N0XC9tZWRpY2FsLWNvbnN1bHRhdGlvbnNcLzEifSwiX3ByZXZpb3VzIjp7InVybCI6Imh0dHA6XC9cL2xvY2FsaG9zdFwvbWVkaWNhbC1jb25zdWx0YXRpb25zXC8xIiwicm91dGUiOiJtZWRpY2FsLWNvbnN1bHRhdGlvbnMuc2hvdyJ9LCJfZmxhc2giOnsib2xkIjpbXSwibmV3IjpbXX19', 1793841016),
+	('6QE9laW5eEgcwCqc8Tu2pGJbFvxzmzKYkTyFobtP', NULL, '127.0.0.1', 'Symfony', 'eyJfdG9rZW4iOiJzTjMweHNIWTFHREl2bzJhUW9OMzNVcnZ3blZ4blNvcEhNR0lOWUJyIiwidXJsIjp7ImludGVuZGVkIjoiaHR0cDpcL1wvY2xpbmljLmRldi5jb21cL21lZGljYWwtY29uc3VsdGF0aW9uc1wvMSJ9LCJfcHJldmlvdXMiOnsidXJsIjoiaHR0cDpcL1wvY2xpbmljLmRldi5jb21cL21lZGljYWwtY29uc3VsdGF0aW9uc1wvMSIsInJvdXRlIjoibWVkaWNhbC1jb25zdWx0YXRpb25zLnNob3cifSwiX2ZsYXNoIjp7Im9sZCI6W10sIm5ldyI6W119fQ==', 1793840984),
+	('cM9LTTH1SaJwIWtgZqGZ928EcjKGe8fMWllUDSKt', 1, '127.0.0.1', 'Symfony', 'eyJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI6MSwiX3Rva2VuIjoiMU5FRk9ROHkwc3lwcjV3MGtlc003MHVJY2tyNW5UZFNPcG52MVlQdiIsInBhc3N3b3JkX2hhc2hfd2ViIjoiZTg3YjlmOTkwYzhlZTE5Njk2OGRjYzU3ZTNkMTgxN2Y0MTZkZWVkNjhlNzBjN2Q5OTY0NGNhYWZlNTc4MjI3NiIsIl9wcmV2aW91cyI6eyJ1cmwiOiJodHRwOlwvXC9jbGluaWMuZGV2LmNvbVwvbWVkaWNhbC1jb25zdWx0YXRpb25zXC8xIiwicm91dGUiOiJtZWRpY2FsLWNvbnN1bHRhdGlvbnMuc2hvdyJ9LCJfZmxhc2giOnsib2xkIjpbXSwibmV3IjpbXX19', 1793840994);
 /*!40000 ALTER TABLE `sessions` ENABLE KEYS */;
 
 -- Dumping structure for table clinic_management.settings
@@ -1048,29 +1448,44 @@ CREATE TABLE IF NOT EXISTS `settings` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `settings_key_unique` (`key`),
   KEY `settings_group_index` (`group`)
-) ENGINE=MyISAM AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=33 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Dumping data for table clinic_management.settings: 17 rows
 DELETE FROM `settings`;
 /*!40000 ALTER TABLE `settings` DISABLE KEYS */;
 INSERT INTO `settings` (`id`, `group`, `key`, `value`, `created_at`, `updated_at`) VALUES
-	(1, 'university', 'university_name', 'Surigao del Norte State University', '2026-11-04 09:37:50', '2026-11-04 09:37:50'),
-	(2, 'university', 'university_short_name', 'SNSU', '2026-11-04 09:37:50', '2026-11-04 09:37:50'),
-	(3, 'university', 'university_campus', 'Main Campus, Surigao City', '2026-11-04 09:37:50', '2026-11-04 09:37:50'),
-	(4, 'university', 'university_address', 'Narciso Street, Surigao City, Surigao del Norte, Philippines', '2026-11-04 09:37:50', '2026-11-04 09:37:50'),
-	(5, 'university', 'university_president', 'Dr. Gregorio Z. Gamboa Jr.', '2026-11-04 09:37:50', '2026-11-04 09:37:50'),
-	(6, 'university', 'university_website', 'https://snsu.edu.ph', '2026-11-04 09:37:50', '2026-11-04 09:37:50'),
-	(7, 'general', 'clinic_name', 'SNSU University Clinic', '2026-11-04 09:37:50', '2026-11-04 09:37:50'),
+	(1, 'university', 'university_name', 'Agusan del Sur State University', '2026-11-04 09:37:50', '2026-11-04 18:09:31'),
+	(2, 'university', 'university_short_name', 'ADSSU', '2026-11-04 09:37:50', '2026-11-04 18:09:31'),
+	(3, 'university', 'university_campus', 'Main Campus, San Teodoro, Bunawan, Agusan del Sur', '2026-11-04 09:37:50', '2026-11-04 18:09:31'),
+	(4, 'university', 'university_address', 'San Teodoro, Bunawan, Agusan del Sur', '2026-11-04 09:37:50', '2026-11-04 18:09:31'),
+	(5, 'university', 'university_president', 'DR. JO E. CAPISTRANO', '2026-11-04 09:37:50', '2026-11-04 18:09:31'),
+	(6, 'university', 'university_website', 'https://adssu.edu.ph', '2026-11-04 09:37:50', '2026-11-04 18:09:31'),
+	(7, 'general', 'clinic_name', 'ADSSU University Clinic', '2026-11-04 09:37:50', '2026-11-04 18:09:53'),
 	(8, 'general', 'clinic_head', 'Dr. Maria Elena Santos, MD', '2026-11-04 09:37:50', '2026-11-04 09:37:50'),
 	(9, 'general', 'clinic_license_no', 'DOH-R13-CLN-2026-088', '2026-11-04 09:37:50', '2026-11-04 09:37:50'),
 	(10, 'general', 'clinic_email', 'clinic@snsu.edu.ph', '2026-11-04 09:37:50', '2026-11-04 09:37:50'),
 	(11, 'general', 'clinic_phone', '+63 (86) 826-0135', '2026-11-04 09:37:50', '2026-11-04 09:37:50'),
 	(12, 'general', 'clinic_address', 'Ground Floor, Student Services Center, SNSU Main Campus', '2026-11-04 09:37:50', '2026-11-04 09:37:50'),
 	(13, 'general', 'date_format', 'M d, Y', '2026-11-04 09:37:50', '2026-11-04 09:37:50'),
-	(14, 'general', 'table_page_length', '25', '2026-11-04 09:37:50', '2026-11-04 09:37:50'),
+	(14, 'general', 'table_page_length', '10', '2026-11-04 09:37:50', '2026-11-04 17:47:33'),
 	(15, 'backup', 'backup_enabled', '1', '2026-11-04 09:37:50', '2026-11-04 09:37:50'),
 	(16, 'backup', 'backup_retention_days', '30', '2026-11-04 09:37:50', '2026-11-04 09:37:50'),
-	(17, 'security', 'audit_log_retention_days', '365', '2026-11-04 09:37:50', '2026-11-04 09:37:50');
+	(17, 'security', 'audit_log_retention_days', '365', '2026-11-04 09:37:50', '2026-11-04 09:37:50'),
+	(18, 'branding', 'logo_print_enabled', '1', '2026-11-04 18:08:00', '2026-11-04 18:08:00'),
+	(19, 'branding', 'logo_print_variant', 'seal', '2026-11-04 18:08:00', '2026-11-04 18:08:00'),
+	(20, 'branding', 'logo_print_size', 'medium', '2026-11-04 18:08:00', '2026-11-04 18:08:00'),
+	(21, 'branding', 'logo_print_position', 'left', '2026-11-04 18:08:00', '2026-11-04 18:08:00'),
+	(22, 'branding', 'logo_original', 'logos/original_TnAmkr657YLw.png', '2026-11-04 18:08:00', '2026-11-04 18:14:14'),
+	(23, 'branding', 'logo_large', 'logos/large_TnAmkr657YLw.png', '2026-11-04 18:08:00', '2026-11-04 18:14:14'),
+	(24, 'branding', 'logo_primary', 'logos/large_TnAmkr657YLw.png', '2026-11-04 18:08:00', '2026-11-04 18:14:14'),
+	(25, 'branding', 'logo_medium', 'logos/medium_TnAmkr657YLw.png', '2026-11-04 18:08:00', '2026-11-04 18:14:14'),
+	(26, 'branding', 'logo_small', 'logos/small_TnAmkr657YLw.png', '2026-11-04 18:08:00', '2026-11-04 18:14:14'),
+	(27, 'branding', 'logo_compact', 'logos/small_TnAmkr657YLw.png', '2026-11-04 18:08:00', '2026-11-04 18:14:14'),
+	(28, 'branding', 'logo_favicon', 'logos/favicon_TnAmkr657YLw.png', '2026-11-04 18:08:00', '2026-11-04 18:14:14'),
+	(29, 'branding', 'logo_transparent', 'logos/transparent_TnAmkr657YLw.png', '2026-11-04 18:08:00', '2026-11-04 18:14:14'),
+	(30, 'branding', 'logo_seal', 'logos/seal_TnAmkr657YLw.png', '2026-11-04 18:08:00', '2026-11-04 18:14:14'),
+	(31, 'branding', 'logo_grayscale', 'logos/grayscale_TnAmkr657YLw.png', '2026-11-04 18:08:00', '2026-11-04 18:14:14'),
+	(32, 'branding', 'logo_watermark', 'logos/watermark_TnAmkr657YLw.png', '2026-11-04 18:08:00', '2026-11-04 18:14:14');
 /*!40000 ALTER TABLE `settings` ENABLE KEYS */;
 
 -- Dumping structure for table clinic_management.users
@@ -1099,8 +1514,8 @@ CREATE TABLE IF NOT EXISTS `users` (
 DELETE FROM `users`;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` (`id`, `name`, `email`, `phone`, `email_verified_at`, `password`, `google_id`, `avatar`, `is_active`, `last_login_at`, `remember_token`, `created_at`, `updated_at`) VALUES
-	(1, 'System Administrator', 'admin@clinic.test', NULL, '2026-11-04 09:37:50', '$2y$12$3kNvZ50Hb3gEXhQFezvvg.18.Xnuq8cujyHpakRwoQjr.0DvP9vRO', NULL, NULL, 1, NULL, NULL, '2026-11-04 09:37:51', '2026-11-04 09:37:51'),
-	(2, 'Super Admin (SNSU)', 'apiloton1@snsu.edu.ph', NULL, '2026-11-04 09:37:51', '$2y$12$F3aSuyASP9cgev25AmotZO2pzfzbawteSFw.eZZVwwmYoFEPZndJu', '117952079880321133596', 'https://lh3.googleusercontent.com/a/ACg8ocICxZuvbmnED8B5vH9nAzZ75oj4EyyJOq04YOMO7jxaSaNGZqsv=s96-c', 1, '2026-11-04 09:38:14', 'RDpFW0dPbUJzB6LVp1ibgwNyWEDq5sCE8nYf5foIl1LzyrZhVbhQnibQfxCJ', '2026-11-04 09:37:51', '2026-11-04 09:38:14'),
+	(1, 'System Administrator', 'admin@clinic.test', NULL, '2026-11-04 09:37:50', '$2y$12$3kNvZ50Hb3gEXhQFezvvg.18.Xnuq8cujyHpakRwoQjr.0DvP9vRO', NULL, NULL, 1, '2026-11-04 17:09:54', NULL, '2026-11-04 09:37:51', '2026-11-04 17:09:54'),
+	(2, 'Super Admin (SNSU)', 'apiloton1@snsu.edu.ph', NULL, '2026-11-04 09:37:51', '$2y$12$F3aSuyASP9cgev25AmotZO2pzfzbawteSFw.eZZVwwmYoFEPZndJu', '117952079880321133596', 'https://lh3.googleusercontent.com/a/ACg8ocICxZuvbmnED8B5vH9nAzZ75oj4EyyJOq04YOMO7jxaSaNGZqsv=s96-c', 1, '2026-11-04 16:34:55', 'RDpFW0dPbUJzB6LVp1ibgwNyWEDq5sCE8nYf5foIl1LzyrZhVbhQnibQfxCJ', '2026-11-04 09:37:51', '2026-11-04 16:34:55'),
 	(3, 'Super Admin (ADSSU)', 'alpiloton@adssu.edu.ph', NULL, '2026-11-04 09:37:51', '$2y$12$lmJ6Ijt3oWxCCkACwriLz.u494dSubSxPQW44hygPRPnPyg3C8KaG', NULL, NULL, 1, NULL, NULL, '2026-11-04 09:37:51', '2026-11-04 09:37:51');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 

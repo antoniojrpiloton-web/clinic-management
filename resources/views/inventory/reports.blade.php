@@ -133,7 +133,7 @@
                             </td>
                             <td class="text-end pe-3">
                                 @can('inventory.stock-in')
-                                    <a href="{{ route('inventory.stock-in', ['medicine_id' => $med->id]) }}" class="btn btn-sm btn-success py-1 px-2">
+                                    <a href="{{ route('inventory.stock-in', ['medicine_id' => $med->getRouteKey()]) }}" class="btn btn-sm btn-success py-1 px-2">
                                         <i class="bi bi-box-arrow-in-down me-1"></i> Stock-In
                                     </a>
                                 @endcan

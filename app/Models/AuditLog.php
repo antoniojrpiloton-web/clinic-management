@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasObfuscatedRouteKey;
 use App\Services\SettingService;
 use Database\Factories\AuditLogFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 class AuditLog extends Model
 {
     /** @use HasFactory<AuditLogFactory> */
-    use HasFactory, MassPrunable;
+    use HasFactory, HasObfuscatedRouteKey, MassPrunable;
 
     public const UPDATED_AT = null;
 

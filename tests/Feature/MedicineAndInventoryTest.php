@@ -209,7 +209,6 @@ class MedicineAndInventoryTest extends TestCase
 
         $reportResponse = $this->actingAs($admin)->get(route('inventory.reports'));
         $reportResponse->assertOk();
-        $reportResponse->assertSee('Pharmacy &amp; Inventory Reports');
+        $reportResponse->assertSee('Pharmacy &amp; Inventory Reports', false);
     }
 }
-

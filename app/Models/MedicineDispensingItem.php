@@ -37,4 +37,3 @@ class MedicineDispensingItem extends Model
         return $this->belongsTo(MedicineBatch::class, 'batch_id');
     }
 }
-

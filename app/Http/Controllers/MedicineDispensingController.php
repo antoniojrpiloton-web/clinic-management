@@ -10,9 +10,12 @@ use App\Models\MedicineDispensing;
 use App\Models\MedicineDispensingItem;
 use App\Models\Patient;
 use App\Services\AuditLogger;
+use App\Services\Pdf\MedicalDocumentPdfService;
 use App\Services\SettingService;
+use App\Support\IdObfuscator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\DB;
@@ -61,7 +64,8 @@ class MedicineDispensingController extends Controller implements HasMiddleware
     public function create(Request $request): View
     {
         $patientId = $request->query('patient_id');
-        $preselectedPatient = $patientId ? Patient::find($patientId) : null;
+        $resolvedPatientId = $patientId ? IdObfuscator::decodeOrRaw($patientId, Patient::class) : null;
+        $preselectedPatient = $resolvedPatientId ? Patient::find($resolvedPatientId) : null;
 
         $clinicians = Clinician::active()->orderBy('name')->get();
         $defaultClinician = Clinician::where('user_id', auth()->id())->first()
@@ -189,7 +193,7 @@ class MedicineDispensingController extends Controller implements HasMiddleware
         return view('inventory.dispensings.show', compact('dispensing'));
     }
 
-    public function printSlip(MedicineDispensing $dispensing, SettingService $settingService): View
+    public function printSlip(Request $request, MedicineDispensing $dispensing, SettingService $settingService, MedicalDocumentPdfService $pdfService): View|Response
     {
         $dispensing->load([
             'patient.college',
@@ -200,11 +204,20 @@ class MedicineDispensingController extends Controller implements HasMiddleware
             'items.batch',
         ]);
 
-        return view('inventory.dispensings.print', [
-            'dispensing' => $dispensing,
-            'patient' => $dispensing->patient,
-            'settings' => $settingService->all(),
+        if ($request->query('format') === 'html') {
+            return view('inventory.dispensings.print', [
+                'dispensing' => $dispensing,
+                'patient' => $dispensing->patient,
+                'settings' => $settingService->all(),
+            ]);
+        }
+
+        $pdf = $pdfService->medicineDispensingSlip($dispensing, $settingService->all(), $dispensing->clinician);
+        $filename = "DispensingSlip-{$dispensing->dispensing_number}.pdf";
+
+        return response($pdf->Output('S'), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => "inline; filename=\"{$filename}\"",
         ]);
     }
 }
-

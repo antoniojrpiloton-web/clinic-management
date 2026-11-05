@@ -32,6 +32,15 @@ class UpdateSettingsRequest extends FormRequest
             'backup_enabled' => ['boolean'],
             'backup_retention_days' => ['required', 'integer', 'min:1', 'max:3650'],
             'audit_log_retention_days' => ['required', 'integer', 'min:30', 'max:3650'],
+            'logo' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp', 'max:5120'],
+            'school_logo' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp', 'max:5120'],
+            'logo_primary' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp', 'max:5120'],
+            'remove_logo' => ['boolean'],
+            'remove_logo_primary' => ['boolean'],
+            'logo_print_enabled' => ['boolean'],
+            'logo_print_variant' => ['nullable', Rule::in(['seal', 'primary', 'transparent', 'grayscale'])],
+            'logo_print_size' => ['nullable', Rule::in(['small', 'medium', 'large'])],
+            'logo_print_position' => ['nullable', Rule::in(['left', 'center', 'dual'])],
         ];
     }
 
@@ -48,6 +57,14 @@ class UpdateSettingsRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $this->merge(['backup_enabled' => $this->boolean('backup_enabled')]);
+        $this->merge([
+            'backup_enabled' => $this->boolean('backup_enabled'),
+            'logo_print_enabled' => $this->boolean('logo_print_enabled', true),
+            'logo_print_variant' => $this->input('logo_print_variant') ?: 'seal',
+            'logo_print_size' => $this->input('logo_print_size') ?: 'medium',
+            'logo_print_position' => $this->input('logo_print_position') ?: 'left',
+            'remove_logo' => $this->boolean('remove_logo') || $this->boolean('remove_logo_primary'),
+            'remove_logo_primary' => $this->boolean('remove_logo') || $this->boolean('remove_logo_primary'),
+        ]);
     }
 }

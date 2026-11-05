@@ -304,4 +304,3 @@ class MedicineAndInventorySeeder extends Seeder
         }
     }
 }
-

@@ -22,13 +22,13 @@
         <div class="d-flex flex-wrap gap-2">
             <div class="dropdown">
                 <button class="btn btn-outline-primary dropdown-toggle px-3 py-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-printer me-1"></i> Print Forms &amp; Certificates
+                    <i class="bi bi-file-earmark-pdf me-1"></i> PDF Documentation &amp; Forms
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow">
-                    <li><a class="dropdown-item" href="{{ route('physical-examinations.print-pe', $exam) }}" target="_blank"><i class="bi bi-file-earmark-medical text-primary me-2"></i> Physical Exam Form</a></li>
-                    <li><a class="dropdown-item" href="{{ route('physical-examinations.print-certificate', $exam) }}" target="_blank"><i class="bi bi-file-earmark-check text-success me-2"></i> Medical Certificate (HSD-4)</a></li>
-                    <li><a class="dropdown-item" href="{{ route('physical-examinations.print-exemption', $exam) }}" target="_blank"><i class="bi bi-file-earmark-x text-warning me-2"></i> Medical Exemption (HSD-6)</a></li>
-                    <li><a class="dropdown-item" href="{{ route('physical-examinations.print-referral', $exam) }}" target="_blank"><i class="bi bi-box-arrow-up-right text-secondary me-2"></i> Referral Form (HSD-3)</a></li>
+                    <li><a class="dropdown-item" href="{{ route('physical-examinations.print-pe', $exam) }}" target="_blank"><i class="bi bi-file-earmark-medical text-primary me-2"></i> Physical Exam Form (PDF)</a></li>
+                    <li><a class="dropdown-item" href="{{ route('physical-examinations.print-certificate', $exam) }}" target="_blank"><i class="bi bi-file-earmark-check text-success me-2"></i> Medical Certificate (HSD-4 PDF)</a></li>
+                    <li><a class="dropdown-item" href="{{ route('physical-examinations.print-exemption', $exam) }}" target="_blank"><i class="bi bi-file-earmark-x text-warning me-2"></i> Medical Exemption (HSD-6 PDF)</a></li>
+                    <li><a class="dropdown-item" href="{{ route('physical-examinations.print-referral', $exam) }}" target="_blank"><i class="bi bi-box-arrow-up-right text-secondary me-2"></i> Referral Form (HSD-3 PDF)</a></li>
                 </ul>
             </div>
 
@@ -125,7 +125,9 @@
                             @if ($exam->clinician)
                                 <div class="small text-muted">{{ $exam->clinician->title }}{{ $exam->clinician->specialization ? ' &bull; ' . $exam->clinician->specialization : '' }}</div>
                             @endif
-                            <div class="small text-muted">PRC Lic. No: {{ $exam->examiner_license_number ?: '0052551' }}</div>
+                            @if ($exam->examiner_license_number)
+                                <div class="small text-muted">PRC Lic. No: {{ $exam->examiner_license_number }}</div>
+                            @endif
                             <div class="small text-muted">Term: {{ $exam->academicYear?->code ?? 'Current Academic Year' }}</div>
                         </div>
                     </div>

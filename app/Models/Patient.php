@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasObfuscatedRouteKey;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Patient extends Model
 {
     use HasFactory;
+    use HasObfuscatedRouteKey;
 
     protected $fillable = [
         'patient_number',
@@ -83,6 +85,11 @@ class Patient extends Model
     public function latestPhysicalExamination(): HasOne
     {
         return $this->hasOne(PhysicalExamination::class)->latestOfMany('exam_date');
+    }
+
+    public function clinicVisits(): HasMany
+    {
+        return $this->hasMany(ClinicVisit::class)->latest('visit_date');
     }
 
     public function getStudentProfileAttribute(): ?self

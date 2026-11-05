@@ -76,10 +76,10 @@
     </div>
 
     <div class="text-center mb-3">
-        <div class="inst-title">{{ $settings['clinic_institution'] ?? 'Surigao del Norte State University' }}</div>
-        <div class="dept-title">{{ $settings['clinic_name'] ?? 'UNIVERSITY HEALTH SERVICES DEPARTMENT' }}</div>
-        <div class="dept-sub">{{ $settings['clinic_address'] ?? 'Surigao City, Philippines' }}</div>
-        <div class="dept-sub">Contact: {{ $settings['clinic_phone'] ?? '(086) 826-6346' }}</div>
+        <div class="inst-title">{{ $settings['university_name'] ?? 'Surigao del Norte State University' }}</div>
+        <div class="dept-title">{{ $settings['clinic_name'] ?? 'SNSU University Clinic' }}</div>
+        <div class="dept-sub">{{ $settings['clinic_address'] ?? 'Ground Floor, Student Services Center, SNSU Main Campus' }}</div>
+        <div class="dept-sub">Contact: {{ $settings['clinic_phone'] ?? '+63 (86) 826-0135' }} &bull; {{ $settings['clinic_email'] ?? 'clinic@snsu.edu.ph' }}</div>
     </div>
 
     <div class="slip-title">MEDICINE DISPENSING SLIP</div>
@@ -163,10 +163,10 @@
     <div class="d-flex justify-content-between mt-5 pt-3">
         <div>
             <div class="signature-line">
-                {{ $dispensing->clinician?->name ?? 'N/A (Direct OTC)' }}
+                {{ $dispensing->clinician?->name ?? ($settings['clinic_head'] ?? 'Dr. Maria Elena Santos, MD') }}
             </div>
             <div class="text-center" style="font-size: 9pt;">
-                {{ $dispensing->clinician ? $dispensing->clinician->title.' • Lic: '.($dispensing->clinician->license_number ?? 'N/A') : 'Attending Health Care Provider' }}
+                {{ $dispensing->clinician ? $dispensing->clinician->title.' • Lic: '.($dispensing->clinician->license_number ?? ($settings['clinic_license_no'] ?? 'N/A')) : 'Attending Health Care Provider • Lic: '.($settings['clinic_license_no'] ?? 'DOH-R13-CLN-2026-088') }}
             </div>
         </div>
 

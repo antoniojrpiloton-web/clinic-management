@@ -31,6 +31,12 @@ class RolesAndPermissionsSeeder extends Seeder
         'medicines' => ['view', 'create', 'edit', 'delete'],
         'medicine-categories' => ['view', 'create', 'edit', 'delete'],
         'inventory' => ['view', 'stock-in', 'stock-out', 'dispense', 'reports'],
+        'clinic-visits' => ['view', 'create', 'edit', 'delete'],
+        'medical-consultations' => ['view', 'create', 'edit', 'delete'],
+        'dental-consultations' => ['view', 'create', 'edit', 'delete'],
+        'emergency-records' => ['view', 'create', 'edit', 'delete'],
+        'first-aid-records' => ['view', 'create', 'edit', 'delete'],
+        'physical-exam-schedules' => ['view', 'create', 'edit', 'delete'],
     ];
 
     public function run(): void
@@ -67,6 +73,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'medicines.view', 'medicines.create', 'medicines.edit', 'medicines.delete',
             'medicine-categories.view', 'medicine-categories.create', 'medicine-categories.edit', 'medicine-categories.delete',
             'inventory.view', 'inventory.stock-in', 'inventory.stock-out', 'inventory.dispense', 'inventory.reports',
+            'clinic-visits.view', 'clinic-visits.create', 'clinic-visits.edit', 'clinic-visits.delete',
+            'medical-consultations.view', 'medical-consultations.create', 'medical-consultations.edit', 'medical-consultations.delete',
+            'dental-consultations.view', 'dental-consultations.create', 'dental-consultations.edit', 'dental-consultations.delete',
+            'emergency-records.view', 'emergency-records.create', 'emergency-records.edit', 'emergency-records.delete',
+            'first-aid-records.view', 'first-aid-records.create', 'first-aid-records.edit', 'first-aid-records.delete',
+            'physical-exam-schedules.view', 'physical-exam-schedules.create', 'physical-exam-schedules.edit', 'physical-exam-schedules.delete',
         ]);
 
         foreach (['Doctor', 'Nurse'] as $role) {
@@ -81,6 +93,12 @@ class RolesAndPermissionsSeeder extends Seeder
                 'medical-certificates.view', 'medical-certificates.create', 'medical-certificates.print',
                 'medicines.view', 'medicines.create', 'medicines.edit',
                 'inventory.view', 'inventory.stock-in', 'inventory.stock-out', 'inventory.dispense', 'inventory.reports',
+                'clinic-visits.view', 'clinic-visits.create', 'clinic-visits.edit',
+                'medical-consultations.view', 'medical-consultations.create', 'medical-consultations.edit',
+                'dental-consultations.view', 'dental-consultations.create', 'dental-consultations.edit',
+                'emergency-records.view', 'emergency-records.create', 'emergency-records.edit',
+                'first-aid-records.view', 'first-aid-records.create', 'first-aid-records.edit',
+                'physical-exam-schedules.view', 'physical-exam-schedules.create', 'physical-exam-schedules.edit',
             ]);
         }
 
@@ -90,6 +108,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'students.view', 'students.create', 'students.edit',
             'employees.view', 'employees.create', 'employees.edit',
             'physical-examinations.view',
+            'clinic-visits.view', 'clinic-visits.create',
+            'physical-exam-schedules.view',
         ]);
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();

@@ -223,9 +223,9 @@
 
     <div class="clearfix">
         <div class="signature-block">
-            <div class="sig-line">{{ $exam->examiner_name ?: 'DR. VICENTE S. QUIMPO, MD' }}</div>
+            <div class="sig-line">{{ $exam->examiner_name ?: ($settings['clinic_head'] ?? 'Dr. Maria Elena Santos, MD') }}</div>
             <div>School Physician / Attending Medical Officer</div>
-            <div>License #: {{ $exam->examiner_license_number ?: '0052551' }}</div>
+            <div>License #: {{ $exam->examiner_license_number ?: ($settings['clinic_license_no'] ?? 'DOH-R13-CLN-2026-088') }}</div>
         </div>
     </div>
 </body>

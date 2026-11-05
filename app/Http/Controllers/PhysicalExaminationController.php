@@ -6,11 +6,14 @@ use App\Models\AcademicYear;
 use App\Models\Clinician;
 use App\Models\Patient;
 use App\Models\PhysicalExamination;
+use App\Services\Pdf\MedicalDocumentPdfService;
 use App\Services\SettingService;
+use App\Support\IdObfuscator;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -123,7 +126,8 @@ class PhysicalExaminationController extends Controller
     public function create(Request $request): View
     {
         $patientId = $request->query('patient_id');
-        $patient = $patientId ? Patient::with(['college', 'program', 'academicYear', 'medicalProfile'])->find($patientId) : null;
+        $resolvedPatientId = $patientId ? IdObfuscator::decodeOrRaw($patientId, Patient::class) : null;
+        $patient = $resolvedPatientId ? Patient::with(['college', 'program', 'academicYear', 'medicalProfile'])->find($resolvedPatientId) : null;
         $academicYears = AcademicYear::orderByDesc('start_date')->get();
         $currentAy = AcademicYear::current()->first();
         $defaultClinician = Clinician::where('user_id', auth()->id())->first()
@@ -198,47 +202,87 @@ class PhysicalExaminationController extends Controller
             ->with('success', "Physical Examination {$peNumber} has been removed.");
     }
 
-    public function printPe(PhysicalExamination $physicalExamination, SettingService $settingService): View
+    public function printPe(Request $request, PhysicalExamination $physicalExamination, SettingService $settingService, MedicalDocumentPdfService $pdfService): View|Response
     {
         $physicalExamination->load(['patient.college', 'patient.program', 'patient.academicYear', 'patient.medicalProfile', 'academicYear', 'examiner']);
 
-        return view('physical-examinations.print.pe-form', [
-            'exam' => $physicalExamination,
-            'patient' => $physicalExamination->patient,
-            'settings' => $settingService->all(),
+        if ($request->query('format') === 'html') {
+            return view('physical-examinations.print.pe-form', [
+                'exam' => $physicalExamination,
+                'patient' => $physicalExamination->patient,
+                'settings' => $settingService->all(),
+            ]);
+        }
+
+        $pdf = $pdfService->physicalExamination($physicalExamination, $settingService->all(), $physicalExamination->examiner);
+        $filename = "PE-{$physicalExamination->pe_number}.pdf";
+
+        return response($pdf->Output('S'), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => "inline; filename=\"{$filename}\"",
         ]);
     }
 
-    public function printCertificate(PhysicalExamination $physicalExamination, SettingService $settingService): View
+    public function printCertificate(Request $request, PhysicalExamination $physicalExamination, SettingService $settingService, MedicalDocumentPdfService $pdfService): View|Response
     {
         $physicalExamination->load(['patient.college', 'patient.program', 'patient.academicYear', 'academicYear', 'examiner']);
 
-        return view('physical-examinations.print.medical-certificate', [
-            'exam' => $physicalExamination,
-            'patient' => $physicalExamination->patient,
-            'settings' => $settingService->all(),
+        if ($request->query('format') === 'html') {
+            return view('physical-examinations.print.medical-certificate', [
+                'exam' => $physicalExamination,
+                'patient' => $physicalExamination->patient,
+                'settings' => $settingService->all(),
+            ]);
+        }
+
+        $pdf = $pdfService->medicalCertificate($physicalExamination, $settingService->all(), $physicalExamination->examiner);
+        $filename = "Medical-Certificate-{$physicalExamination->pe_number}.pdf";
+
+        return response($pdf->Output('S'), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => "inline; filename=\"{$filename}\"",
         ]);
     }
 
-    public function printExemption(PhysicalExamination $physicalExamination, SettingService $settingService): View
+    public function printExemption(Request $request, PhysicalExamination $physicalExamination, SettingService $settingService, MedicalDocumentPdfService $pdfService): View|Response
     {
         $physicalExamination->load(['patient.college', 'patient.program', 'patient.academicYear', 'academicYear', 'examiner']);
 
-        return view('physical-examinations.print.medical-exemption', [
-            'exam' => $physicalExamination,
-            'patient' => $physicalExamination->patient,
-            'settings' => $settingService->all(),
+        if ($request->query('format') === 'html') {
+            return view('physical-examinations.print.medical-exemption', [
+                'exam' => $physicalExamination,
+                'patient' => $physicalExamination->patient,
+                'settings' => $settingService->all(),
+            ]);
+        }
+
+        $pdf = $pdfService->medicalExemption($physicalExamination, $settingService->all(), $physicalExamination->examiner);
+        $filename = "Medical-Exemption-{$physicalExamination->pe_number}.pdf";
+
+        return response($pdf->Output('S'), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => "inline; filename=\"{$filename}\"",
         ]);
     }
 
-    public function printReferral(PhysicalExamination $physicalExamination, SettingService $settingService): View
+    public function printReferral(Request $request, PhysicalExamination $physicalExamination, SettingService $settingService, MedicalDocumentPdfService $pdfService): View|Response
     {
         $physicalExamination->load(['patient.college', 'patient.program', 'patient.academicYear', 'academicYear', 'examiner']);
 
-        return view('physical-examinations.print.medical-referral', [
-            'exam' => $physicalExamination,
-            'patient' => $physicalExamination->patient,
-            'settings' => $settingService->all(),
+        if ($request->query('format') === 'html') {
+            return view('physical-examinations.print.medical-referral', [
+                'exam' => $physicalExamination,
+                'patient' => $physicalExamination->patient,
+                'settings' => $settingService->all(),
+            ]);
+        }
+
+        $pdf = $pdfService->medicalReferral($physicalExamination, $settingService->all(), $physicalExamination->examiner);
+        $filename = "Medical-Referral-{$physicalExamination->pe_number}.pdf";
+
+        return response($pdf->Output('S'), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => "inline; filename=\"{$filename}\"",
         ]);
     }
 

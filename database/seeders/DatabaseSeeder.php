@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             ClinicianSeeder::class,
             PatientSeeder::class,
             MedicineAndInventorySeeder::class,
+            ClinicOperationsSeeder::class,
         ]);
 
         $superAdmins = [
