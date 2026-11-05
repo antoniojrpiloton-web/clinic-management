@@ -31,6 +31,11 @@ class College extends Model
         return $this->hasMany(Program::class);
     }
 
+    public function clinicVisits(): HasMany
+    {
+        return $this->hasMany(ClinicVisit::class);
+    }
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);

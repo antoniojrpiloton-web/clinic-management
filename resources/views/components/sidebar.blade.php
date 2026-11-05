@@ -122,7 +122,7 @@
                 @can('physical-examinations.view')
                     <li>
                         <a href="{{ route('physical-exam-schedules.index') }}" @class(['submenu-link', 'active' => request()->routeIs('physical-exam-schedules.*')])>
-                            <span>5. Scheduled Physical Exam</span>
+                            <span>5. Scheduled PE</span>
                         </a>
                     </li>
                 @endcan
@@ -145,7 +145,7 @@
         >
             <div class="nav-left">
                 <i class="bi bi-heart-pulse menu-icon"></i>
-                <span>Clinical &amp; Physical Exam</span>
+                <span>Clinical &amp; PE</span>
             </div>
             <i class="bi bi-chevron-right menu-chevron"></i>
         </button>
@@ -168,7 +168,7 @@
                 @can('clinicians.view')
                     <li>
                         <a href="{{ route('clinicians.index') }}" @class(['submenu-link', 'active' => request()->routeIs('clinicians.*')])>
-                            <span>Healthcare Providers (Doctors &amp; Nurses)</span>
+                            <span>Healthcare Providers</span>
                         </a>
                     </li>
                 @endcan
@@ -232,6 +232,11 @@
                 @endcan
                 @can('inventory.reports')
                     <li>
+                        <a href="{{ route('reports.clinic.index') }}" @class(['submenu-link', 'active' => request()->routeIs('reports.clinic.*')])>
+                            <span>Morbidity Reports</span>
+                        </a>
+                    </li>
+                    <li>
                         <a href="{{ route('inventory.reports') }}" @class(['submenu-link', 'active' => request()->routeIs('inventory.reports')])>
                             <span>Inventory Reports</span>
                         </a>
@@ -256,7 +261,7 @@
         >
             <div class="nav-left">
                 <i class="bi bi-shield-lock menu-icon"></i>
-                <span>System Administration</span>
+                <span>Administration</span>
             </div>
             <i class="bi bi-chevron-right menu-chevron"></i>
         </button>
@@ -302,7 +307,7 @@
         >
             <div class="nav-left">
                 <i class="bi bi-sliders2 menu-icon"></i>
-                <span>System Configuration</span>
+                <span>Configuration</span>
             </div>
             <i class="bi bi-chevron-right menu-chevron"></i>
         </button>
@@ -325,14 +330,14 @@
                 @can('colleges.view')
                     <li>
                         <a href="{{ route('colleges.index') }}" @class(['submenu-link', 'active' => request()->routeIs('colleges.*')])>
-                            <span>Colleges and Departments</span>
+                            <span>Colleges &amp; Depts</span>
                         </a>
                     </li>
                 @endcan
                 @can('programs.view')
                     <li>
                         <a href="{{ route('programs.index') }}" @class(['submenu-link', 'active' => request()->routeIs('programs.*')])>
-                            <span>Courses and Programs</span>
+                            <span>Programs</span>
                         </a>
                     </li>
                 @endcan
@@ -355,7 +360,7 @@
         >
             <div class="nav-left">
                 <i class="bi bi-database menu-icon"></i>
-                <span>Database Management</span>
+                <span>Database</span>
             </div>
             <i class="bi bi-chevron-right menu-chevron"></i>
         </button>

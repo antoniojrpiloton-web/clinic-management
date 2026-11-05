@@ -939,4 +939,123 @@ class MedicalDocumentPdfService
 
         return $doc;
     }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @param  array<string, mixed>  $settings
+     */
+    public function clinicMorbidityReport(array $data, array $settings): ClinicFpdf
+    {
+        $doc = new ClinicFpdf('P', 'mm', 'A4', $settings, '', 'NVC HSD - Morbidity & Clinic Utilization Report', true, 'two_rooms');
+        $doc->AliasNbPages();
+        $doc->AddPage();
+
+        $doc->SetY(44);
+        $doc->SetFont('Arial', 'B', 12);
+        $doc->Cell(0, 5.5, 'CLINICAL MORBIDITY & UTILIZATION REPORT', 0, 1, 'C');
+        $doc->SetFont('Arial', 'I', 8.5);
+        $doc->Cell(0, 4.5, 'Aggregated Health Services Statistics: '.($data['period']['label'] ?? ''), 0, 1, 'C');
+        $doc->Ln(2);
+
+        $w = 170;
+
+        $doc->SetFont('Arial', 'B', 9);
+        $doc->SetFillColor(235, 238, 242);
+        $doc->Cell($w, 5, ' I. EXECUTIVE UTILIZATION SUMMARY', 1, 1, 'L', true);
+
+        $doc->SetFont('Arial', '', 8.5);
+        $doc->Cell(56, 5, 'Total Encounters / Visits:', 1, 0, 'L');
+        $doc->SetFont('Arial', 'B', 8.5);
+        $doc->Cell(29, 5, (string) ($data['summary']['total_visits'] ?? 0), 1, 0, 'C');
+        $doc->SetFont('Arial', '', 8.5);
+        $doc->Cell(56, 5, 'Unduplicated Patients Served:', 1, 0, 'L');
+        $doc->SetFont('Arial', 'B', 8.5);
+        $doc->Cell(29, 5, (string) ($data['summary']['unique_patients'] ?? 0), 1, 1, 'C');
+
+        $doc->SetFont('Arial', '', 8.5);
+        $doc->Cell(56, 5, 'Total Medicines Dispensed:', 1, 0, 'L');
+        $doc->SetFont('Arial', 'B', 8.5);
+        $doc->Cell(29, 5, number_format($data['summary']['total_medicines_dispensed'] ?? 0).' units', 1, 0, 'C');
+        $doc->SetFont('Arial', '', 8.5);
+        $doc->Cell(56, 5, 'Reporting Period:', 1, 0, 'L');
+        $doc->SetFont('Arial', 'B', 8);
+        $doc->Cell(29, 5, $doc->conv($data['period']['label'] ?? 'All Time'), 1, 1, 'C');
+        $doc->Ln(2);
+
+        $doc->SetFont('Arial', 'B', 9);
+        $doc->Cell($w, 5, ' II. SERVICE ENCOUNTER BREAKDOWN', 1, 1, 'L', true);
+        $doc->SetFont('Arial', 'B', 8);
+        $doc->Cell(120, 5, 'Service / Consultation Category', 1, 0, 'L');
+        $doc->Cell(50, 5, 'Encounters Recorded', 1, 1, 'C');
+        $doc->SetFont('Arial', '', 8);
+        foreach ($data['service_distribution'] as $serv => $cnt) {
+            $doc->Cell(120, 4.5, $doc->conv($serv), 1, 0, 'L');
+            $doc->Cell(50, 4.5, (string) $cnt, 1, 1, 'C');
+        }
+        $doc->Ln(2);
+
+        $doc->SetFont('Arial', 'B', 9);
+        $doc->Cell($w, 5, ' III. COMMUNICABLE & INFECTIOUS MORBIDITY (Leading Causes)', 1, 1, 'L', true);
+        $doc->SetFont('Arial', 'B', 8);
+        $doc->Cell(110, 5, 'Diagnosed Infectious / Respiratory Condition', 1, 0, 'L');
+        $doc->Cell(30, 5, 'Cases', 1, 0, 'C');
+        $doc->Cell(30, 5, '% Share', 1, 1, 'C');
+        $doc->SetFont('Arial', '', 8);
+        $commList = array_slice($data['morbidity']['communicable'] ?? [], 0, 7);
+        if (empty($commList)) {
+            $doc->Cell($w, 4.5, 'No communicable conditions recorded in this period.', 1, 1, 'C');
+        } else {
+            foreach ($commList as $item) {
+                $doc->Cell(110, 4.5, $doc->conv($item['name']), 1, 0, 'L');
+                $doc->Cell(30, 4.5, (string) $item['count'], 1, 0, 'C');
+                $doc->Cell(30, 4.5, $item['percentage'].'%', 1, 1, 'C');
+            }
+        }
+        $doc->Ln(2);
+
+        $doc->SetFont('Arial', 'B', 9);
+        $doc->Cell($w, 5, ' IV. CHRONIC & NON-COMMUNICABLE CONDITIONS (Leading Causes)', 1, 1, 'L', true);
+        $doc->SetFont('Arial', 'B', 8);
+        $doc->Cell(110, 5, 'Diagnosed Non-Communicable Condition', 1, 0, 'L');
+        $doc->Cell(30, 5, 'Cases', 1, 0, 'C');
+        $doc->Cell(30, 5, '% Share', 1, 1, 'C');
+        $doc->SetFont('Arial', '', 8);
+        $nonCommList = array_slice($data['morbidity']['non_communicable'] ?? [], 0, 7);
+        if (empty($nonCommList)) {
+            $doc->Cell($w, 4.5, 'No non-communicable conditions recorded in this period.', 1, 1, 'C');
+        } else {
+            foreach ($nonCommList as $item) {
+                $doc->Cell(110, 4.5, $doc->conv($item['name']), 1, 0, 'L');
+                $doc->Cell(30, 4.5, (string) $item['count'], 1, 0, 'C');
+                $doc->Cell(30, 4.5, $item['percentage'].'%', 1, 1, 'C');
+            }
+        }
+        $doc->Ln(2);
+
+        $doc->SetFont('Arial', 'B', 9);
+        $doc->Cell($w, 5, ' V. TOP CHIEF COMPLAINTS ON PRESENTATION', 1, 1, 'L', true);
+        $doc->SetFont('Arial', 'B', 8);
+        $doc->Cell(110, 5, 'Reported Symptom / Reason for Visit', 1, 0, 'L');
+        $doc->Cell(30, 5, 'Visits', 1, 0, 'C');
+        $doc->Cell(30, 5, '% Share', 1, 1, 'C');
+        $doc->SetFont('Arial', '', 8);
+        $topComp = array_slice($data['complaints'] ?? [], 0, 5);
+        if (empty($topComp)) {
+            $doc->Cell($w, 4.5, 'No chief complaints logged in this period.', 1, 1, 'C');
+        } else {
+            foreach ($topComp as $comp) {
+                $doc->Cell(110, 4.5, $doc->conv($comp['name']), 1, 0, 'L');
+                $doc->Cell(30, 4.5, (string) $comp['count'], 1, 0, 'C');
+                $doc->Cell(30, 4.5, $comp['percentage'].'%', 1, 1, 'C');
+            }
+        }
+        $doc->Ln(5);
+
+        $physicianName = $this->resolvePhysicianName($settings);
+        $license = $this->resolvePhysicianLicense($settings);
+
+        $doc->drawHsdSignatureBlock($physicianName, 'Head, Health Services Department', $license, 122);
+
+        return $doc;
+    }
 }

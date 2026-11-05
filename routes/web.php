@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\ClinicianController;
+use App\Http\Controllers\ClinicReportController;
 use App\Http\Controllers\ClinicVisitController;
 use App\Http\Controllers\CollegeController;
 use App\Http\Controllers\DashboardController;
@@ -147,6 +148,11 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('batches/{batch}/dispose', 'disposeBatch')->name('batches.dispose');
         Route::get('transactions', 'transactions')->name('transactions');
         Route::get('reports', 'reports')->name('reports');
+    });
+
+    Route::controller(ClinicReportController::class)->prefix('reports/clinic')->name('reports.clinic.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('print-pdf', 'printPdf')->name('print-pdf');
     });
 
     Route::controller(MedicineDispensingController::class)->prefix('inventory/dispensings')->name('inventory.dispensings.')->group(function () {
