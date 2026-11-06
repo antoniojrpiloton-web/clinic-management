@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\MedicineCategory;
 use App\Services\AuditLogger;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Yajra\DataTables\Facades\DataTables;
 
 class MedicineCategoryController extends Controller implements HasMiddleware
 {
@@ -25,11 +27,67 @@ class MedicineCategoryController extends Controller implements HasMiddleware
         ];
     }
 
-    public function index(): View
+    public function index(Request $request): View|JsonResponse
     {
-        $categories = MedicineCategory::withCount('medicines')->orderBy('name')->get();
+        if ($request->ajax()) {
+            $canEdit = $request->user()?->can('medicine-categories.edit') ?? false;
+            $canDelete = $request->user()?->can('medicine-categories.delete') ?? false;
 
-        return view('medicine-categories.index', compact('categories'));
+            $query = MedicineCategory::query()
+                ->withCount('medicines')
+                ->orderBy('name');
+
+            return DataTables::eloquent($query)
+                ->addColumn('code_col', fn (MedicineCategory $cat): string => '<span class="badge badge-soft-blue font-monospace">'.e($cat->code).'</span>')
+                ->addColumn('name_col', fn (MedicineCategory $cat): string => '<span class="fw-bold text-dark">'.e($cat->name).'</span>')
+                ->addColumn('desc_col', fn (MedicineCategory $cat): string => '<span class="text-muted small">'.e($cat->description ?: 'N/A').'</span>')
+                ->addColumn('count_col', function (MedicineCategory $cat): string {
+                    $url = route('medicines.index', ['category_id' => $cat->id]);
+
+                    return "<a href=\"{$url}\" class=\"badge badge-soft-gray text-decoration-none\">{$cat->medicines_count} items</a>";
+                })
+                ->addColumn('status_col', function (MedicineCategory $cat): string {
+                    return $cat->is_active
+                        ? '<span class="badge badge-soft-green"><i class="bi bi-check-circle me-1"></i>Active</span>'
+                        : '<span class="badge badge-soft-gray"><i class="bi bi-pause-circle me-1"></i>Inactive</span>';
+                })
+                ->addColumn('actions_col', function (MedicineCategory $cat) use ($canEdit, $canDelete): string {
+                    $html = '<div class="d-flex align-items-center justify-content-end gap-1">';
+
+                    if ($canEdit) {
+                        $updateUrl = route('medicine-categories.update', $cat);
+                        $name = e($cat->name);
+                        $code = e($cat->code);
+                        $desc = e($cat->description);
+                        $active = $cat->is_active ? '1' : '0';
+
+                        $html .= "<button type=\"button\" class=\"btn btn-sm btn-light border p-1 px-2\" title=\"Edit Category\" data-bs-toggle=\"modal\" data-bs-target=\"#modal-edit-category\" data-category-id=\"{$cat->id}\" data-category-name=\"{$name}\" data-category-code=\"{$code}\" data-category-description=\"{$desc}\" data-category-active=\"{$active}\" data-update-url=\"{$updateUrl}\"><i class=\"bi bi-pencil\"></i></button>";
+                    }
+
+                    if ($canDelete) {
+                        $deleteUrl = route('medicine-categories.destroy', $cat);
+                        $csrf = csrf_field();
+                        $method = method_field('DELETE');
+                        $nameJs = e(addslashes($cat->name));
+
+                        $html .= "<form method=\"POST\" action=\"{$deleteUrl}\" class=\"d-inline\" onsubmit=\"return confirm('Are you sure you want to remove category {$nameJs}?');\">{$csrf}{$method}<button type=\"submit\" class=\"btn btn-sm btn-light border text-danger p-1 px-2\" title=\"Delete\"><i class=\"bi bi-trash\"></i></button></form>";
+                    }
+
+                    $html .= '</div>';
+
+                    return $html;
+                })
+                ->orderColumn('code_col', 'code $1')
+                ->orderColumn('name_col', 'name $1')
+                ->orderColumn('count_col', 'medicines_count $1')
+                ->orderColumn('status_col', 'is_active $1')
+                ->rawColumns(['code_col', 'name_col', 'desc_col', 'count_col', 'status_col', 'actions_col'])
+                ->make(true);
+        }
+
+        $totalCategories = MedicineCategory::count();
+
+        return view('medicine-categories.index', compact('totalCategories'));
     }
 
     public function store(Request $request): RedirectResponse

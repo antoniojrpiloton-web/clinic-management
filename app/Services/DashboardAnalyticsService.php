@@ -2,9 +2,14 @@
 
 namespace App\Services;
 
+use App\Models\AuditLog;
 use App\Models\Clinician;
 use App\Models\ClinicVisit;
 use App\Models\College;
+use App\Models\DentalConsultation;
+use App\Models\EmergencyRecord;
+use App\Models\FirstAidRecord;
+use App\Models\InventoryTransaction;
 use App\Models\MedicalConsultation;
 use App\Models\Medicine;
 use App\Models\MedicineBatch;
@@ -12,6 +17,9 @@ use App\Models\MedicineDispensing;
 use App\Models\MedicineDispensingItem;
 use App\Models\Patient;
 use App\Models\PhysicalExamination;
+use App\Models\PhysicalExamSchedule;
+use App\Models\Program;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -98,23 +106,40 @@ class DashboardAnalyticsService
         $lastMonthStart = Carbon::now()->subMonth()->startOfMonth();
         $lastMonthEnd = Carbon::now()->subMonth()->endOfMonth();
 
-        $totalVisits = ClinicVisit::count();
+        $visitsByType = ClinicVisit::query()
+            ->selectRaw('visit_type, COUNT(*) as aggregate')
+            ->groupBy('visit_type')
+            ->pluck('aggregate', 'visit_type');
+
+        $visitsByClass = ClinicVisit::query()
+            ->selectRaw('patient_classification, COUNT(*) as aggregate')
+            ->groupBy('patient_classification')
+            ->pluck('aggregate', 'patient_classification');
+
+        $totalVisits = (int) $visitsByType->sum();
         $todayVisits = ClinicVisit::whereDate('visit_date', $today)->count();
         $thisMonthVisits = ClinicVisit::where('visit_date', '>=', $thisMonth)->count();
         $lastMonthVisits = ClinicVisit::whereBetween('visit_date', [$lastMonthStart, $lastMonthEnd])->count();
 
-        $studentVisits = ClinicVisit::where('patient_classification', 'student')->count();
-        $employeeVisits = ClinicVisit::whereIn('patient_classification', ['faculty', 'staff', 'employee'])->count();
+        $studentVisits = (int) ($visitsByClass['student'] ?? 0);
+        $employeeVisits = (int) ($visitsByClass['faculty'] ?? 0)
+            + (int) ($visitsByClass['staff'] ?? 0)
+            + (int) ($visitsByClass['employee'] ?? 0);
 
-        $medicalVisits = ClinicVisit::where('visit_type', ClinicVisit::TYPE_MEDICAL)->count();
-        $dentalVisits = ClinicVisit::where('visit_type', ClinicVisit::TYPE_DENTAL)->count();
-        $emergencyVisits = ClinicVisit::where('visit_type', ClinicVisit::TYPE_EMERGENCY)->count();
-        $firstAidVisits = ClinicVisit::where('visit_type', ClinicVisit::TYPE_FIRST_AID)->count();
+        $medicalVisits = (int) ($visitsByType[ClinicVisit::TYPE_MEDICAL] ?? 0);
+        $dentalVisits = (int) ($visitsByType[ClinicVisit::TYPE_DENTAL] ?? 0);
+        $emergencyVisits = (int) ($visitsByType[ClinicVisit::TYPE_EMERGENCY] ?? 0);
+        $firstAidVisits = (int) ($visitsByType[ClinicVisit::TYPE_FIRST_AID] ?? 0);
 
-        $totalPatients = Patient::count();
+        $patientsByType = Patient::query()
+            ->selectRaw('type, COUNT(*) as aggregate')
+            ->groupBy('type')
+            ->pluck('aggregate', 'type');
+
+        $totalPatients = (int) $patientsByType->sum();
         $activePatients = Patient::where('status', 'active')->count();
-        $studentsCount = Patient::where('type', 'student')->count();
-        $employeesCount = Patient::where('type', 'employee')->count();
+        $studentsCount = (int) ($patientsByType['student'] ?? 0);
+        $employeesCount = (int) ($patientsByType['employee'] ?? 0);
 
         $totalPE = PhysicalExamination::count();
         $completedPE = PhysicalExamination::where('status', 'completed')->count();
@@ -168,6 +193,16 @@ class DashboardAnalyticsService
             'expiring_count' => $expiringIn30Days,
             'expired_count' => $expiredBatches,
             'total_clinicians' => $totalClinicians,
+            'medical_consultations_count' => MedicalConsultation::count(),
+            'dental_consultations_count' => DentalConsultation::count(),
+            'emergency_records_count' => EmergencyRecord::count(),
+            'first_aid_records_count' => FirstAidRecord::count(),
+            'pe_schedules_count' => PhysicalExamSchedule::count(),
+            'inventory_transactions_count' => InventoryTransaction::count(),
+            'colleges_count' => College::count(),
+            'programs_count' => Program::count(),
+            'users_count' => User::count(),
+            'audit_logs_count' => AuditLog::count(),
         ];
     }
 
@@ -205,11 +240,21 @@ class DashboardAnalyticsService
             $end = Carbon::now()->subMonths($i)->endOfMonth();
             $months[] = $start->format('M Y');
 
-            $visits = ClinicVisit::whereBetween('visit_date', [$start, $end])->get(['visit_type']);
-            $totals[] = $visits->count();
-            $medical[] = $visits->where('visit_type', ClinicVisit::TYPE_MEDICAL)->count();
-            $dental[] = $visits->where('visit_type', ClinicVisit::TYPE_DENTAL)->count();
-            $emergency[] = $visits->whereIn('visit_type', [ClinicVisit::TYPE_EMERGENCY, ClinicVisit::TYPE_FIRST_AID])->count();
+            $byType = ClinicVisit::query()
+                ->whereBetween('visit_date', [$start, $end])
+                ->selectRaw('visit_type, COUNT(*) as aggregate')
+                ->groupBy('visit_type')
+                ->pluck('aggregate', 'visit_type');
+
+            $medCount = (int) ($byType[ClinicVisit::TYPE_MEDICAL] ?? 0);
+            $denCount = (int) ($byType[ClinicVisit::TYPE_DENTAL] ?? 0);
+            $emgCount = (int) ($byType[ClinicVisit::TYPE_EMERGENCY] ?? 0)
+                + (int) ($byType[ClinicVisit::TYPE_FIRST_AID] ?? 0);
+
+            $totals[] = (int) $byType->sum();
+            $medical[] = $medCount;
+            $dental[] = $denCount;
+            $emergency[] = $emgCount;
         }
 
         return [
@@ -226,10 +271,15 @@ class DashboardAnalyticsService
      */
     public function studentVsEmployeeBreakdown(): array
     {
-        $students = ClinicVisit::where('patient_classification', 'student')->count();
-        $faculty = ClinicVisit::where('patient_classification', 'faculty')->count();
-        $staff = ClinicVisit::whereIn('patient_classification', ['staff', 'employee'])->count();
-        $others = ClinicVisit::whereNotIn('patient_classification', ['student', 'faculty', 'staff', 'employee'])->count();
+        $byClass = ClinicVisit::query()
+            ->selectRaw('patient_classification, COUNT(*) as aggregate')
+            ->groupBy('patient_classification')
+            ->pluck('aggregate', 'patient_classification');
+
+        $students = (int) ($byClass['student'] ?? 0);
+        $faculty = (int) ($byClass['faculty'] ?? 0);
+        $staff = (int) ($byClass['staff'] ?? 0) + (int) ($byClass['employee'] ?? 0);
+        $others = max(0, (int) $byClass->sum() - ($students + $faculty + $staff));
 
         return [
             'labels' => ['Students', 'Faculty', 'Staff', 'Others'],
@@ -243,11 +293,16 @@ class DashboardAnalyticsService
      */
     public function servicesBreakdown(): array
     {
-        $medical = ClinicVisit::where('visit_type', ClinicVisit::TYPE_MEDICAL)->count();
-        $dental = ClinicVisit::where('visit_type', ClinicVisit::TYPE_DENTAL)->count();
-        $emergency = ClinicVisit::where('visit_type', ClinicVisit::TYPE_EMERGENCY)->count();
-        $firstAid = ClinicVisit::where('visit_type', ClinicVisit::TYPE_FIRST_AID)->count();
-        $general = ClinicVisit::where('visit_type', ClinicVisit::TYPE_GENERAL)->count();
+        $byType = ClinicVisit::query()
+            ->selectRaw('visit_type, COUNT(*) as aggregate')
+            ->groupBy('visit_type')
+            ->pluck('aggregate', 'visit_type');
+
+        $medical = (int) ($byType[ClinicVisit::TYPE_MEDICAL] ?? 0);
+        $dental = (int) ($byType[ClinicVisit::TYPE_DENTAL] ?? 0);
+        $emergency = (int) ($byType[ClinicVisit::TYPE_EMERGENCY] ?? 0);
+        $firstAid = (int) ($byType[ClinicVisit::TYPE_FIRST_AID] ?? 0);
+        $general = (int) ($byType[ClinicVisit::TYPE_GENERAL] ?? 0);
 
         return [
             'labels' => ['Medical', 'Dental', 'Emergency', 'First Aid', 'General Checkup'],
@@ -264,12 +319,14 @@ class DashboardAnalyticsService
         $complaints = ClinicVisit::query()
             ->whereNotNull('chief_complaint')
             ->where('chief_complaint', '!=', '')
-            ->pluck('chief_complaint');
+            ->select('chief_complaint', DB::raw('COUNT(*) as aggregate'))
+            ->groupBy('chief_complaint')
+            ->get();
 
         $tally = [];
-        foreach ($complaints as $text) {
-            $normalized = $this->categorizeComplaint((string) $text);
-            $tally[$normalized] = ($tally[$normalized] ?? 0) + 1;
+        foreach ($complaints as $row) {
+            $normalized = $this->categorizeComplaint((string) $row->chief_complaint);
+            $tally[$normalized] = ($tally[$normalized] ?? 0) + (int) $row->aggregate;
         }
 
         arsort($tally);
@@ -296,7 +353,12 @@ class DashboardAnalyticsService
      */
     public function diseaseClassification(): array
     {
-        $diagnoses = MedicalConsultation::pluck('diagnosis');
+        $diagnoses = MedicalConsultation::query()
+            ->whereNotNull('diagnosis')
+            ->where('diagnosis', '!=', '')
+            ->select('diagnosis', DB::raw('COUNT(*) as aggregate'))
+            ->groupBy('diagnosis')
+            ->get();
 
         $communicable = 0;
         $nonCommunicable = 0;
@@ -305,9 +367,10 @@ class DashboardAnalyticsService
         $communicableTally = [];
         $nonCommunicableTally = [];
 
-        foreach ($diagnoses as $diag) {
-            $clean = trim((string) $diag);
-            if ($clean === '') {
+        foreach ($diagnoses as $row) {
+            $clean = trim((string) $row->diagnosis);
+            $qty = (int) $row->aggregate;
+            if ($clean === '' || $qty <= 0) {
                 continue;
             }
             $lower = strtolower($clean);
@@ -331,15 +394,15 @@ class DashboardAnalyticsService
             }
 
             if ($isCommunicable) {
-                $communicable++;
+                $communicable += $qty;
                 $label = $this->labelDisease($clean, self::COMMUNICABLE_KEYWORDS);
-                $communicableTally[$label] = ($communicableTally[$label] ?? 0) + 1;
+                $communicableTally[$label] = ($communicableTally[$label] ?? 0) + $qty;
             } elseif ($isNonCommunicable) {
-                $nonCommunicable++;
+                $nonCommunicable += $qty;
                 $label = $this->labelDisease($clean, self::NON_COMMUNICABLE_KEYWORDS);
-                $nonCommunicableTally[$label] = ($nonCommunicableTally[$label] ?? 0) + 1;
+                $nonCommunicableTally[$label] = ($nonCommunicableTally[$label] ?? 0) + $qty;
             } else {
-                $other++;
+                $other += $qty;
             }
         }
 
@@ -434,16 +497,20 @@ class DashboardAnalyticsService
      */
     public function peFitnessBreakdown(): array
     {
-        $classes = ['Class A', 'Class B', 'Class C', 'Class D', 'Class E'];
-        $counts = [];
+        $byClass = PhysicalExamination::query()
+            ->selectRaw('fitness_assessment, COUNT(*) as aggregate')
+            ->groupBy('fitness_assessment')
+            ->pluck('aggregate', 'fitness_assessment');
 
-        foreach ($classes as $cls) {
-            $counts[] = PhysicalExamination::where('fitness_assessment', $cls)->count();
-        }
+        $classA = (int) ($byClass['Class A'] ?? 0);
+        $classB = (int) ($byClass['Class B'] ?? 0);
+        $classC = (int) ($byClass['Class C'] ?? 0);
+        $classD = (int) ($byClass['Class D'] ?? 0);
+        $classE = (int) ($byClass['Class E'] ?? 0) + (int) ($byClass['Pending / Incomplete'] ?? 0);
 
         return [
             'labels' => ['Class A (Fit all)', 'Class B (Correctable defect)', 'Class C (Restricted work)', 'Class D (Defective/Unfit)', 'Class E (Pending/Exempt)'],
-            'data' => $counts,
+            'data' => [$classA, $classB, $classC, $classD, $classE],
             'colors' => ['#10b981', '#06b6d4', '#f59e0b', '#f97316', '#ef4444'],
         ];
     }

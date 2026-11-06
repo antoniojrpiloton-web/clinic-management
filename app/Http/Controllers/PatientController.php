@@ -7,6 +7,7 @@ use App\Models\College;
 use App\Models\Patient;
 use App\Models\Program;
 use App\Services\AuditLogger;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,6 +15,7 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Yajra\DataTables\Facades\DataTables;
 
 class PatientController extends Controller implements HasMiddleware
 {
@@ -30,29 +32,174 @@ class PatientController extends Controller implements HasMiddleware
         ];
     }
 
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
         $type = $request->query('type');
         $status = $request->query('status');
+        $collegeId = $request->query('college_id');
         $search = $request->query('search');
 
-        $query = Patient::query()
-            ->with(['college', 'program', 'academicYear'])
-            ->when($type, fn ($q) => $q->where('type', $type))
-            ->when($status, fn ($q) => $q->where('status', $status))
-            ->when($search, fn ($q) => $q->search($search))
-            ->latest();
+        if ($request->ajax()) {
+            $canEdit = $request->user()?->can('patients.edit') ?? false;
+            $canDelete = $request->user()?->can('patients.delete') ?? false;
 
-        $patients = $query->paginate(15)->withQueryString();
+            $query = Patient::query()
+                ->select([
+                    'id',
+                    'patient_number',
+                    'type',
+                    'school_id_number',
+                    'first_name',
+                    'middle_name',
+                    'last_name',
+                    'suffix',
+                    'gender',
+                    'date_of_birth',
+                    'email',
+                    'phone',
+                    'college_id',
+                    'program_id',
+                    'office_department',
+                    'status',
+                    'created_at',
+                ])
+                ->with(['college:id,code,name', 'program:id,code,name'])
+                ->when($type, fn (Builder $q) => $q->where('type', $type))
+                ->when($status, fn (Builder $q) => $q->where('status', $status))
+                ->when($collegeId, fn (Builder $q) => $q->where('college_id', $collegeId));
+
+            return DataTables::eloquent($query)
+                ->filter(function (Builder $q) use ($request): void {
+                    $term = $request->input('custom_search') ?: $request->input('search.value');
+                    if (is_string($term) && trim($term) !== '') {
+                        $q->search(trim($term));
+                    }
+                })
+                ->addColumn('patient_number_col', fn (Patient $p): string => '<span class="font-monospace fw-bold text-dark">'.e($p->patient_number).'</span>')
+                ->addColumn('patient_name_col', function (Patient $p): string {
+                    $initials = e($p->initials());
+                    $url = route('patients.show', $p);
+                    $name = e($p->full_name);
+                    $sub = e($p->email ?: ($p->phone ?: 'N/A'));
+
+                    return "<div class=\"d-flex align-items-center gap-2\">
+                        <span class=\"avatar-initials\" style=\"width: 28px; height: 28px; font-size: 0.7rem;\">{$initials}</span>
+                        <div>
+                            <a href=\"{$url}\" class=\"fw-semibold text-dark text-decoration-none\">{$name}</a>
+                            <small class=\"text-muted d-block\" style=\"font-size: 0.72rem;\">{$sub}</small>
+                        </div>
+                    </div>";
+                })
+                ->addColumn('classification_col', function (Patient $p): string {
+                    if ($p->type === 'student') {
+                        return '<span class="badge badge-pill badge-soft-blue"><i class="bi bi-mortarboard me-1"></i> Student</span>';
+                    }
+                    if ($p->type === 'employee') {
+                        return '<span class="badge badge-pill badge-soft-green"><i class="bi bi-person-badge me-1"></i> Employee</span>';
+                    }
+
+                    return '<span class="badge badge-pill badge-soft-gray">Other</span>';
+                })
+                ->addColumn('identifier_col', fn (Patient $p): string => '<span class="font-monospace fw-semibold">'.e($p->primary_identifier ?: 'N/A').'</span>')
+                ->addColumn('college_unit_col', function (Patient $p): string {
+                    if ($p->type === 'student') {
+                        if ($p->college || $p->program) {
+                            $colCode = e($p->college?->code ?? 'N/A');
+                            $progCode = e($p->program?->code ?? 'N/A');
+
+                            return "<span class=\"badge badge-pill badge-soft-gray\">{$colCode}</span><small class=\"text-muted ms-1\">{$progCode}</small>";
+                        }
+
+                        return '<span class="badge badge-soft-gray">N/A</span>';
+                    }
+                    if ($p->type === 'employee') {
+                        $unit = $p->office_department ?: $p->college?->name;
+
+                        return $unit
+                            ? '<small class="text-dark fw-medium">'.e($unit).'</small>'
+                            : '<span class="badge badge-soft-gray">N/A</span>';
+                    }
+
+                    return '<span class="badge badge-soft-gray">N/A</span>';
+                })
+                ->addColumn('gender_age_col', function (Patient $p): string {
+                    $gender = e($p->gender);
+                    $age = $p->age ?? 'N/A';
+
+                    return "<span class=\"text-dark\">{$gender}</span>, <small class=\"text-muted\">{$age} y/o</small>";
+                })
+                ->addColumn('status_col', function (Patient $p): string {
+                    $cls = $p->status === 'active' ? 'completed' : 'pending';
+
+                    return '<span class="status-badge '.$cls.'">'.e($p->status).'</span>';
+                })
+                ->addColumn('actions', function (Patient $p) use ($canEdit, $canDelete): string {
+                    $showUrl = route('patients.show', $p);
+                    $medProfileUrl = route('medical-profiles.show', $p);
+                    $newVisitUrl = route('clinic-visits.create', ['patient_id' => $p->getRouteKey()]);
+                    $newPeUrl = route('physical-examinations.create', ['patient_id' => $p->getRouteKey()]);
+
+                    $items = "<li><a class=\"dropdown-item\" href=\"{$showUrl}\"><i class=\"bi bi-person-vcard text-primary me-2\"></i> View Profile</a></li>";
+                    $items .= "<li><a class=\"dropdown-item\" href=\"{$medProfileUrl}\"><i class=\"bi bi-journal-medical text-info me-2\"></i> Medical Profile</a></li>";
+
+                    if ($canEdit) {
+                        $editUrl = route('patients.edit', $p);
+                        $items .= "<li><a class=\"dropdown-item\" href=\"{$editUrl}\"><i class=\"bi bi-pencil text-warning me-2\"></i> Edit Record</a></li>";
+                    }
+
+                    $items .= '<li><hr class="dropdown-divider"></li>';
+                    $items .= "<li><a class=\"dropdown-item\" href=\"{$newVisitUrl}\"><i class=\"bi bi-clipboard2-pulse text-success me-2\"></i> Log Clinic Visit</a></li>";
+                    $items .= "<li><a class=\"dropdown-item\" href=\"{$newPeUrl}\"><i class=\"bi bi-heart-pulse text-danger me-2\"></i> New Physical Exam</a></li>";
+
+                    if ($canDelete) {
+                        $deleteUrl = route('patients.destroy', $p);
+                        $csrf = csrf_field();
+                        $method = method_field('DELETE');
+                        $name = e($p->full_name);
+                        $items .= "<li><hr class=\"dropdown-divider\"></li>
+                        <li>
+                            <form method=\"POST\" action=\"{$deleteUrl}\" data-confirm=\"Are you sure you want to delete patient record for {$name}?\">
+                                {$csrf}
+                                {$method}
+                                <button type=\"submit\" class=\"dropdown-item text-danger\"><i class=\"bi bi-trash me-2\"></i> Delete</button>
+                            </form>
+                        </li>";
+                    }
+
+                    return "<div class=\"dropdown\">
+                        <button class=\"btn btn-sm btn-outline-secondary dropdown-toggle py-1 px-2\" type=\"button\" data-bs-toggle=\"dropdown\" aria-expanded=\"false\">
+                            <i class=\"bi bi-gear-fill me-1\"></i> Action
+                        </button>
+                        <ul class=\"dropdown-menu shadow-sm\">
+                            {$items}
+                        </ul>
+                    </div>";
+                })
+                ->orderColumn('patient_number_col', 'patient_number $1')
+                ->orderColumn('patient_name_col', 'last_name $1')
+                ->orderColumn('identifier_col', 'school_id_number $1')
+                ->orderColumn('status_col', 'status $1')
+                ->rawColumns(['patient_number_col', 'patient_name_col', 'classification_col', 'identifier_col', 'college_unit_col', 'gender_age_col', 'status_col', 'actions'])
+                ->make(true);
+        }
+
+        $agg = Patient::query()
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw("SUM(CASE WHEN type = 'student' THEN 1 ELSE 0 END) as students")
+            ->selectRaw("SUM(CASE WHEN type = 'employee' THEN 1 ELSE 0 END) as employees")
+            ->selectRaw("SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active")
+            ->first();
 
         $stats = [
-            'total' => Patient::count(),
-            'students' => Patient::students()->count(),
-            'employees' => Patient::employees()->count(),
-            'active' => Patient::active()->count(),
+            'total' => (int) ($agg?->total ?? 0),
+            'students' => (int) ($agg?->students ?? 0),
+            'employees' => (int) ($agg?->employees ?? 0),
+            'active' => (int) ($agg?->active ?? 0),
         ];
 
-        return view('patients.index', compact('patients', 'stats', 'type', 'status', 'search'));
+        $colleges = College::where('is_active', true)->orderBy('name')->get(['id', 'code', 'name']);
+
+        return view('patients.index', compact('stats', 'colleges', 'type', 'status', 'collegeId', 'search'));
     }
 
     public function create(Request $request): View

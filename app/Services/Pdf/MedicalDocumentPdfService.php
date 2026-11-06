@@ -7,6 +7,7 @@ use App\Models\ClinicVisit;
 use App\Models\MedicineDispensing;
 use App\Models\PhysicalExamination;
 use App\Models\PhysicalExamSchedule;
+use App\Models\User;
 
 class MedicalDocumentPdfService
 {
@@ -15,7 +16,7 @@ class MedicalDocumentPdfService
         return (string) ($settings['university_campus'] ?? ($settings['university_address'] ?? 'Surigao City'));
     }
 
-    protected function resolvePhysicianName(array $settings, ?Clinician $physician = null, ?string $examinerName = null): string
+    protected function resolvePhysicianName(array $settings, Clinician|User|null $physician = null, ?string $examinerName = null): string
     {
         if (! empty($settings['clinic_head'])) {
             return (string) $settings['clinic_head'];
@@ -24,16 +25,18 @@ class MedicalDocumentPdfService
         return (string) ($physician?->name ?: ($examinerName ?: 'Dr. Maria Elena Santos, MD'));
     }
 
-    protected function resolvePhysicianLicense(array $settings, ?Clinician $physician = null, ?string $examinerLicense = null): string
+    protected function resolvePhysicianLicense(array $settings, Clinician|User|null $physician = null, ?string $examinerLicense = null): string
     {
         if (! empty($settings['clinic_license_no'])) {
             return (string) $settings['clinic_license_no'];
         }
 
-        return (string) ($physician?->license_number ?: ($examinerLicense ?: 'DOH-R13-CLN-2026-088'));
+        $license = $physician instanceof Clinician ? $physician->license_number : null;
+
+        return (string) ($license ?: ($examinerLicense ?: 'DOH-R13-CLN-2026-088'));
     }
 
-    public function medicalCertificate(PhysicalExamination $exam, array $settings, ?Clinician $physician = null): ClinicFpdf
+    public function medicalCertificate(PhysicalExamination $exam, array $settings, Clinician|User|null $physician = null): ClinicFpdf
     {
         $patient = $exam->patient;
         $doc = new ClinicFpdf('P', 'mm', 'A4', $settings, '', 'HSD FORM 4- Personal Copy', true, 'single_room');
@@ -134,7 +137,7 @@ class MedicalDocumentPdfService
         return $doc;
     }
 
-    public function medicalExemption(PhysicalExamination $exam, array $settings, ?Clinician $physician = null): ClinicFpdf
+    public function medicalExemption(PhysicalExamination $exam, array $settings, Clinician|User|null $physician = null): ClinicFpdf
     {
         $patient = $exam->patient;
         $doc = new ClinicFpdf('P', 'mm', 'A4', $settings, '', 'HSD FORM 6- Medical Exemption Certificate', true, 'two_rooms');
@@ -229,7 +232,7 @@ class MedicalDocumentPdfService
         return $doc;
     }
 
-    public function medicalReferral(PhysicalExamination $exam, array $settings, ?Clinician $physician = null): ClinicFpdf
+    public function medicalReferral(PhysicalExamination $exam, array $settings, Clinician|User|null $physician = null): ClinicFpdf
     {
         $patient = $exam->patient;
         $doc = new ClinicFpdf('P', 'mm', 'A4', $settings, '', 'HSD FORM 3- Referral Form', true, 'single_room');
@@ -432,138 +435,106 @@ class MedicalDocumentPdfService
         $doc->Cell(0, 6, 'MEDICAL REFERRAL FORM', 0, 1, 'C');
         $doc->Ln(2);
 
-        $x = 20;
-        $w = 170;
+        $w = 166.0;
+        $doc->SetLineWidth(0.22);
+
+        $doc->drawRow([
+            ['w' => 28, 'text' => 'Date:', 'style' => 'B', 'size' => 9],
+            ['w' => 138, 'text' => $date, 'style' => '', 'size' => 9],
+        ], 4.5, 6.5);
+
+        $doc->drawRow([
+            ['w' => 28, 'text' => 'Refer to:', 'style' => 'B', 'size' => 9],
+            ['w' => 138, 'text' => $referTo ?: 'Attending Medical Specialist / Hospital', 'style' => 'B', 'size' => 9],
+        ], 4.5, 12.0);
+
+        $doc->drawSectionHeader('Patient Information:', $w, 6.0);
+
+        $doc->drawRow([
+            ['w' => 28, 'text' => 'Name:', 'style' => 'B', 'size' => 9],
+            ['w' => 138, 'text' => $patientName, 'style' => 'B', 'size' => 9.5],
+        ], 4.5, 7.5);
+
+        $doc->drawRow([
+            ['w' => 28, 'text' => 'Date of Birth:', 'style' => 'B', 'size' => 8.5],
+            ['w' => 55, 'text' => $dob ?: '—', 'style' => '', 'size' => 9],
+            ['w' => 16, 'text' => 'Age:', 'style' => 'B', 'size' => 8.5],
+            ['w' => 25, 'text' => $age ?: '—', 'style' => '', 'size' => 9, 'align' => 'C'],
+            ['w' => 18, 'text' => 'Gender:', 'style' => 'B', 'size' => 8.5],
+            ['w' => 24, 'text' => ucfirst($gender) ?: '—', 'style' => '', 'size' => 9, 'align' => 'C'],
+        ], 4.5, 7.5);
+
+        $doc->drawRow([
+            ['w' => 28, 'text' => 'Address:', 'style' => 'B', 'size' => 8.5],
+            ['w' => 82, 'text' => $address ?: '—', 'style' => '', 'size' => 8.5],
+            ['w' => 26, 'text' => 'Contact No.:', 'style' => 'B', 'size' => 8.5],
+            ['w' => 30, 'text' => $phone ?: '—', 'style' => '', 'size' => 8.5],
+        ], 4.3, 8.0);
+
+        $doc->drawSectionHeader('In case of Emergency:', $w, 6.0);
+
+        $doc->drawRow([
+            ['w' => 32, 'text' => 'Contact Name:', 'style' => 'B', 'size' => 8.5],
+            ['w' => 78, 'text' => $emergencyName ?: '—', 'style' => '', 'size' => 8.5],
+            ['w' => 26, 'text' => 'Contact No.:', 'style' => 'B', 'size' => 8.5],
+            ['w' => 30, 'text' => $emergencyPhone ?: '—', 'style' => '', 'size' => 8.5],
+        ], 4.3, 8.0);
+
+        $this->renderDynamicTextBox($doc, 'Complaints/ Findings:', $complaints, $w, 28.0);
+        $this->renderDynamicTextBox($doc, 'Treatment:', $treatment, $w, 22.0);
+        $this->renderDynamicTextBox($doc, 'Reasons for Referral:', $reasons, $w, 24.0);
+
+        $sigBoxH = 22.0;
+        $doc->checkPageBreak($sigBoxH);
+        $x = 22.0;
         $y = $doc->GetY();
-        $doc->SetLineWidth(0.25);
+        $doc->Rect($x, $y, $w, $sigBoxH);
 
-        $doc->Rect($x, $y, $w, 6.5);
-        $doc->SetXY($x + 1.5, $y + 1);
-        $doc->SetFont('Arial', 'B', 9.5);
-        $doc->Cell(12, 4.5, 'Date:', 0, 0, 'L');
-        $doc->SetFont('Arial', '', 9.5);
-        $doc->Cell(0, 4.5, $doc->conv($date), 0, 1, 'L');
-        $y += 6.5;
+        $sigW = 68.0;
+        $sigX = $x + $w - $sigW - 6.0;
+        $doc->Line($sigX, $y + 10.5, $sigX + $sigW, $y + 10.5);
 
-        $doc->Rect($x, $y, $w, 20);
-        $doc->SetXY($x + 1.5, $y + 1.2);
+        $doc->SetXY($sigX, $y + 11.2);
         $doc->SetFont('Arial', 'B', 9.5);
-        $doc->Cell(18, 4.5, 'Refer to:', 0, 0, 'L');
-        $doc->SetFont('Arial', '', 9.5);
-        $doc->SetXY($x + 20, $y + 1.2);
-        $doc->MultiCell($w - 22, 4.5, $doc->conv($referTo), 0, 'L');
-        $y += 20;
-
-        $doc->Rect($x, $y, $w, 6);
-        $doc->SetXY($x + 1.5, $y + 0.8);
-        $doc->SetFont('Arial', 'B', 9.5);
-        $doc->Cell(0, 4.5, 'Patient Information:', 0, 1, 'L');
-        $y += 6;
-
-        $doc->Rect($x, $y, $w, 9);
-        $doc->SetXY($x + 1.5, $y + 1.2);
-        $doc->SetFont('Arial', 'B', 9.5);
-        $doc->Cell(14, 4.5, 'Name:', 0, 0, 'L');
-        $doc->SetFont('Arial', '', 9.5);
-        $doc->Cell(0, 4.5, $doc->conv($patientName), 0, 1, 'L');
-        $y += 9;
-
-        $doc->Rect($x, $y, $w, 8.5);
-        $doc->SetXY($x + 1.5, $y + 1.2);
-        $doc->SetFont('Arial', 'B', 9.5);
-        $doc->Cell(25, 4.5, 'Date of Birth:', 0, 0, 'L');
-        $doc->SetFont('Arial', '', 9.5);
-        $doc->Cell(65, 4.5, $doc->conv($dob), 0, 0, 'L');
-        $doc->SetFont('Arial', 'B', 9.5);
-        $doc->Cell(10, 4.5, 'Age:', 0, 0, 'L');
-        $doc->SetFont('Arial', '', 9.5);
-        $doc->Cell(25, 4.5, $doc->conv($age), 0, 0, 'L');
-        $doc->SetFont('Arial', 'B', 9.5);
-        $doc->Cell(15, 4.5, 'Gender:', 0, 0, 'L');
-        $doc->SetFont('Arial', '', 9.5);
-        $doc->Cell(0, 4.5, $doc->conv($gender), 0, 1, 'L');
-        $y += 8.5;
-
-        $doc->Rect($x, $y, $w, 10);
-        $doc->SetXY($x + 1.5, $y + 1.2);
-        $doc->SetFont('Arial', 'B', 9.5);
-        $doc->Cell(17, 4.5, 'Address:', 0, 0, 'L');
-        $doc->SetFont('Arial', '', 9.5);
-        $doc->Cell(73, 4.5, $doc->conv($address), 0, 0, 'L');
-        $doc->SetFont('Arial', 'B', 9.5);
-        $doc->Cell(30, 4.5, 'Contact Number:', 0, 0, 'L');
-        $doc->SetFont('Arial', '', 9.5);
-        $doc->Cell(0, 4.5, $doc->conv($phone), 0, 1, 'L');
-        $y += 10;
-
-        $doc->Rect($x, $y, $w, 6);
-        $doc->SetXY($x + 1.5, $y + 0.8);
-        $doc->SetFont('Arial', 'B', 9.5);
-        $doc->Cell(0, 4.5, 'In case of Emergency:', 0, 1, 'L');
-        $y += 6;
-
-        $doc->Rect($x, $y, $w, 15);
-        $doc->SetXY($x + 6, $y + 1.5);
-        $doc->SetFont('Arial', 'B', 9.5);
-        $doc->Cell(28, 4.5, 'Contact Name:', 0, 0, 'L');
-        $doc->SetFont('Arial', '', 9.5);
-        $doc->Cell(0, 4.5, $doc->conv($emergencyName), 0, 1, 'L');
-
-        $doc->SetXY($x + 6, $y + 8.5);
-        $doc->SetFont('Arial', 'B', 9.5);
-        $doc->Cell(30, 4.5, 'Contact Number:', 0, 0, 'L');
-        $doc->SetFont('Arial', '', 9.5);
-        $doc->Cell(0, 4.5, $doc->conv($emergencyPhone), 0, 1, 'L');
-        $y += 15;
-
-        $doc->Rect($x, $y, $w, 30);
-        $doc->SetXY($x + 1.5, $y + 1.2);
-        $doc->SetFont('Arial', 'B', 9.5);
-        $doc->Cell(0, 4.5, 'Complaints/ Findings:', 0, 1, 'L');
-        if ($complaints !== '') {
-            $doc->SetXY($x + 2, $y + 6.5);
-            $doc->SetFont('Arial', '', 9);
-            $doc->MultiCell($w - 4, 4.2, $doc->conv($complaints), 0, 'L');
-        }
-        $y += 30;
-
-        $doc->Rect($x, $y, $w, 24);
-        $doc->SetXY($x + 1.5, $y + 1.2);
-        $doc->SetFont('Arial', 'B', 9.5);
-        $doc->Cell(0, 4.5, 'Treatment:', 0, 1, 'L');
-        if ($treatment !== '') {
-            $doc->SetXY($x + 2, $y + 6.5);
-            $doc->SetFont('Arial', '', 9);
-            $doc->MultiCell($w - 4, 4.2, $doc->conv($treatment), 0, 'L');
-        }
-        $y += 24;
-
-        $doc->Rect($x, $y, $w, 28);
-        $doc->SetXY($x + 1.5, $y + 1.2);
-        $doc->SetFont('Arial', 'B', 9.5);
-        $doc->Cell(0, 4.5, 'Reasons for Referral:', 0, 1, 'L');
-        if ($reasons !== '') {
-            $doc->SetXY($x + 2, $y + 6.5);
-            $doc->SetFont('Arial', '', 9);
-            $doc->MultiCell($w - 4, 4.2, $doc->conv($reasons), 0, 'L');
-        }
-        $y += 28;
-
-        $doc->Rect($x, $y, $w, 20);
-        $doc->SetXY($x + 14, $y + 9.5);
-        $doc->SetFont('Arial', 'B', 9.5);
-        $doc->Cell(60, 4.2, $doc->conv(strtoupper($physicianName)), 0, 1, 'C');
-        $doc->SetX($x + 14);
-        $doc->SetFont('Arial', '', 9);
-        $doc->Cell(60, 4, 'School Physician', 0, 1, 'C');
+        $doc->Cell($sigW, 4.2, $doc->conv(strtoupper($physicianName)), 0, 1, 'C');
+        $doc->SetX($sigX);
+        $doc->SetFont('Arial', '', 8.5);
+        $doc->Cell($sigW, 3.8, 'School Physician', 0, 1, 'C');
         if ($license !== '') {
-            $doc->SetX($x + 14);
+            $doc->SetX($sigX);
             $doc->SetFont('Arial', '', 8);
-            $doc->Cell(60, 3.5, $doc->conv("License #: {$license}"), 0, 1, 'C');
+            $doc->Cell($sigW, 3.5, $doc->conv("License #: {$license}"), 0, 1, 'C');
         }
+        $doc->SetY($y + $sigBoxH);
     }
 
-    public function clinicVisitSlip(ClinicVisit $visit, array $settings, ?Clinician $physician = null): ClinicFpdf
+    protected function renderDynamicTextBox(ClinicFpdf $doc, string $label, string $content, float $w = 166.0, float $minHeight = 24.0): void
+    {
+        $doc->SetFont('Arial', '', 9);
+        $converted = $doc->conv(trim($content));
+        $lines = $converted !== '' ? $doc->nbLines($w - 5.0, $converted) : 1;
+        $textH = $lines * 4.3;
+        $boxH = max($minHeight, 8.0 + $textH + 2.5);
+
+        $doc->checkPageBreak($boxH);
+        $x = 22.0;
+        $y = $doc->GetY();
+
+        $doc->Rect($x, $y, $w, $boxH);
+        $doc->SetXY($x + 1.8, $y + 1.4);
+        $doc->SetFont('Arial', 'B', 9);
+        $doc->Cell(0, 4.5, $doc->conv($label), 0, 1, 'L');
+
+        if ($converted !== '') {
+            $doc->SetXY($x + 2.5, $y + 6.5);
+            $doc->SetFont('Arial', '', 9);
+            $doc->MultiCell($w - 5.0, 4.3, $converted, 0, 'L');
+        }
+
+        $doc->SetXY($x, $y + $boxH);
+    }
+
+    public function clinicVisitSlip(ClinicVisit $visit, array $settings, Clinician|User|null $physician = null): ClinicFpdf
     {
         $patient = $visit->patient;
         $doc = new ClinicFpdf('P', 'mm', 'A4', $settings, '', 'HSD FORM 5- Consultation Form', true, 'single_room');
@@ -571,18 +542,18 @@ class MedicalDocumentPdfService
         $doc->AddPage();
 
         $doc->SetY(43);
-        $doc->SetFont('Arial', 'B', 11);
+        $doc->SetFont('Arial', 'B', 11.5);
         $doc->Cell(0, 5, 'CONSULTATION FORM', 0, 1, 'C');
         $doc->Ln(3);
 
-        $x = 20;
+        $x = 22.0;
         $doc->SetX($x);
         $doc->SetFont('Arial', '', 9.5);
         $doc->Cell(23, 5.5, 'Patient Name:', 0, 0, 'L');
-        $doc->drawInlineBlank($patient?->full_name ?? '', 95, 'L', true);
+        $doc->drawInlineBlank($patient?->full_name ?? '', 92, 'L', true);
         $doc->SetFont('Arial', '', 9.5);
         $doc->Cell(19, 5.5, ' Civil Status:', 0, 0, 'L');
-        $doc->drawInlineBlank($patient?->civil_status ?? '', 33, 'C', false);
+        $doc->drawInlineBlank($patient?->civil_status ?? '', 32, 'C', false);
         $doc->Ln(7);
 
         $courseOrOcc = $patient?->type === 'student'
@@ -592,39 +563,35 @@ class MedicalDocumentPdfService
         $doc->SetX($x);
         $doc->SetFont('Arial', '', 9.5);
         $doc->Cell(9, 5.5, 'Age:', 0, 0, 'L');
-        $doc->drawInlineBlank((string) ($patient?->age ?? ''), 22, 'C', false);
+        $doc->drawInlineBlank((string) ($patient?->age ?? ''), 20, 'C', false);
         $doc->SetFont('Arial', '', 9.5);
         $doc->Cell(31, 5.5, ' Course/Occupation:', 0, 0, 'L');
-        $doc->drawInlineBlank($courseOrOcc, 72, 'L', false);
+        $doc->drawInlineBlank($courseOrOcc, 71, 'L', false);
         $doc->SetFont('Arial', '', 9.5);
         $doc->Cell(9, 5.5, ' Sex:', 0, 0, 'L');
-        $doc->drawInlineBlank($patient?->gender ?? '', 27, 'C', false);
+        $doc->drawInlineBlank($patient?->gender ?? '', 26, 'C', false);
         $doc->Ln(7);
 
         $doc->SetX($x);
         $doc->SetFont('Arial', '', 9.5);
         $doc->Cell(15, 5.5, 'Address:', 0, 0, 'L');
-        $doc->drawInlineBlank($patient?->address ?: $this->defaultAddress($settings), 105, 'L', false);
+        $doc->drawInlineBlank($patient?->address ?: $this->defaultAddress($settings), 102, 'L', false);
         $doc->SetFont('Arial', '', 9.5);
         $doc->Cell(14, 5.5, ' Cel. No.', 0, 0, 'L');
-        $doc->drawInlineBlank($patient?->phone ?? '', 36, 'C', false);
+        $doc->drawInlineBlank($patient?->phone ?? '', 35, 'C', false);
         $doc->Ln(8);
 
-        $col1 = 28;
-        $col2 = 88;
-        $col3 = 54;
-        $tableW = $col1 + $col2 + $col3;
-        $tableStartY = $doc->GetY();
-        $headerH = 6.5;
-        $rowH = 8.5;
-        $totalRows = 20;
+        $col1 = 24.0;
+        $col2 = 88.0;
+        $col3 = 54.0;
 
-        $doc->SetLineWidth(0.25);
-        $doc->SetX($x);
-        $doc->SetFont('Arial', 'B', 9);
-        $doc->Cell($col1, $headerH, 'DATE', 1, 0, 'C');
-        $doc->Cell($col2, $headerH, 'COMPLAINTS/ FINDINGS', 1, 0, 'C');
-        $doc->Cell($col3, $headerH, 'TREATMENT', 1, 1, 'C');
+        $doc->SetLineWidth(0.22);
+        $doc->SetFillColor(242, 244, 247);
+        $doc->drawRow([
+            ['w' => $col1, 'text' => 'DATE', 'style' => 'B', 'size' => 8.5, 'align' => 'C', 'fill' => true],
+            ['w' => $col2, 'text' => 'COMPLAINTS/ FINDINGS', 'style' => 'B', 'size' => 8.5, 'align' => 'C', 'fill' => true],
+            ['w' => $col3, 'text' => 'TREATMENT', 'style' => 'B', 'size' => 8.5, 'align' => 'C', 'fill' => true],
+        ], 4.5, 6.5);
 
         $visitsToRender = collect([$visit]);
         if ($patient) {
@@ -637,7 +604,6 @@ class MedicalDocumentPdfService
             $visitsToRender = $visitsToRender->concat($otherVisits);
         }
 
-        $entries = [];
         foreach ($visitsToRender as $vItem) {
             $vitalsParts = array_filter([
                 $vItem->blood_pressure ? "BP {$vItem->blood_pressure}" : null,
@@ -652,36 +618,26 @@ class MedicalDocumentPdfService
                 ?? ($vItem->firstAidRecord?->treatment_notes
                 ?? ($vItem->remarks ?: $vItem->disposition_label)));
 
-            $entries[] = [
-                'date' => $vItem->visit_date->format('m/d/Y'),
-                'complaints' => $complaintText,
-                'treatment' => (string) $treatmentText,
-            ];
+            $doc->drawRow([
+                ['w' => $col1, 'text' => $vItem->visit_date->format('m/d/Y'), 'style' => '', 'size' => 8, 'align' => 'C'],
+                ['w' => $col2, 'text' => $complaintText, 'style' => '', 'size' => 8],
+                ['w' => $col3, 'text' => (string) $treatmentText, 'style' => '', 'size' => 8],
+            ], 4.0, 8.0);
         }
 
-        for ($r = 0; $r < $totalRows; $r++) {
-            $ry = $tableStartY + $headerH + ($r * $rowH);
-            $doc->Rect($x, $ry, $col1, $rowH);
-            $doc->Rect($x + $col1, $ry, $col2, $rowH);
-            $doc->Rect($x + $col1 + $col2, $ry, $col3, $rowH);
-
-            if (isset($entries[$r])) {
-                $doc->SetFont('Arial', '', 8);
-                $doc->SetXY($x + 1, $ry + 2);
-                $doc->Cell($col1 - 2, 4.5, $doc->conv($entries[$r]['date']), 0, 0, 'C');
-
-                $doc->SetXY($x + $col1 + 1.5, $ry + 2);
-                $doc->Cell($col2 - 3, 4.5, $doc->conv(mb_strimwidth($entries[$r]['complaints'], 0, 62, '...')), 0, 0, 'L');
-
-                $doc->SetXY($x + $col1 + $col2 + 1.5, $ry + 2);
-                $doc->Cell($col3 - 3, 4.5, $doc->conv(mb_strimwidth($entries[$r]['treatment'], 0, 36, '...')), 0, 0, 'L');
-            }
+        $blankRowH = 8.0;
+        while ($doc->GetY() + $blankRowH <= ($doc->GetPageHeight() - 22)) {
+            $ry = $doc->GetY();
+            $doc->Rect($x, $ry, $col1, $blankRowH);
+            $doc->Rect($x + $col1, $ry, $col2, $blankRowH);
+            $doc->Rect($x + $col1 + $col2, $ry, $col3, $blankRowH);
+            $doc->SetY($ry + $blankRowH);
         }
 
         return $doc;
     }
 
-    public function physicalExamination(PhysicalExamination $exam, array $settings, ?Clinician $physician = null): ClinicFpdf
+    public function physicalExamination(PhysicalExamination $exam, array $settings, Clinician|User|null $physician = null): ClinicFpdf
     {
         $patient = $exam->patient;
         $doc = new ClinicFpdf('P', 'mm', 'A4', $settings, '', 'HSD FORM 1- Physical Examination Form', true, 'two_rooms');
@@ -691,42 +647,44 @@ class MedicalDocumentPdfService
         $doc->SetY(44);
         $doc->SetFont('Arial', 'B', 12);
         $doc->Cell(0, 5.5, 'PHYSICAL EXAMINATION RECORD', 0, 1, 'C');
-        $doc->Ln(2);
+        $doc->Ln(1.5);
 
-        $doc->SetFont('Arial', 'B', 9);
-        $doc->Cell(55, 5, 'PE No: '.$exam->pe_number, 0, 0, 'L');
-        $doc->Cell(56, 5, 'Purpose: '.$exam->purpose, 0, 0, 'C');
-        $doc->Cell(55, 5, 'Date: '.$exam->exam_date->format('M d, Y'), 0, 1, 'R');
-        $doc->Ln(1);
+        $w = 166.0;
+        $doc->SetLineWidth(0.2);
 
-        $doc->SetFont('Arial', 'B', 9);
-        $doc->SetFillColor(235, 238, 242);
-        $doc->Cell(166, 5, ' I. PATIENT INFORMATION', 1, 1, 'L', true);
+        $doc->SetFillColor(246, 247, 249);
+        $doc->drawRow([
+            ['w' => 55, 'text' => 'PE No: '.$exam->pe_number, 'style' => 'B', 'size' => 8.5, 'fill' => true],
+            ['w' => 61, 'text' => 'Purpose: '.$exam->purpose, 'style' => 'B', 'size' => 8.5, 'align' => 'C', 'fill' => true],
+            ['w' => 50, 'text' => 'Date: '.$exam->exam_date->format('M d, Y'), 'style' => 'B', 'size' => 8.5, 'align' => 'R', 'fill' => true],
+        ], 4.2, 5.5);
+        $doc->Ln(1.5);
 
-        $doc->SetFont('Arial', '', 8.5);
-        $doc->Cell(32, 5, 'Full Name:', 1, 0, 'L');
-        $doc->SetFont('Arial', 'B', 8.5);
-        $doc->Cell(68, 5, $doc->conv($patient->full_name), 1, 0, 'L');
-        $doc->SetFont('Arial', '', 8.5);
-        $doc->Cell(32, 5, 'ID / Type:', 1, 0, 'L');
-        $doc->SetFont('Arial', 'B', 8.5);
-        $doc->Cell(34, 5, $doc->conv($patient->primary_identifier.' ('.ucfirst($patient->type).')'), 1, 1, 'L');
+        $doc->drawSectionHeader('I. PATIENT INFORMATION', $w, 5.2);
 
-        $doc->SetFont('Arial', '', 8.5);
-        $doc->Cell(32, 5, 'College / Program:', 1, 0, 'L');
-        $doc->Cell(68, 5, $doc->conv(($patient->college?->code ?: '—').' - '.($patient->program?->code ?: '—')), 1, 0, 'L');
-        $doc->Cell(32, 5, 'Sex / Age:', 1, 0, 'L');
-        $doc->Cell(34, 5, $doc->conv(($patient->gender ?: '—').' / '.($patient->age ? "{$patient->age} y/o" : '—')), 1, 1, 'L');
+        $doc->drawRow([
+            ['w' => 30, 'text' => 'Full Name:', 'style' => 'B', 'size' => 8],
+            ['w' => 70, 'text' => $patient->full_name, 'style' => 'B', 'size' => 8.5],
+            ['w' => 28, 'text' => 'ID / Type:', 'style' => 'B', 'size' => 8],
+            ['w' => 38, 'text' => $patient->primary_identifier.' ('.ucfirst($patient->type).')', 'style' => '', 'size' => 8],
+        ], 4.0, 5.2);
 
-        $doc->Cell(32, 5, 'Address & Phone:', 1, 0, 'L');
-        $doc->Cell(68, 5, $doc->conv(($patient->address ?: $this->defaultAddress($settings)).' | '.($patient->phone ?: '—')), 1, 0, 'L');
-        $doc->Cell(32, 5, 'Blood / Civil:', 1, 0, 'L');
-        $doc->Cell(34, 5, $doc->conv(($patient->blood_type ?: 'O+').' / '.($patient->civil_status ?: 'Single')), 1, 1, 'L');
-        $doc->Ln(2);
+        $doc->drawRow([
+            ['w' => 30, 'text' => 'College / Prog:', 'style' => 'B', 'size' => 8],
+            ['w' => 70, 'text' => ($patient->college?->code ?: '—').' - '.($patient->program?->code ?: '—'), 'style' => '', 'size' => 8],
+            ['w' => 28, 'text' => 'Sex / Age:', 'style' => 'B', 'size' => 8],
+            ['w' => 38, 'text' => ucfirst((string) ($patient->gender ?: '—')).' / '.($patient->age ? "{$patient->age} y/o" : '—'), 'style' => '', 'size' => 8],
+        ], 4.0, 5.2);
 
-        $doc->SetFont('Arial', 'B', 9);
-        $doc->Cell(166, 5, ' II. VITAL SIGNS & ANTHROPOMETRIC MEASUREMENTS', 1, 1, 'L', true);
-        $doc->SetFont('Arial', '', 8.5);
+        $doc->drawRow([
+            ['w' => 30, 'text' => 'Address & Tel:', 'style' => 'B', 'size' => 8],
+            ['w' => 70, 'text' => ($patient->address ?: $this->defaultAddress($settings)).' | '.($patient->phone ?: '—'), 'style' => '', 'size' => 8],
+            ['w' => 28, 'text' => 'Blood / Civil:', 'style' => 'B', 'size' => 8],
+            ['w' => 38, 'text' => ($patient->blood_type ?: 'O+').' / '.($patient->civil_status ?: 'Single'), 'style' => '', 'size' => 8],
+        ], 4.0, 5.2);
+        $doc->Ln(1.5);
+
+        $doc->drawSectionHeader('II. VITAL SIGNS & ANTHROPOMETRIC MEASUREMENTS', $w, 5.2);
 
         $bp = $exam->blood_pressure ?: '—';
         $pr = $exam->pulse_rate ? "{$exam->pulse_rate} bpm" : '—';
@@ -734,11 +692,13 @@ class MedicalDocumentPdfService
         $temp = $exam->temperature ? "{$exam->temperature} C" : '—';
         $spo2 = $exam->oxygen_saturation ? "{$exam->oxygen_saturation}%" : '—';
 
-        $doc->Cell(33.2, 5, "BP: {$bp}", 1, 0, 'C');
-        $doc->Cell(33.2, 5, "Pulse: {$pr}", 1, 0, 'C');
-        $doc->Cell(33.2, 5, "Resp: {$rr}", 1, 0, 'C');
-        $doc->Cell(33.2, 5, "Temp: {$temp}", 1, 0, 'C');
-        $doc->Cell(33.2, 5, "SpO2: {$spo2}", 1, 1, 'C');
+        $doc->drawRow([
+            ['w' => 33.2, 'text' => "BP: {$bp}", 'style' => '', 'size' => 8, 'align' => 'C'],
+            ['w' => 33.2, 'text' => "Pulse: {$pr}", 'style' => '', 'size' => 8, 'align' => 'C'],
+            ['w' => 33.2, 'text' => "Resp: {$rr}", 'style' => '', 'size' => 8, 'align' => 'C'],
+            ['w' => 33.2, 'text' => "Temp: {$temp}", 'style' => '', 'size' => 8, 'align' => 'C'],
+            ['w' => 33.2, 'text' => "SpO2: {$spo2}", 'style' => '', 'size' => 8, 'align' => 'C'],
+        ], 4.0, 5.2);
 
         $ht = $exam->height_cm ? "{$exam->height_cm} cm" : '—';
         $wt = $exam->weight_kg ? "{$exam->weight_kg} kg" : '—';
@@ -746,54 +706,74 @@ class MedicalDocumentPdfService
         $od = $exam->visual_acuity_right ?: '20/20';
         $os = $exam->visual_acuity_left ?: '20/20';
 
-        $doc->Cell(33.2, 5, "Height: {$ht}", 1, 0, 'C');
-        $doc->Cell(33.2, 5, "Weight: {$wt}", 1, 0, 'C');
-        $doc->Cell(49.8, 5, "BMI: {$bmi}", 1, 0, 'C');
-        $doc->Cell(49.8, 5, "Vision: R {$od} / L {$os}", 1, 1, 'C');
-        $doc->Ln(2);
+        $doc->drawRow([
+            ['w' => 33.2, 'text' => "Height: {$ht}", 'style' => '', 'size' => 8, 'align' => 'C'],
+            ['w' => 33.2, 'text' => "Weight: {$wt}", 'style' => '', 'size' => 8, 'align' => 'C'],
+            ['w' => 49.8, 'text' => "BMI: {$bmi}", 'style' => '', 'size' => 8, 'align' => 'C'],
+            ['w' => 49.8, 'text' => "Vision: R {$od} / L {$os}", 'style' => '', 'size' => 8, 'align' => 'C'],
+        ], 4.0, 5.2);
+        $doc->Ln(1.5);
 
-        $doc->SetFont('Arial', 'B', 9);
-        $doc->Cell(166, 5, ' III. SYSTEMIC PHYSICAL EXAMINATION FINDINGS', 1, 1, 'L', true);
-        $doc->SetFont('Arial', '', 8);
+        $doc->drawSectionHeader('III. SYSTEMIC PHYSICAL EXAMINATION FINDINGS', $w, 5.2);
 
-        $sys = (array) ($exam->systems ?? []);
+        $doc->SetFillColor(248, 249, 250);
+        $doc->drawRow([
+            ['w' => 46, 'text' => 'Anatomical System', 'style' => 'B', 'size' => 8, 'fill' => true],
+            ['w' => 22, 'text' => 'Assessment', 'style' => 'B', 'size' => 8, 'align' => 'C', 'fill' => true],
+            ['w' => 98, 'text' => 'Clinical Remarks & Observations', 'style' => 'B', 'size' => 8, 'fill' => true],
+        ], 4.0, 5.0);
+
         $systemsList = [
-            'General Appearance' => 'Well-nourished, alert, oriented',
-            'Skin & Integumentary' => 'No suspicious lesions, jaundice, or cyanosis',
-            'Head, Eyes, Ears, Nose' => 'Sclera anicteric, pupils equal and reactive',
-            'Mouth, Teeth & Throat' => 'Good oral hygiene, no tonsillopharyngeal congestion',
-            'Neck & Thyroid' => 'Supple, no palpable lymphadenopathy or goiter',
-            'Chest & Lungs' => 'Clear vesicular breath sounds, no rales or wheezes',
-            'Cardiovascular System' => 'Normal rate, regular rhythm, no cardiac murmurs',
-            'Abdomen' => 'Soft, non-tender, no organomegaly',
-            'Musculoskeletal & Spine' => 'Full range of motion, no deformities',
-            'Neurological' => 'Grossly intact cranial nerves and reflexes',
+            'general_appearance' => ['label' => 'General Appearance', 'default' => 'Well-nourished, alert, oriented'],
+            'skin' => ['label' => 'Skin & Integumentary', 'default' => 'No suspicious lesions, jaundice, or cyanosis'],
+            'heent' => ['label' => 'Head, Eyes, Ears, Nose', 'default' => 'Sclera anicteric, pupils equal and reactive'],
+            'dental' => ['label' => 'Mouth, Teeth & Throat', 'default' => 'Good oral hygiene, no tonsillopharyngeal congestion'],
+            'neck' => ['label' => 'Neck & Thyroid', 'default' => 'Supple, no palpable lymphadenopathy or goiter'],
+            'chest_lungs' => ['label' => 'Chest & Lungs', 'default' => 'Clear vesicular breath sounds, no rales or wheezes'],
+            'heart' => ['label' => 'Cardiovascular System', 'default' => 'Normal rate, regular rhythm, no cardiac murmurs'],
+            'abdomen' => ['label' => 'Abdomen', 'default' => 'Soft, non-tender, no organomegaly'],
+            'musculoskeletal' => ['label' => 'Musculoskeletal & Spine', 'default' => 'Full range of motion, no deformities'],
+            'neurological' => ['label' => 'Neurological', 'default' => 'Grossly intact cranial nerves and reflexes'],
         ];
 
-        foreach ($systemsList as $name => $defaultDesc) {
-            $status = $sys[$name]['status'] ?? 'normal';
-            $remarks = $sys[$name]['remarks'] ?? $defaultDesc;
+        foreach ($systemsList as $column => $meta) {
+            $name = $meta['label'];
+            $defaultDesc = $meta['default'];
+            $raw = $exam->{$column} ?? null;
 
-            $doc->SetFont('Arial', 'B', 8);
-            $doc->Cell(46, 4.5, $doc->conv($name), 1, 0, 'L');
-            $doc->SetFont('Arial', '', 8);
-            $doc->Cell(22, 4.5, ucfirst($status), 1, 0, 'C');
-            $doc->Cell(98, 4.5, $doc->conv($remarks), 1, 1, 'L');
+            if ($column === 'general_appearance') {
+                $status = 'normal';
+                $remarks = is_string($raw) && trim($raw) !== '' ? $raw : $defaultDesc;
+            } elseif (is_array($raw)) {
+                $status = (string) ($raw['status'] ?? 'normal');
+                $remarks = ! empty($raw['remarks']) ? (string) $raw['remarks'] : $defaultDesc;
+            } else {
+                $status = 'normal';
+                $remarks = $defaultDesc;
+            }
+
+            $doc->drawRow([
+                ['w' => 46, 'text' => $name, 'style' => 'B', 'size' => 8],
+                ['w' => 22, 'text' => ucfirst($status), 'style' => '', 'size' => 8, 'align' => 'C'],
+                ['w' => 98, 'text' => $remarks, 'style' => '', 'size' => 8],
+            ], 3.8, 4.8, 0.7);
         }
-        $doc->Ln(2);
+        $doc->Ln(1.5);
 
-        $doc->SetFont('Arial', 'B', 9);
-        $doc->Cell(166, 5, ' IV. DIAGNOSTIC SCREENING & OVERALL FITNESS ASSESSMENT', 1, 1, 'L', true);
-        $doc->SetFont('Arial', '', 8.5);
+        $doc->drawSectionHeader('IV. DIAGNOSTIC SCREENING & OVERALL FITNESS ASSESSMENT', $w, 5.2);
         $cxr = $exam->chest_xray_findings ?: 'Chest X-Ray: Normal lung fields.';
         $lab = $exam->laboratory_notes ?: 'Routine laboratory tests within normal range.';
-        $doc->MultiCell(166, 4.5, $doc->conv("{$cxr} | {$lab}"), 1, 'L');
+
+        $doc->drawRow([
+            ['w' => 36, 'text' => 'Ancillary & Lab:', 'style' => 'B', 'size' => 8],
+            ['w' => 130, 'text' => "{$cxr} | {$lab}", 'style' => '', 'size' => 8],
+        ], 4.0, 5.5);
 
         $fitness = $exam->fitness_assessment ?: 'Class A';
-        $doc->SetFont('Arial', 'B', 9);
-        $doc->Cell(46, 5.5, "Clearance: {$fitness}", 1, 0, 'C');
-        $doc->SetFont('Arial', '', 8.5);
-        $doc->Cell(120, 5.5, $doc->conv($exam->clinical_findings ?: 'Fit for academic and university activities.'), 1, 1, 'L');
+        $doc->drawRow([
+            ['w' => 36, 'text' => "Clearance: {$fitness}", 'style' => 'B', 'size' => 8.5, 'align' => 'C'],
+            ['w' => 130, 'text' => $exam->clinical_findings ?: 'Fit for academic and university activities.', 'style' => '', 'size' => 8.5],
+        ], 4.0, 5.8);
 
         $physicianName = $this->resolvePhysicianName($settings, $physician, $exam->examiner_name);
         $license = $this->resolvePhysicianLicense($settings, $physician, $exam->examiner_license_number);
@@ -803,7 +783,7 @@ class MedicalDocumentPdfService
         return $doc;
     }
 
-    public function medicineDispensingSlip(MedicineDispensing $dispensing, array $settings, ?Clinician $physician = null): ClinicFpdf
+    public function medicineDispensingSlip(MedicineDispensing $dispensing, array $settings, Clinician|User|null $physician = null): ClinicFpdf
     {
         $patient = $dispensing->patient;
         $doc = new ClinicFpdf('P', 'mm', 'A4', $settings, '', 'HSD FORM 7- Pharmacy Dispensing Slip', true, 'two_rooms');
@@ -813,66 +793,73 @@ class MedicalDocumentPdfService
         $doc->SetY(44);
         $doc->SetFont('Arial', 'B', 12);
         $doc->Cell(0, 5.5, 'CLINIC PHARMACY DISPENSING SLIP', 0, 1, 'C');
-        $doc->Ln(3);
-
-        $doc->SetFont('Arial', 'B', 9);
-        $doc->Cell(60, 5, 'Slip No: '.$dispensing->dispensing_number, 0, 0, 'L');
-        $doc->Cell(50, 5, 'Total Items: '.$dispensing->total_items, 0, 0, 'C');
-        $doc->Cell(56, 5, 'Date: '.$dispensing->dispensed_date->format('M d, Y h:i A'), 0, 1, 'R');
         $doc->Ln(2);
 
-        $doc->SetFillColor(235, 238, 242);
-        $doc->Cell(166, 5.5, ' 1. PATIENT & PRESCRIBING CLINICIAN', 1, 1, 'L', true);
-        $doc->SetFont('Arial', '', 8.5);
+        $w = 166.0;
+        $doc->SetLineWidth(0.2);
+
+        $doc->SetFillColor(246, 247, 249);
+        $doc->drawRow([
+            ['w' => 62, 'text' => 'Slip No: '.$dispensing->dispensing_number, 'style' => 'B', 'size' => 8.5, 'fill' => true],
+            ['w' => 44, 'text' => 'Total Items: '.$dispensing->total_items, 'style' => 'B', 'size' => 8.5, 'align' => 'C', 'fill' => true],
+            ['w' => 60, 'text' => 'Date: '.$dispensing->dispensed_date->format('M d, Y h:i A'), 'style' => 'B', 'size' => 8.5, 'align' => 'R', 'fill' => true],
+        ], 4.2, 5.5);
+        $doc->Ln(2);
+
+        $doc->drawSectionHeader('1. PATIENT & PRESCRIBING CLINICIAN', $w, 5.5);
 
         $name = $patient?->full_name ?? 'Walk-in Patient';
         $idNo = $patient?->primary_identifier ?? 'N/A';
         $prog = $patient?->program?->code ?? ($patient?->type === 'student' ? 'Student' : 'Employee');
         $prescriber = $dispensing->clinician?->name ?? $this->resolvePhysicianName($settings, $physician);
 
-        $doc->Cell(35, 5, 'Patient Name:', 1, 0, 'L');
-        $doc->SetFont('Arial', 'B', 8.5);
-        $doc->Cell(71, 5, $doc->conv($name), 1, 0, 'L');
-        $doc->SetFont('Arial', '', 8.5);
-        $doc->Cell(28, 5, 'ID Number:', 1, 0, 'L');
-        $doc->SetFont('Arial', 'B', 8.5);
-        $doc->Cell(32, 5, $doc->conv($idNo), 1, 1, 'L');
+        $doc->drawRow([
+            ['w' => 32, 'text' => 'Patient Name:', 'style' => 'B', 'size' => 8.5],
+            ['w' => 70, 'text' => $name, 'style' => 'B', 'size' => 8.5],
+            ['w' => 28, 'text' => 'ID Number:', 'style' => 'B', 'size' => 8.5],
+            ['w' => 36, 'text' => $idNo, 'style' => '', 'size' => 8.5],
+        ], 4.2, 5.5);
 
-        $doc->SetFont('Arial', '', 8.5);
-        $doc->Cell(35, 5, 'Course / Dept:', 1, 0, 'L');
-        $doc->Cell(71, 5, $doc->conv($prog), 1, 0, 'L');
-        $doc->Cell(28, 5, 'Prescriber:', 1, 0, 'L');
-        $doc->Cell(32, 5, $doc->conv($prescriber), 1, 1, 'L');
+        $doc->drawRow([
+            ['w' => 32, 'text' => 'Course / Dept:', 'style' => 'B', 'size' => 8.5],
+            ['w' => 70, 'text' => $prog, 'style' => '', 'size' => 8.5],
+            ['w' => 28, 'text' => 'Prescriber:', 'style' => 'B', 'size' => 8.5],
+            ['w' => 36, 'text' => $prescriber, 'style' => '', 'size' => 8.5],
+        ], 4.2, 5.5);
 
-        $doc->Cell(35, 5, 'Diagnosis:', 1, 0, 'L');
-        $doc->Cell(131, 5, $doc->conv($dispensing->diagnosis ?: 'Symptomatic medical relief'), 1, 1, 'L');
-        $doc->Ln(3);
+        $doc->drawRow([
+            ['w' => 32, 'text' => 'Diagnosis:', 'style' => 'B', 'size' => 8.5],
+            ['w' => 134, 'text' => $dispensing->diagnosis ?: 'Symptomatic medical relief', 'style' => '', 'size' => 8.5],
+        ], 4.2, 5.5);
+        $doc->Ln(2.5);
 
-        $doc->SetFont('Arial', 'B', 9);
-        $doc->Cell(166, 5.5, ' 2. DISPENSED MEDICINES & INSTRUCTIONS', 1, 1, 'L', true);
-        $doc->SetFont('Arial', 'B', 8);
+        $doc->drawSectionHeader('2. DISPENSED MEDICINES & INSTRUCTIONS', $w, 5.5);
 
-        $doc->Cell(10, 5, '#', 1, 0, 'C');
-        $doc->Cell(64, 5, 'Medicine / Generic (Brand)', 1, 0, 'L');
-        $doc->Cell(25, 5, 'Strength', 1, 0, 'C');
-        $doc->Cell(18, 5, 'Qty', 1, 0, 'C');
-        $doc->Cell(49, 5, 'Instructions / Sig', 1, 1, 'L');
+        $doc->SetFillColor(248, 249, 250);
+        $doc->drawRow([
+            ['w' => 10, 'text' => '#', 'style' => 'B', 'size' => 8, 'align' => 'C', 'fill' => true],
+            ['w' => 64, 'text' => 'Medicine / Generic (Brand)', 'style' => 'B', 'size' => 8, 'fill' => true],
+            ['w' => 25, 'text' => 'Strength', 'style' => 'B', 'size' => 8, 'align' => 'C', 'fill' => true],
+            ['w' => 18, 'text' => 'Qty', 'style' => 'B', 'size' => 8, 'align' => 'C', 'fill' => true],
+            ['w' => 49, 'text' => 'Instructions / Sig', 'style' => 'B', 'size' => 8, 'fill' => true],
+        ], 4.0, 5.5);
 
-        $doc->SetFont('Arial', '', 8);
         $dispensing->loadMissing(['items.medicine']);
         $idx = 1;
         foreach ($dispensing->items as $item) {
             $med = $item->medicine;
             $medName = $med ? "{$med->generic_name} ({$med->brand_name})" : 'Medicine';
-            $strength = $med ? "{$med->strength} {$med->dosage_form}" : '—';
-            $qty = "{$item->quantity} {$med?->unit}";
-            $sig = $item->instructions ?: ($dispensing->instructions ?: 'Take as directed');
+            $strength = $med ? trim("{$med->strength} {$med->dosage_form}") : '—';
+            $qty = trim("{$item->quantity} {$med?->unit}");
+            $sig = $item->dosage_instruction ?: ($item->instructions ?: ($dispensing->instructions ?: 'Take as directed'));
 
-            $doc->Cell(10, 5, (string) $idx++, 1, 0, 'C');
-            $doc->Cell(64, 5, $doc->conv($medName), 1, 0, 'L');
-            $doc->Cell(25, 5, $doc->conv($strength), 1, 0, 'C');
-            $doc->Cell(18, 5, $doc->conv($qty), 1, 0, 'C');
-            $doc->Cell(49, 5, $doc->conv($sig), 1, 1, 'L');
+            $doc->drawRow([
+                ['w' => 10, 'text' => (string) $idx++, 'style' => '', 'size' => 8, 'align' => 'C'],
+                ['w' => 64, 'text' => $medName, 'style' => 'B', 'size' => 8],
+                ['w' => 25, 'text' => $strength ?: '—', 'style' => '', 'size' => 8, 'align' => 'C'],
+                ['w' => 18, 'text' => $qty, 'style' => 'B', 'size' => 8, 'align' => 'C'],
+                ['w' => 49, 'text' => (string) $sig, 'style' => '', 'size' => 8],
+            ], 4.0, 5.5);
         }
 
         $physicianName = $this->resolvePhysicianName($settings, $physician, $dispensing->clinician?->name);
@@ -894,27 +881,37 @@ class MedicalDocumentPdfService
         $doc->Cell(0, 5.5, 'PHYSICAL EXAMINATION SCREENING ROSTER', 0, 1, 'C');
         $doc->Ln(2);
 
-        $doc->SetFont('Arial', 'B', 9);
-        $doc->Cell(83, 5, 'Campaign: '.$doc->conv($schedule->title), 0, 0, 'L');
-        $doc->Cell(83, 5, 'Schedule No: '.$schedule->schedule_number, 0, 1, 'R');
+        $w = 166.0;
+        $doc->SetLineWidth(0.2);
 
         $dateFormatted = $schedule->scheduled_date->format('F d, Y');
         $timeWindow = "{$schedule->start_time} - {$schedule->end_time}";
-        $doc->SetFont('Arial', '', 8.5);
-        $doc->Cell(83, 4.5, "Date & Time: {$dateFormatted} ({$timeWindow})", 0, 0, 'L');
-        $doc->Cell(83, 4.5, $doc->conv("Venue: {$schedule->venue} | Capacity: {$schedule->capacity}"), 0, 1, 'R');
+
+        $doc->drawRow([
+            ['w' => 28, 'text' => 'Campaign:', 'style' => 'B', 'size' => 8.5],
+            ['w' => 76, 'text' => $schedule->title, 'style' => 'B', 'size' => 8.5],
+            ['w' => 26, 'text' => 'Schedule No:', 'style' => 'B', 'size' => 8.5],
+            ['w' => 36, 'text' => $schedule->schedule_number, 'style' => '', 'size' => 8.5],
+        ], 4.0, 5.5);
+
+        $doc->drawRow([
+            ['w' => 28, 'text' => 'Date & Time:', 'style' => 'B', 'size' => 8.5],
+            ['w' => 76, 'text' => "{$dateFormatted} ({$timeWindow})", 'style' => '', 'size' => 8.5],
+            ['w' => 26, 'text' => 'Venue / Cap:', 'style' => 'B', 'size' => 8.5],
+            ['w' => 36, 'text' => "{$schedule->venue} ({$schedule->capacity})", 'style' => '', 'size' => 8.5],
+        ], 4.0, 5.5);
         $doc->Ln(2);
 
-        $doc->SetFillColor(235, 238, 242);
-        $doc->SetFont('Arial', 'B', 8);
-        $doc->Cell(10, 5, '#', 1, 0, 'C', true);
-        $doc->Cell(60, 5, 'Patient Name', 1, 0, 'L', true);
-        $doc->Cell(34, 5, 'ID / Classification', 1, 0, 'L', true);
-        $doc->Cell(40, 5, 'College / Program', 1, 0, 'L', true);
-        $doc->Cell(22, 5, 'Status', 1, 1, 'C', true);
+        $doc->SetFillColor(242, 244, 247);
+        $doc->drawRow([
+            ['w' => 10, 'text' => '#', 'style' => 'B', 'size' => 8, 'align' => 'C', 'fill' => true],
+            ['w' => 58, 'text' => 'Patient Name', 'style' => 'B', 'size' => 8, 'fill' => true],
+            ['w' => 36, 'text' => 'ID / Classification', 'style' => 'B', 'size' => 8, 'fill' => true],
+            ['w' => 40, 'text' => 'College / Program', 'style' => 'B', 'size' => 8, 'fill' => true],
+            ['w' => 22, 'text' => 'Status', 'style' => 'B', 'size' => 8, 'align' => 'C', 'fill' => true],
+        ], 4.0, 5.5);
 
         $schedule->loadMissing(['attendees.patient.college', 'attendees.patient.program']);
-        $doc->SetFont('Arial', '', 8);
 
         $idx = 1;
         foreach ($schedule->attendees as $att) {
@@ -925,11 +922,13 @@ class MedicalDocumentPdfService
             $prog = ($p?->college?->code ?: '—').' / '.($p?->program?->code ?: '—');
             $status = ucfirst($att->status);
 
-            $doc->Cell(10, 4.5, (string) $idx++, 1, 0, 'C');
-            $doc->Cell(60, 4.5, $doc->conv($name), 1, 0, 'L');
-            $doc->Cell(34, 4.5, $doc->conv("{$id} ({$type})"), 1, 0, 'L');
-            $doc->Cell(40, 4.5, $doc->conv($prog), 1, 0, 'L');
-            $doc->Cell(22, 4.5, $status, 1, 1, 'C');
+            $doc->drawRow([
+                ['w' => 10, 'text' => (string) $idx++, 'style' => '', 'size' => 8, 'align' => 'C'],
+                ['w' => 58, 'text' => $name, 'style' => 'B', 'size' => 8],
+                ['w' => 36, 'text' => "{$id} ({$type})", 'style' => '', 'size' => 8],
+                ['w' => 40, 'text' => $prog, 'style' => '', 'size' => 8],
+                ['w' => 22, 'text' => $status, 'style' => '', 'size' => 8, 'align' => 'C'],
+            ], 4.0, 5.0);
         }
 
         $physicianName = $this->resolvePhysicianName($settings, $schedule->clinician);
@@ -957,104 +956,704 @@ class MedicalDocumentPdfService
         $doc->Cell(0, 4.5, 'Aggregated Health Services Statistics: '.($data['period']['label'] ?? ''), 0, 1, 'C');
         $doc->Ln(2);
 
-        $w = 170;
+        $w = 166.0;
+        $doc->SetLineWidth(0.2);
 
-        $doc->SetFont('Arial', 'B', 9);
-        $doc->SetFillColor(235, 238, 242);
-        $doc->Cell($w, 5, ' I. EXECUTIVE UTILIZATION SUMMARY', 1, 1, 'L', true);
+        $doc->drawSectionHeader('I. EXECUTIVE UTILIZATION SUMMARY', $w, 5.5);
 
-        $doc->SetFont('Arial', '', 8.5);
-        $doc->Cell(56, 5, 'Total Encounters / Visits:', 1, 0, 'L');
-        $doc->SetFont('Arial', 'B', 8.5);
-        $doc->Cell(29, 5, (string) ($data['summary']['total_visits'] ?? 0), 1, 0, 'C');
-        $doc->SetFont('Arial', '', 8.5);
-        $doc->Cell(56, 5, 'Unduplicated Patients Served:', 1, 0, 'L');
-        $doc->SetFont('Arial', 'B', 8.5);
-        $doc->Cell(29, 5, (string) ($data['summary']['unique_patients'] ?? 0), 1, 1, 'C');
+        $doc->drawRow([
+            ['w' => 54, 'text' => 'Total Encounters / Visits:', 'style' => 'B', 'size' => 8.5],
+            ['w' => 29, 'text' => number_format((int) ($data['summary']['total_visits'] ?? 0)), 'style' => 'B', 'size' => 8.5, 'align' => 'C'],
+            ['w' => 54, 'text' => 'Unduplicated Patients Served:', 'style' => 'B', 'size' => 8.5],
+            ['w' => 29, 'text' => number_format((int) ($data['summary']['unique_patients'] ?? 0)), 'style' => 'B', 'size' => 8.5, 'align' => 'C'],
+        ], 4.2, 5.5);
 
-        $doc->SetFont('Arial', '', 8.5);
-        $doc->Cell(56, 5, 'Total Medicines Dispensed:', 1, 0, 'L');
-        $doc->SetFont('Arial', 'B', 8.5);
-        $doc->Cell(29, 5, number_format($data['summary']['total_medicines_dispensed'] ?? 0).' units', 1, 0, 'C');
-        $doc->SetFont('Arial', '', 8.5);
-        $doc->Cell(56, 5, 'Reporting Period:', 1, 0, 'L');
-        $doc->SetFont('Arial', 'B', 8);
-        $doc->Cell(29, 5, $doc->conv($data['period']['label'] ?? 'All Time'), 1, 1, 'C');
+        $doc->drawRow([
+            ['w' => 54, 'text' => 'Total Medicines Dispensed:', 'style' => 'B', 'size' => 8.5],
+            ['w' => 29, 'text' => number_format((int) ($data['summary']['total_medicines_dispensed'] ?? 0)).' units', 'style' => 'B', 'size' => 8.5, 'align' => 'C'],
+            ['w' => 54, 'text' => 'Reporting Period:', 'style' => 'B', 'size' => 8.5],
+            ['w' => 29, 'text' => (string) ($data['period']['label'] ?? 'All Time'), 'style' => '', 'size' => 8, 'align' => 'C'],
+        ], 4.2, 5.5);
         $doc->Ln(2);
 
-        $doc->SetFont('Arial', 'B', 9);
-        $doc->Cell($w, 5, ' II. SERVICE ENCOUNTER BREAKDOWN', 1, 1, 'L', true);
-        $doc->SetFont('Arial', 'B', 8);
-        $doc->Cell(120, 5, 'Service / Consultation Category', 1, 0, 'L');
-        $doc->Cell(50, 5, 'Encounters Recorded', 1, 1, 'C');
-        $doc->SetFont('Arial', '', 8);
+        $doc->drawSectionHeader('II. SERVICE ENCOUNTER BREAKDOWN', $w, 5.5);
+        $doc->SetFillColor(248, 249, 250);
+        $doc->drawRow([
+            ['w' => 118, 'text' => 'Service / Consultation Category', 'style' => 'B', 'size' => 8, 'fill' => true],
+            ['w' => 48, 'text' => 'Encounters Recorded', 'style' => 'B', 'size' => 8, 'align' => 'C', 'fill' => true],
+        ], 4.0, 5.2);
+
         foreach ($data['service_distribution'] as $serv => $cnt) {
-            $doc->Cell(120, 4.5, $doc->conv($serv), 1, 0, 'L');
-            $doc->Cell(50, 4.5, (string) $cnt, 1, 1, 'C');
+            $doc->drawRow([
+                ['w' => 118, 'text' => (string) $serv, 'style' => '', 'size' => 8],
+                ['w' => 48, 'text' => number_format((int) $cnt), 'style' => 'B', 'size' => 8, 'align' => 'C'],
+            ], 4.0, 4.8);
         }
         $doc->Ln(2);
 
-        $doc->SetFont('Arial', 'B', 9);
-        $doc->Cell($w, 5, ' III. COMMUNICABLE & INFECTIOUS MORBIDITY (Leading Causes)', 1, 1, 'L', true);
-        $doc->SetFont('Arial', 'B', 8);
-        $doc->Cell(110, 5, 'Diagnosed Infectious / Respiratory Condition', 1, 0, 'L');
-        $doc->Cell(30, 5, 'Cases', 1, 0, 'C');
-        $doc->Cell(30, 5, '% Share', 1, 1, 'C');
-        $doc->SetFont('Arial', '', 8);
+        $doc->drawSectionHeader('III. COMMUNICABLE & INFECTIOUS MORBIDITY (Leading Causes)', $w, 5.5);
+        $doc->SetFillColor(248, 249, 250);
+        $doc->drawRow([
+            ['w' => 108, 'text' => 'Diagnosed Infectious / Respiratory Condition', 'style' => 'B', 'size' => 8, 'fill' => true],
+            ['w' => 29, 'text' => 'Cases', 'style' => 'B', 'size' => 8, 'align' => 'C', 'fill' => true],
+            ['w' => 29, 'text' => '% Share', 'style' => 'B', 'size' => 8, 'align' => 'C', 'fill' => true],
+        ], 4.0, 5.2);
+
         $commList = array_slice($data['morbidity']['communicable'] ?? [], 0, 7);
         if (empty($commList)) {
-            $doc->Cell($w, 4.5, 'No communicable conditions recorded in this period.', 1, 1, 'C');
+            $doc->drawRow([
+                ['w' => $w, 'text' => 'No communicable conditions recorded in this period.', 'style' => 'I', 'size' => 8, 'align' => 'C'],
+            ], 4.0, 5.0);
         } else {
             foreach ($commList as $item) {
-                $doc->Cell(110, 4.5, $doc->conv($item['name']), 1, 0, 'L');
-                $doc->Cell(30, 4.5, (string) $item['count'], 1, 0, 'C');
-                $doc->Cell(30, 4.5, $item['percentage'].'%', 1, 1, 'C');
+                $doc->drawRow([
+                    ['w' => 108, 'text' => (string) $item['name'], 'style' => '', 'size' => 8],
+                    ['w' => 29, 'text' => (string) $item['count'], 'style' => 'B', 'size' => 8, 'align' => 'C'],
+                    ['w' => 29, 'text' => $item['percentage'].'%', 'style' => '', 'size' => 8, 'align' => 'C'],
+                ], 4.0, 4.8);
             }
         }
         $doc->Ln(2);
 
-        $doc->SetFont('Arial', 'B', 9);
-        $doc->Cell($w, 5, ' IV. CHRONIC & NON-COMMUNICABLE CONDITIONS (Leading Causes)', 1, 1, 'L', true);
-        $doc->SetFont('Arial', 'B', 8);
-        $doc->Cell(110, 5, 'Diagnosed Non-Communicable Condition', 1, 0, 'L');
-        $doc->Cell(30, 5, 'Cases', 1, 0, 'C');
-        $doc->Cell(30, 5, '% Share', 1, 1, 'C');
-        $doc->SetFont('Arial', '', 8);
+        $doc->drawSectionHeader('IV. CHRONIC & NON-COMMUNICABLE CONDITIONS (Leading Causes)', $w, 5.5);
+        $doc->SetFillColor(248, 249, 250);
+        $doc->drawRow([
+            ['w' => 108, 'text' => 'Diagnosed Non-Communicable Condition', 'style' => 'B', 'size' => 8, 'fill' => true],
+            ['w' => 29, 'text' => 'Cases', 'style' => 'B', 'size' => 8, 'align' => 'C', 'fill' => true],
+            ['w' => 29, 'text' => '% Share', 'style' => 'B', 'size' => 8, 'align' => 'C', 'fill' => true],
+        ], 4.0, 5.2);
+
         $nonCommList = array_slice($data['morbidity']['non_communicable'] ?? [], 0, 7);
         if (empty($nonCommList)) {
-            $doc->Cell($w, 4.5, 'No non-communicable conditions recorded in this period.', 1, 1, 'C');
+            $doc->drawRow([
+                ['w' => $w, 'text' => 'No non-communicable conditions recorded in this period.', 'style' => 'I', 'size' => 8, 'align' => 'C'],
+            ], 4.0, 5.0);
         } else {
             foreach ($nonCommList as $item) {
-                $doc->Cell(110, 4.5, $doc->conv($item['name']), 1, 0, 'L');
-                $doc->Cell(30, 4.5, (string) $item['count'], 1, 0, 'C');
-                $doc->Cell(30, 4.5, $item['percentage'].'%', 1, 1, 'C');
+                $doc->drawRow([
+                    ['w' => 108, 'text' => (string) $item['name'], 'style' => '', 'size' => 8],
+                    ['w' => 29, 'text' => (string) $item['count'], 'style' => 'B', 'size' => 8, 'align' => 'C'],
+                    ['w' => 29, 'text' => $item['percentage'].'%', 'style' => '', 'size' => 8, 'align' => 'C'],
+                ], 4.0, 4.8);
             }
         }
         $doc->Ln(2);
 
-        $doc->SetFont('Arial', 'B', 9);
-        $doc->Cell($w, 5, ' V. TOP CHIEF COMPLAINTS ON PRESENTATION', 1, 1, 'L', true);
-        $doc->SetFont('Arial', 'B', 8);
-        $doc->Cell(110, 5, 'Reported Symptom / Reason for Visit', 1, 0, 'L');
-        $doc->Cell(30, 5, 'Visits', 1, 0, 'C');
-        $doc->Cell(30, 5, '% Share', 1, 1, 'C');
-        $doc->SetFont('Arial', '', 8);
+        $doc->drawSectionHeader('V. TOP CHIEF COMPLAINTS ON PRESENTATION', $w, 5.5);
+        $doc->SetFillColor(248, 249, 250);
+        $doc->drawRow([
+            ['w' => 108, 'text' => 'Reported Symptom / Reason for Visit', 'style' => 'B', 'size' => 8, 'fill' => true],
+            ['w' => 29, 'text' => 'Visits', 'style' => 'B', 'size' => 8, 'align' => 'C', 'fill' => true],
+            ['w' => 29, 'text' => '% Share', 'style' => 'B', 'size' => 8, 'align' => 'C', 'fill' => true],
+        ], 4.0, 5.2);
+
         $topComp = array_slice($data['complaints'] ?? [], 0, 5);
         if (empty($topComp)) {
-            $doc->Cell($w, 4.5, 'No chief complaints logged in this period.', 1, 1, 'C');
+            $doc->drawRow([
+                ['w' => $w, 'text' => 'No chief complaints logged in this period.', 'style' => 'I', 'size' => 8, 'align' => 'C'],
+            ], 4.0, 5.0);
         } else {
             foreach ($topComp as $comp) {
-                $doc->Cell(110, 4.5, $doc->conv($comp['name']), 1, 0, 'L');
-                $doc->Cell(30, 4.5, (string) $comp['count'], 1, 0, 'C');
-                $doc->Cell(30, 4.5, $comp['percentage'].'%', 1, 1, 'C');
+                $doc->drawRow([
+                    ['w' => 108, 'text' => (string) $comp['name'], 'style' => '', 'size' => 8],
+                    ['w' => 29, 'text' => (string) $comp['count'], 'style' => 'B', 'size' => 8, 'align' => 'C'],
+                    ['w' => 29, 'text' => $comp['percentage'].'%', 'style' => '', 'size' => 8, 'align' => 'C'],
+                ], 4.0, 4.8);
             }
         }
-        $doc->Ln(5);
 
         $physicianName = $this->resolvePhysicianName($settings);
         $license = $this->resolvePhysicianLicense($settings);
 
         $doc->drawHsdSignatureBlock($physicianName, 'Head, Health Services Department', $license, 122);
+
+        return $doc;
+    }
+
+    /**
+     * Generate Official Landscape PDF for Report 1: MEDICAL AND DENTAL RECORDS (Annual 12-Month Matrix).
+     *
+     * @param  array<string, mixed>  $matrix
+     * @param  array<string, mixed>  $settings
+     */
+    public function medicalAndDentalRecordsReport(array $matrix, array $settings): ClinicFpdf
+    {
+        $year = (int) ($matrix['year'] ?? now()->year);
+        $doc = new ClinicFpdf('L', 'mm', 'A4', $settings, '', "HSD REPORT - Medical and Dental Records ({$year})", true, 'two_rooms');
+        $doc->SetMargins(12, 12, 12);
+        $doc->SetAutoPageBreak(false);
+        $doc->AliasNbPages();
+        $doc->AddPage();
+
+        $doc->SetY(38);
+        $doc->SetFont('Arial', 'B', 12);
+        $doc->Cell(0, 5.0, 'MEDICAL AND DENTAL RECORDS', 0, 1, 'C');
+        $doc->SetFont('Arial', 'B', 11);
+        $doc->Cell(0, 4.8, (string) $year, 0, 1, 'C');
+        $doc->Ln(1.5);
+
+        $groups = $matrix['groups'] ?? [];
+        $totalDataRows = 0;
+        foreach ($groups as $g) {
+            $totalDataRows += count($g['rows'] ?? []);
+        }
+
+        $xStart = 12.0;
+        $yStart = $doc->GetY();
+        $wYear = 15.0;
+        $wGroup = 29.0;
+        $wCat = 30.0;
+        $wServices = $wGroup + $wCat;
+        $wMonth = 15.0;
+        $wTotal = 19.0;
+        $headerH = 7.8;
+
+        $availableBodyH = 175.0 - ($yStart + $headerH);
+        $rowH = min(5.4, max(3.8, $availableBodyH / max(1, $totalDataRows + 1)));
+        $cellTextOffsetY = max(0.5, ($rowH - 3.2) / 2);
+        $valFontSize = $rowH < 4.5 ? 6.8 : 7.5;
+
+        $doc->SetLineWidth(0.25);
+        $doc->SetFillColor(118, 146, 60);
+        $doc->SetFont('Arial', 'B', 7.5);
+
+        $doc->Rect($xStart, $yStart, $wYear, $headerH, 'DF');
+        $doc->SetXY($xStart, $yStart + 2.1);
+        $doc->Cell($wYear, 3.6, 'YEAR', 0, 0, 'C');
+
+        $doc->Rect($xStart + $wYear, $yStart, $wServices, $headerH, 'DF');
+        $doc->SetXY($xStart + $wYear, $yStart + 2.1);
+        $doc->Cell($wServices, 3.6, 'SERVICES', 0, 0, 'C');
+
+        $months = $matrix['months'] ?? [];
+        $curX = $xStart + $wYear + $wServices;
+        for ($m = 1; $m <= 12; $m++) {
+            $mLabel = (string) ($months[$m] ?? '');
+            $doc->Rect($curX, $yStart, $wMonth, $headerH, 'DF');
+            $doc->SetFont('Arial', 'B', strlen($mLabel) >= 9 ? 6.0 : 6.8);
+            $doc->SetXY($curX, $yStart + 2.1);
+            $doc->Cell($wMonth, 3.6, $mLabel, 0, 0, 'C');
+            $curX += $wMonth;
+        }
+
+        $doc->Rect($curX, $yStart, $wTotal, $headerH, 'DF');
+        $doc->SetFont('Arial', 'B', 6.5);
+        $doc->SetXY($curX, $yStart + 0.9);
+        $doc->MultiCell($wTotal, 3.0, "TOTAL FOR\nYEAR", 0, 'C');
+
+        $bodyStartY = $yStart + $headerH;
+        $yearColH = ($totalDataRows + 1) * $rowH;
+        $doc->SetFillColor(118, 146, 60);
+        $doc->Rect($xStart, $bodyStartY, $wYear, $yearColH, 'DF');
+        $doc->SetFont('Arial', 'B', 7.2);
+        $doc->SetXY($xStart, $bodyStartY + $yearColH - $rowH + $cellTextOffsetY);
+        $doc->Cell($wYear, 3.2, "{$year}.0", 0, 0, 'L');
+
+        $curY = $bodyStartY;
+        foreach ($groups as $g) {
+            $groupRows = $g['rows'] ?? [];
+            $groupCount = count($groupRows);
+            if ($groupCount === 0) {
+                continue;
+            }
+
+            $groupH = $groupCount * $rowH;
+            [$gr, $gg, $gb] = $this->resolveReportGroupRgb((string) ($g['color'] ?? 'slate'));
+
+            $doc->SetFillColor($gr, $gg, $gb);
+            $doc->Rect($xStart + $wYear, $curY, $wGroup, $groupH, 'DF');
+
+            $doc->SetFont('Arial', 'B', $rowH < 4.5 ? 6.4 : 6.8);
+            $groupText = $doc->conv((string) ($g['group'] ?? ''));
+            $gLines = $doc->nbLines($wGroup - 2.0, $groupText);
+            $gLineH = min(3.1, max(2.6, ($groupH - 0.8) / max(1, $gLines)));
+            $gTextH = $gLines * $gLineH;
+            $gOffsetY = max(0.4, ($groupH - $gTextH) / 2);
+            $doc->SetXY($xStart + $wYear + 1.0, $curY + $gOffsetY);
+            $doc->MultiCell($wGroup - 2.0, $gLineH, $groupText, 0, 'C');
+
+            foreach ($groupRows as $row) {
+                $doc->SetFillColor($gr, $gg, $gb);
+                $doc->Rect($xStart + $wYear + $wGroup, $curY, $wCat, $rowH, 'DF');
+                $labelLen = strlen((string) $row['label']);
+                $labelSize = $labelLen > 16 ? 5.8 : ($labelLen > 13 ? 6.2 : ($rowH < 4.5 ? 6.5 : 7.0));
+                $doc->SetFont('Arial', 'B', $labelSize);
+                $doc->SetXY($xStart + $wYear + $wGroup + 0.6, $curY + $cellTextOffsetY);
+                $doc->Cell($wCat - 1.2, 3.2, $doc->conv((string) $row['label']), 0, 0, 'C');
+
+                $mx = $xStart + $wYear + $wServices;
+                $doc->SetFont('Arial', 'B', $valFontSize);
+                for ($m = 1; $m <= 12; $m++) {
+                    $val = (int) ($row['months'][$m] ?? 0);
+                    $doc->Rect($mx, $curY, $wMonth, $rowH, 'D');
+                    $doc->SetXY($mx, $curY + $cellTextOffsetY);
+                    $doc->Cell($wMonth - 1.0, 3.2, (string) $val, 0, 0, 'R');
+                    $mx += $wMonth;
+                }
+
+                $doc->SetFillColor(245, 204, 38);
+                $doc->Rect($mx, $curY, $wTotal, $rowH, 'DF');
+                $doc->SetXY($mx, $curY + $cellTextOffsetY);
+                $doc->Cell($wTotal - 1.2, 3.2, (string) ($row['total'] ?? 0), 0, 0, 'R');
+
+                $curY += $rowH;
+            }
+        }
+
+        $doc->SetFillColor(118, 146, 60);
+        $doc->Rect($xStart + $wYear, $curY, $wServices, $rowH, 'DF');
+        $doc->SetFont('Arial', 'B', $rowH < 4.5 ? 6.8 : 7.2);
+        $doc->SetXY($xStart + $wYear, $curY + $cellTextOffsetY);
+        $doc->Cell($wServices, 3.2, 'TOTAL FOR THE MONTH', 0, 0, 'C');
+
+        $monthlyTotals = $matrix['monthly_totals'] ?? [];
+        $mx = $xStart + $wYear + $wServices;
+        $doc->SetFillColor(245, 204, 38);
+        $doc->SetFont('Arial', 'B', $valFontSize);
+        for ($m = 1; $m <= 12; $m++) {
+            $mSum = (int) ($monthlyTotals[$m] ?? 0);
+            $doc->Rect($mx, $curY, $wMonth, $rowH, 'DF');
+            $doc->SetXY($mx, $curY + $cellTextOffsetY);
+            $doc->Cell($wMonth - 1.0, 3.2, (string) $mSum, 0, 0, 'R');
+            $mx += $wMonth;
+        }
+
+        $doc->SetFillColor(148, 108, 30);
+        $doc->Rect($mx, $curY, $wTotal, $rowH, 'DF');
+        $doc->SetXY($mx, $curY + $cellTextOffsetY);
+        $doc->Cell($wTotal - 1.2, 3.2, (string) ($matrix['grand_total'] ?? 0), 0, 0, 'R');
+
+        $this->drawAnnualReportSignatories($doc, $settings, $xStart, $curY + $rowH + 4.5);
+
+        return $doc;
+    }
+
+    /**
+     * Generate Official Landscape PDF for Report 2: MEDICAL AND DENTAL LOG-IN RECORDS (Annual 12-Month Matrix).
+     *
+     * @param  array<string, mixed>  $loginData
+     * @param  array<string, mixed>  $settings
+     */
+    public function medicalAndDentalLoginRecordsReport(array $loginData, array $settings): ClinicFpdf
+    {
+        $year = (int) ($loginData['year'] ?? now()->year);
+        $doc = new ClinicFpdf('L', 'mm', 'A4', $settings, '', "HSD REPORT - Medical and Dental Log-In Records ({$year})", true, 'two_rooms');
+        $doc->SetMargins(12, 12, 12);
+        $doc->SetAutoPageBreak(false);
+        $doc->AliasNbPages();
+        $doc->AddPage();
+
+        $doc->SetY(38);
+        $doc->SetFont('Arial', 'B', 12);
+        $doc->Cell(0, 5.0, 'MEDICAL AND DENTAL LOG-IN RECORDS', 0, 1, 'C');
+        $doc->SetFont('Arial', 'B', 11);
+        $doc->Cell(0, 4.8, (string) $year, 0, 1, 'C');
+        $doc->Ln(2.0);
+
+        $rows = $loginData['rows'] ?? [];
+        $rowCount = count($rows);
+
+        $xStart = 12.0;
+        $yStart = $doc->GetY();
+        $wYear = 18.0;
+        $wGroup = 25.0;
+        $wCat = 32.0;
+        $wServices = $wGroup + $wCat;
+        $wMonth = 15.0;
+        $wTotal = 18.0;
+        $headerH = 8.0;
+
+        $availableBodyH = 175.0 - ($yStart + $headerH);
+        $rowH = min(6.2, max(4.0, $availableBodyH / max(1, $rowCount + 1)));
+        $cellTextOffsetY = max(0.6, ($rowH - 3.4) / 2);
+        $valFontSize = $rowH < 4.8 ? 7.2 : 7.8;
+
+        $doc->SetLineWidth(0.25);
+        $doc->SetFillColor(118, 146, 60);
+        $doc->SetFont('Arial', 'B', 7.5);
+
+        $doc->Rect($xStart, $yStart, $wYear, $headerH, 'DF');
+        $doc->SetXY($xStart, $yStart + 2.2);
+        $doc->Cell($wYear, 3.6, 'YEAR', 0, 0, 'C');
+
+        $doc->Rect($xStart + $wYear, $yStart, $wServices, $headerH, 'DF');
+        $doc->SetXY($xStart + $wYear, $yStart + 2.2);
+        $doc->Cell($wServices, 3.6, 'SERVICES', 0, 0, 'C');
+
+        $months = $loginData['months'] ?? [];
+        $curX = $xStart + $wYear + $wServices;
+        for ($m = 1; $m <= 12; $m++) {
+            $mLabel = (string) ($months[$m] ?? '');
+            $doc->Rect($curX, $yStart, $wMonth, $headerH, 'DF');
+            $doc->SetFont('Arial', 'B', strlen($mLabel) >= 9 ? 6.0 : 6.8);
+            $doc->SetXY($curX, $yStart + 2.2);
+            $doc->Cell($wMonth, 3.6, $mLabel, 0, 0, 'C');
+            $curX += $wMonth;
+        }
+
+        $doc->Rect($curX, $yStart, $wTotal, $headerH, 'DF');
+        $doc->SetFont('Arial', 'B', 6.5);
+        $doc->SetXY($curX, $yStart + 1.0);
+        $doc->MultiCell($wTotal, 3.0, "TOTAL FOR\nYEAR", 0, 'C');
+
+        $bodyStartY = $yStart + $headerH;
+
+        $yearColH = ($rowCount + 1) * $rowH;
+        $doc->SetFillColor(118, 146, 60);
+        $doc->Rect($xStart, $bodyStartY, $wYear, $yearColH, 'DF');
+        $doc->SetFont('Arial', 'B', 7.5);
+        $doc->SetXY($xStart + 0.5, $bodyStartY + $yearColH - $rowH + $cellTextOffsetY);
+        $doc->Cell($wYear - 1.0, 3.4, "{$year}.0", 0, 0, 'L');
+
+        $doc->SetFillColor(217, 172, 170);
+        $doc->Rect($xStart + $wYear, $bodyStartY, $wGroup, $rowCount * $rowH, 'DF');
+
+        $curY = $bodyStartY;
+        foreach ($rows as $row) {
+            $doc->SetFillColor(230, 184, 183);
+            $doc->Rect($xStart + $wYear + $wGroup, $curY, $wCat, $rowH, 'DF');
+            $labelLen = strlen((string) $row['label']);
+            $labelSize = $labelLen > 16 ? 6.0 : ($labelLen > 13 ? 6.4 : ($rowH < 4.8 ? 6.8 : 7.2));
+            $doc->SetFont('Arial', 'B', $labelSize);
+            $doc->SetXY($xStart + $wYear + $wGroup + 0.8, $curY + $cellTextOffsetY);
+            $doc->Cell($wCat - 1.6, 3.4, $doc->conv((string) $row['label']), 0, 0, 'C');
+
+            $mx = $xStart + $wYear + $wServices;
+            $doc->SetFont('Arial', 'B', $valFontSize);
+            for ($m = 1; $m <= 12; $m++) {
+                $val = (int) ($row['months'][$m] ?? 0);
+                $doc->Rect($mx, $curY, $wMonth, $rowH, 'D');
+                $doc->SetXY($mx, $curY + $cellTextOffsetY);
+                $doc->Cell($wMonth, 3.4, (string) $val, 0, 0, 'C');
+                $mx += $wMonth;
+            }
+
+            $doc->SetFillColor(245, 204, 38);
+            $doc->Rect($mx, $curY, $wTotal, $rowH, 'DF');
+            $doc->SetXY($mx, $curY + $cellTextOffsetY);
+            $doc->Cell($wTotal, 3.4, (string) ($row['total'] ?? 0), 0, 0, 'C');
+
+            $curY += $rowH;
+        }
+
+        $doc->SetFillColor(118, 146, 60);
+        $doc->Rect($xStart + $wYear, $curY, $wServices, $rowH, 'DF');
+        $doc->SetFont('Arial', 'B', 7.2);
+        $doc->SetXY($xStart + $wYear, $curY + $cellTextOffsetY);
+        $doc->Cell($wServices, 3.4, 'TOTAL FOR THE MONTH', 0, 0, 'C');
+
+        $monthlyTotals = $loginData['monthly_totals'] ?? [];
+        $mx = $xStart + $wYear + $wServices;
+        $doc->SetFillColor(245, 204, 38);
+        $doc->SetFont('Arial', 'B', $valFontSize);
+        for ($m = 1; $m <= 12; $m++) {
+            $mSum = (int) ($monthlyTotals[$m] ?? 0);
+            $doc->Rect($mx, $curY, $wMonth, $rowH, 'DF');
+            $doc->SetXY($mx, $curY + $cellTextOffsetY);
+            $doc->Cell($wMonth, 3.4, (string) $mSum, 0, 0, 'C');
+            $mx += $wMonth;
+        }
+
+        $doc->SetFillColor(148, 108, 30);
+        $doc->Rect($mx, $curY, $wTotal, $rowH, 'DF');
+        $doc->SetXY($mx, $curY + $cellTextOffsetY);
+        $doc->Cell($wTotal, 3.4, (string) ($loginData['grand_total'] ?? 0), 0, 0, 'C');
+
+        $this->drawAnnualReportSignatories($doc, $settings, $xStart + 6.0, $curY + $rowH + 5.0);
+
+        return $doc;
+    }
+
+    /**
+     * @return array{0: int, 1: int, 2: int}
+     */
+    protected function resolveReportGroupRgb(string $colorKey): array
+    {
+        return match ($colorKey) {
+            'blue' => [218, 238, 243],
+            'pink' => [230, 184, 183],
+            'peach' => [252, 213, 180],
+            'slate' => [184, 180, 196],
+            'rose' => [242, 220, 219],
+            default => [235, 238, 242],
+        };
+    }
+
+    /**
+     * @param  array<string, mixed>  $settings
+     */
+    protected function drawAnnualReportSignatories(ClinicFpdf $doc, array $settings, float $x, float $y): void
+    {
+        $nurse = Clinician::where('type', 'Nurse')->where('is_active', true)->first();
+        $doctor = Clinician::where('type', 'Doctor')->where('is_active', true)->first();
+
+        $nurseName = $nurse?->name ?: 'KIEN I. IGUP, RN';
+        $nurseTitle = $nurse?->title ?: 'School Nurse';
+
+        $doctorName = ! empty($settings['clinic_head'])
+            ? (string) $settings['clinic_head']
+            : ($doctor?->name ?: 'DR. VICENTE S. QUIMPO, MD');
+        $doctorTitle = $doctor?->title ?: 'School Physician';
+        $doctorLicense = ! empty($settings['clinic_license_no'])
+            ? (string) $settings['clinic_license_no']
+            : ($doctor?->license_number ?: '0052551');
+
+        $doc->SetXY($x, $y);
+        $doc->SetFont('Arial', 'B', 8.5);
+        $doc->Cell(65, 4.2, 'Prepared by:', 0, 0, 'L');
+        $doc->SetX($x + 95);
+        $doc->Cell(75, 4.2, 'Noted by:', 0, 1, 'L');
+
+        $sigY = $y + 11.0;
+        $doc->SetXY($x, $sigY);
+        $doc->SetFont('Arial', 'B', 9.0);
+        $doc->Cell(65, 4.2, $doc->conv(strtoupper($nurseName)), 0, 0, 'L');
+
+        $doc->SetX($x + 95);
+        $doc->Cell(75, 4.2, $doc->conv(strtoupper($doctorName)), 0, 1, 'L');
+
+        $doc->SetXY($x, $sigY + 4.2);
+        $doc->SetFont('Arial', 'B', 8.0);
+        $doc->Cell(65, 3.8, $doc->conv($nurseTitle), 0, 0, 'L');
+
+        $doc->SetX($x + 95);
+        $doc->Cell(75, 3.8, $doc->conv($doctorTitle.' (Lic. No. '.$doctorLicense.')'), 0, 1, 'L');
+    }
+
+    /**
+     * Generate Official Portrait PDF for Report 3: COMMUNICABLE DISEASES DATA (Horizontal Bar Chart).
+     *
+     * @param  array<string, mixed>  $chartData
+     * @param  array<string, mixed>  $settings
+     */
+    public function communicableDiseasesReport(array $chartData, array $settings): ClinicFpdf
+    {
+        $year = (int) ($chartData['year'] ?? now()->year);
+        $doc = new ClinicFpdf('P', 'mm', 'A4', $settings, '', "HSD REPORT - Communicable Diseases ({$year})", true, 'two_rooms');
+        $doc->SetMargins(14, 14, 14);
+        $doc->SetAutoPageBreak(false);
+        $doc->AliasNbPages();
+        $doc->AddPage();
+
+        $doc->SetY(44);
+
+        $boxX = 15.0;
+        $boxY = 46.0;
+        $boxW = 180.0;
+        $boxH = 190.0;
+
+        $doc->SetDrawColor(215, 220, 228);
+        $doc->SetLineWidth(0.25);
+        $doc->Rect($boxX, $boxY, $boxW, $boxH, 'D');
+
+        $title = (string) ($chartData['title'] ?? "COMMUNICABLE DISEASES {$year} DATA");
+        $doc->SetTextColor(25, 25, 25);
+        $doc->SetFont('Arial', 'B', 12.5);
+        $doc->SetXY($boxX, $boxY + 6.0);
+        $doc->Cell($boxW, 6.0, $doc->conv($title), 0, 1, 'C');
+
+        $items = $chartData['items'] ?? [];
+        $itemCount = max(1, count($items));
+
+        $chartLeftX = $boxX + 87.0;
+        $chartRightX = $boxX + $boxW - 10.0;
+        $chartW = $chartRightX - $chartLeftX;
+        $chartTopY = $boxY + 18.0;
+        $chartBottomY = $boxY + 148.0;
+        $chartH = $chartBottomY - $chartTopY;
+
+        $maxVal = 0;
+        foreach ($items as $it) {
+            $maxVal = max($maxVal, (int) ($it['count'] ?? 0));
+        }
+        $step = $maxVal > 50 ? 10 : 5;
+        $maxScale = max(20, (int) ceil(($maxVal + $step) / $step) * $step);
+        $tickCount = (int) round($maxScale / $step);
+
+        $doc->SetDrawColor(225, 229, 235);
+        $doc->SetLineWidth(0.2);
+        $doc->SetFont('Arial', 'B', 7.5);
+        $doc->SetTextColor(40, 40, 40);
+
+        for ($t = 0; $t <= $tickCount; $t++) {
+            $val = $t * $step;
+            $tx = $chartLeftX + ($val / $maxScale) * $chartW;
+            $doc->Line($tx, $chartTopY, $tx, $chartBottomY);
+            $doc->SetXY($tx - 4.0, $chartBottomY + 2.0);
+            $doc->Cell(8.0, 4.0, (string) $val, 0, 0, 'C');
+        }
+
+        $doc->SetDrawColor(190, 196, 205);
+        $doc->Line($chartLeftX, $chartTopY, $chartLeftX, $chartBottomY);
+
+        $slotH = $chartH / $itemCount;
+        $barH = min(16.0, $slotH * 0.42);
+        $labelMaxW = $chartLeftX - ($boxX + 4.0) - 3.0;
+
+        foreach ($items as $idx => $item) {
+            $label = (string) ($item['label'] ?? '');
+            $count = (int) ($item['count'] ?? 0);
+            $centerY = $chartTopY + ($idx + 0.5) * $slotH;
+            $barY = $centerY - ($barH / 2);
+
+            $doc->SetFont('Arial', 'B', 7.2);
+            $doc->SetTextColor(30, 30, 30);
+            $lines = $doc->nbLines($labelMaxW, $doc->conv($label));
+            $lineH = 3.5;
+            $lblY = $centerY - (($lines * $lineH) / 2);
+            $doc->SetXY($boxX + 4.0, $lblY);
+            $doc->MultiCell($labelMaxW, $lineH, $doc->conv($label), 0, 'R');
+
+            if ($count > 0) {
+                $barW = max(2.2, ($count / $maxScale) * $chartW);
+                $doc->SetFillColor(108, 164, 16);
+                $doc->SetDrawColor(45, 75, 10);
+                $doc->SetLineWidth(0.35);
+                $doc->Rect($chartLeftX, $barY, $barW, $barH, 'DF');
+
+                $doc->SetFont('Arial', 'B', 7.5);
+                if ($barW >= 8.0) {
+                    $doc->SetTextColor(255, 255, 255);
+                    $doc->SetXY($chartLeftX + $barW - 7.5, $centerY - 2.0);
+                    $doc->Cell(6.0, 4.0, (string) $count, 0, 0, 'R');
+                } else {
+                    $doc->SetTextColor(30, 30, 30);
+                    $doc->SetXY($chartLeftX + $barW + 1.5, $centerY - 2.0);
+                    $doc->Cell(8.0, 4.0, (string) $count, 0, 0, 'L');
+                }
+            }
+        }
+
+        $legendY = $chartBottomY + 11.0;
+        $legendX = $boxX + 40.0;
+        $reversedItems = array_reverse($items);
+        foreach ($reversedItems as $item) {
+            $doc->SetFillColor(108, 164, 16);
+            $doc->SetDrawColor(45, 75, 10);
+            $doc->SetLineWidth(0.25);
+            $doc->Rect($legendX, $legendY + 0.8, 2.6, 2.6, 'DF');
+
+            $doc->SetFont('Arial', 'B', 8.5);
+            $doc->SetTextColor(30, 30, 30);
+            $doc->SetXY($legendX + 4.0, $legendY);
+            $doc->Cell(125.0, 4.2, $doc->conv((string) ($item['label'] ?? '')), 0, 1, 'L');
+            $legendY += 6.2;
+        }
+
+        $doc->SetTextColor(0, 0, 0);
+        $this->drawAnnualReportSignatories($doc, $settings, 22.0, $boxY + $boxH + 7.0);
+
+        return $doc;
+    }
+
+    /**
+     * Generate Official Portrait PDF for Report 4: NON-COMMUNICABLE DISEASES DATA (Horizontal Bar Chart).
+     *
+     * @param  array<string, mixed>  $chartData
+     * @param  array<string, mixed>  $settings
+     */
+    public function nonCommunicableDiseasesReport(array $chartData, array $settings): ClinicFpdf
+    {
+        $year = (int) ($chartData['year'] ?? now()->year);
+        $doc = new ClinicFpdf('P', 'mm', 'A4', $settings, '', "HSD REPORT - Non-Communicable Diseases ({$year})", true, 'two_rooms');
+        $doc->SetMargins(14, 14, 14);
+        $doc->SetAutoPageBreak(false);
+        $doc->AliasNbPages();
+        $doc->AddPage();
+
+        $doc->SetXY(15.0, 42.0);
+        $doc->SetFont('Arial', 'B', 8.5);
+        $doc->SetTextColor(25, 25, 25);
+        $doc->Cell(100.0, 4.5, 'NON- COMMUNICABLE DISEASES', 0, 1, 'L');
+
+        $boxX = 15.0;
+        $boxY = 48.0;
+        $boxW = 180.0;
+        $boxH = 192.0;
+
+        $doc->SetDrawColor(215, 220, 228);
+        $doc->SetLineWidth(0.25);
+        $doc->Rect($boxX, $boxY, $boxW, $boxH, 'D');
+
+        $title = (string) ($chartData['title'] ?? "NON- COMMUNICABLE DISEASES {$year} DATA");
+        $doc->SetFont('Arial', 'B', 12.5);
+        $doc->SetXY($boxX, $boxY + 5.0);
+        $doc->Cell($boxW, 6.0, $doc->conv($title), 0, 1, 'C');
+
+        $items = $chartData['items'] ?? [];
+        $itemCount = max(1, count($items));
+
+        $chartLeftX = $boxX + 87.0;
+        $chartRightX = $boxX + $boxW - 10.0;
+        $chartW = $chartRightX - $chartLeftX;
+        $chartTopY = $boxY + 15.0;
+        $chartBottomY = $boxY + $boxH - 12.0;
+        $chartH = $chartBottomY - $chartTopY;
+
+        $maxVal = 0;
+        foreach ($items as $it) {
+            $maxVal = max($maxVal, (int) ($it['count'] ?? 0));
+        }
+        $step = $maxVal > 24 ? ($maxVal > 60 ? 10 : 5) : 2;
+        $maxScale = max(16, (int) ceil(($maxVal + $step) / $step) * $step);
+        $tickCount = (int) round($maxScale / $step);
+
+        $doc->SetDrawColor(225, 229, 235);
+        $doc->SetLineWidth(0.2);
+        $doc->SetFont('Arial', 'B', 7.5);
+        $doc->SetTextColor(40, 40, 40);
+
+        for ($t = 0; $t <= $tickCount; $t++) {
+            $val = $t * $step;
+            $tx = $chartLeftX + ($val / $maxScale) * $chartW;
+            $doc->Line($tx, $chartTopY, $tx, $chartBottomY);
+            $doc->SetXY($tx - 4.0, $chartBottomY + 2.0);
+            $doc->Cell(8.0, 4.0, (string) $val, 0, 0, 'C');
+        }
+
+        $doc->SetDrawColor(190, 196, 205);
+        $doc->Line($chartLeftX, $chartTopY, $chartLeftX, $chartBottomY);
+
+        $slotH = $chartH / $itemCount;
+        $barH = min(8.2, $slotH * 0.56);
+        $labelMaxW = $chartLeftX - ($boxX + 3.0) - 3.0;
+
+        foreach ($items as $idx => $item) {
+            $label = (string) ($item['label'] ?? '');
+            $count = (int) ($item['count'] ?? 0);
+            $centerY = $chartTopY + ($idx + 0.5) * $slotH;
+            $barY = $centerY - ($barH / 2);
+
+            $doc->SetFont('Arial', 'B', 6.8);
+            $doc->SetTextColor(30, 30, 30);
+            $lines = $doc->nbLines($labelMaxW, $doc->conv($label));
+            $lineH = 3.1;
+            $lblY = $centerY - (($lines * $lineH) / 2);
+            $doc->SetXY($boxX + 3.0, $lblY);
+            $doc->MultiCell($labelMaxW, $lineH, $doc->conv($label), 0, 'C');
+
+            if ($count > 0) {
+                $barW = max(3.5, ($count / $maxScale) * $chartW);
+                $doc->SetFillColor(48, 108, 172);
+                $doc->SetDrawColor(22, 52, 92);
+                $doc->SetLineWidth(0.35);
+                $doc->Rect($chartLeftX, $barY, $barW, $barH, 'DF');
+
+                $doc->SetFont('Arial', 'B', 7.2);
+                if ($barW >= 6.5) {
+                    $doc->SetTextColor(255, 255, 255);
+                    $doc->SetXY($chartLeftX + $barW - 6.2, $centerY - 1.8);
+                    $doc->Cell(5.0, 3.6, (string) $count, 0, 0, 'R');
+                } else {
+                    $doc->SetTextColor(30, 30, 30);
+                    $doc->SetXY($chartLeftX + $barW + 1.2, $centerY - 1.8);
+                    $doc->Cell(7.0, 3.6, (string) $count, 0, 0, 'L');
+                }
+            }
+        }
+
+        $doc->SetTextColor(0, 0, 0);
+        $this->drawAnnualReportSignatories($doc, $settings, 22.0, $boxY + $boxH + 6.0);
 
         return $doc;
     }

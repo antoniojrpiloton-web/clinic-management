@@ -113,10 +113,10 @@
         <tr>
             <td class="fw-bold">Academic Unit:</td>
             <td>
-                @if ($patient->type === 'student' && $patient->studentProfile)
-                    {{ $patient->studentProfile->college->code ?? '' }} - {{ $patient->studentProfile->program->code ?? '' }} ({{ $patient->studentProfile->year_level }})
-                @elseif ($patient->type === 'employee' && $patient->employeeProfile)
-                    {{ $patient->employeeProfile->position }} - {{ $patient->employeeProfile->office_department }}
+                @if ($patient->type === 'student')
+                    {{ $patient->college?->code ?? '' }} - {{ $patient->program?->code ?? '' }} ({{ $patient->year_level ?? '—' }})
+                @elseif ($patient->type === 'employee')
+                    {{ $patient->position ?? 'Staff' }} - {{ $patient->office_department ?? 'University' }}
                 @else
                     General Patient
                 @endif

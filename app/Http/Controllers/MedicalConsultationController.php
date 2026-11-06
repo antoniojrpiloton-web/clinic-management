@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ClinicVisit;
+use App\Models\DiseaseCategory;
 use Illuminate\Http\Request;
 
 class MedicalConsultationController extends ClinicRecordController
@@ -22,9 +23,21 @@ class MedicalConsultationController extends ClinicRecordController
         return 'medicalConsultation';
     }
 
+    protected function formOptions(): array
+    {
+        return [
+            'diseaseCategories' => DiseaseCategory::active()
+                ->orderBy('classification')
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get(),
+        ];
+    }
+
     protected function detailRules(): array
     {
         return [
+            'disease_category_id' => ['nullable', 'exists:disease_categories,id'],
             'history_of_present_illness' => ['nullable', 'string', 'max:5000'],
             'physical_findings' => ['nullable', 'string', 'max:5000'],
             'diagnosis' => ['required', 'string', 'max:2000'],
@@ -42,7 +55,13 @@ class MedicalConsultationController extends ClinicRecordController
 
     protected function detailData(array $validated, Request $request): array
     {
+        $diseaseCategoryId = $validated['disease_category_id'] ?? null;
+        if (! $diseaseCategoryId && ! empty($validated['diagnosis'])) {
+            $diseaseCategoryId = $this->resolveDiseaseCategoryFromDiagnosis((string) $validated['diagnosis']);
+        }
+
         return [
+            'disease_category_id' => $diseaseCategoryId,
             'history_of_present_illness' => $validated['history_of_present_illness'] ?? null,
             'physical_findings' => $validated['physical_findings'] ?? null,
             'diagnosis' => $validated['diagnosis'],
@@ -56,5 +75,24 @@ class MedicalConsultationController extends ClinicRecordController
             'referral_reason' => $validated['referral_reason'] ?? null,
             'follow_up_date' => $validated['follow_up_date'] ?? null,
         ];
+    }
+
+    protected function resolveDiseaseCategoryFromDiagnosis(string $diagnosis): ?int
+    {
+        $lower = strtolower($diagnosis);
+        $categories = DiseaseCategory::active()->orderBy('sort_order')->get();
+
+        foreach ($categories as $cat) {
+            if (strtolower($cat->name) === $lower) {
+                return $cat->id;
+            }
+            foreach ($cat->keywordList() as $kw) {
+                if ($kw !== '' && str_contains($lower, $kw)) {
+                    return $cat->id;
+                }
+            }
+        }
+
+        return null;
     }
 }

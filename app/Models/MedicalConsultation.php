@@ -12,6 +12,7 @@ class MedicalConsultation extends Model
 
     protected $fillable = [
         'clinic_visit_id',
+        'disease_category_id',
         'history_of_present_illness',
         'physical_findings',
         'diagnosis',
@@ -37,5 +38,10 @@ class MedicalConsultation extends Model
     public function visit(): BelongsTo
     {
         return $this->belongsTo(ClinicVisit::class, 'clinic_visit_id');
+    }
+
+    public function diseaseCategory(): BelongsTo
+    {
+        return $this->belongsTo(DiseaseCategory::class, 'disease_category_id');
     }
 }

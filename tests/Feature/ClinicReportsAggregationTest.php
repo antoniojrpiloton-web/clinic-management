@@ -87,4 +87,24 @@ class ClinicReportsAggregationTest extends TestCase
         $response->assertOk();
         $response->assertHeader('Content-Type', 'application/pdf');
     }
+
+    public function test_clinic_report_ajax_request_returns_json_partial_and_pdf_url(): void
+    {
+        $response = $this->actingAs($this->admin)
+            ->getJson(route('reports.clinic.index', [
+                'date_from' => '2026-01-01',
+                'date_to' => '2026-11-06',
+            ]));
+
+        $response->assertOk()
+            ->assertJsonStructure([
+                'html',
+                'pdf_url',
+                'summary' => [
+                    'total_visits',
+                    'unique_patients',
+                    'total_medicines_dispensed',
+                ],
+            ]);
+    }
 }

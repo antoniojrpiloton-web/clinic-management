@@ -117,10 +117,17 @@ class ClinicianController extends Controller implements HasMiddleware
                 ->make(true);
         }
 
-        $totalCount = Clinician::count();
-        $doctorsCount = Clinician::where('type', 'Doctor')->count();
-        $nursesCount = Clinician::where('type', 'Nurse')->count();
-        $dentistsCount = Clinician::where('type', 'Dentist')->count();
+        $agg = Clinician::query()
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw("SUM(CASE WHEN type = 'Doctor' THEN 1 ELSE 0 END) as doctors")
+            ->selectRaw("SUM(CASE WHEN type = 'Nurse' THEN 1 ELSE 0 END) as nurses")
+            ->selectRaw("SUM(CASE WHEN type = 'Dentist' THEN 1 ELSE 0 END) as dentists")
+            ->first();
+
+        $totalCount = (int) ($agg?->total ?? 0);
+        $doctorsCount = (int) ($agg?->doctors ?? 0);
+        $nursesCount = (int) ($agg?->nurses ?? 0);
+        $dentistsCount = (int) ($agg?->dentists ?? 0);
 
         return view('clinicians.index', compact('totalCount', 'doctorsCount', 'nursesCount', 'dentistsCount'));
     }

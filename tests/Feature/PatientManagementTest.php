@@ -29,6 +29,16 @@ class PatientManagementTest extends TestCase
         $response = $this->actingAs($admin)->get(route('patients.index'));
         $response->assertOk();
 
+        $ajaxResponse = $this->actingAs($admin)->getJson(route('patients.index', [
+            'draw' => 1,
+            'start' => 0,
+            'length' => 25,
+        ]), [
+            'X-Requested-With' => 'XMLHttpRequest',
+        ]);
+        $ajaxResponse->assertOk()
+            ->assertJsonStructure(['data', 'recordsTotal', 'recordsFiltered']);
+
         $createResponse = $this->actingAs($admin)->post(route('students.store'), [
             'student_id' => '2025-99887',
             'college_id' => $college->id,

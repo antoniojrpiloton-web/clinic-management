@@ -43,6 +43,50 @@ class DashboardAnalyticsTest extends TestCase
         $response->assertViewHasAll(['stats', 'charts', 'recentVisits', 'recentDispensings']);
     }
 
+    public function test_dashboard_ajax_metrics_endpoint_returns_json_payload(): void
+    {
+        $response = $this->actingAs($this->admin)->getJson(route('dashboard.metrics'));
+
+        $response->assertOk();
+        $response->assertJsonStructure([
+            'stats' => [
+                'total_visits',
+                'total_patients',
+                'total_pe',
+                'medicines_dispensed',
+                'medical_consultations_count',
+                'dental_consultations_count',
+                'emergency_records_count',
+                'first_aid_records_count',
+            ],
+            'charts' => [
+                'monthly_utilization',
+                'classification_breakdown',
+                'services_breakdown',
+                'top_complaints',
+                'disease_classification',
+                'top_medicines',
+                'pe_fitness_breakdown',
+                'college_utilization',
+            ],
+            'sections' => [
+                'alerts',
+                'communicable',
+                'non_communicable',
+                'recent_visits',
+                'recent_pe',
+                'upcoming_schedules',
+                'recent_dispensings',
+                'recent_medical',
+                'recent_dental',
+                'recent_emergency',
+                'recent_first_aid',
+                'recent_audit',
+            ],
+            'generated_at',
+        ]);
+    }
+
     public function test_dashboard_analytics_service_calculates_correct_stats(): void
     {
         $patient = Patient::create([

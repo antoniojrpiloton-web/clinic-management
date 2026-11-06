@@ -13,6 +13,8 @@ use App\Services\AuditLogger;
 use App\Services\Pdf\MedicalDocumentPdfService;
 use App\Services\SettingService;
 use App\Support\IdObfuscator;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -20,6 +22,7 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use Yajra\DataTables\Facades\DataTables;
 
 class MedicineDispensingController extends Controller implements HasMiddleware
 {
@@ -33,32 +36,96 @@ class MedicineDispensingController extends Controller implements HasMiddleware
         ];
     }
 
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
         $search = $request->query('search');
+        $dateFrom = $request->query('date_from');
+        $dateTo = $request->query('date_to');
 
-        $query = MedicineDispensing::query()
-            ->with(['patient', 'clinician', 'dispenser', 'items.medicine'])
-            ->when($search, function ($q, $term) {
-                $q->where('dispensing_number', 'like', "%{$term}%")
-                    ->orWhere('diagnosis', 'like', "%{$term}%")
-                    ->orWhereHas('patient', function ($p) use ($term) {
-                        $p->where('first_name', 'like', "%{$term}%")
-                            ->orWhere('last_name', 'like', "%{$term}%")
-                            ->orWhere('school_id_number', 'like', "%{$term}%");
-                    });
-            })
-            ->latest('dispensed_date');
+        if ($request->ajax()) {
+            $query = MedicineDispensing::query()
+                ->with(['patient:id,first_name,middle_name,last_name,suffix,type,school_id_number', 'clinician:id,name,title', 'dispenser:id,name'])
+                ->when($dateFrom, fn (Builder $q) => $q->whereDate('dispensed_date', '>=', $dateFrom))
+                ->when($dateTo, fn (Builder $q) => $q->whereDate('dispensed_date', '<=', $dateTo))
+                ->latest('dispensed_date');
 
-        $dispensings = $query->paginate(15)->withQueryString();
+            return DataTables::eloquent($query)
+                ->filter(function (Builder $q) use ($request): void {
+                    $term = $request->input('custom_search') ?: $request->input('search.value');
+                    if (is_string($term) && trim($term) !== '') {
+                        $term = trim($term);
+                        $q->where(function (Builder $inner) use ($term): void {
+                            $inner->where('dispensing_number', 'like', "%{$term}%")
+                                ->orWhere('diagnosis', 'like', "%{$term}%")
+                                ->orWhereHas('patient', fn (Builder $p) => $p->search($term));
+                        });
+                    }
+                })
+                ->addColumn('slip_col', function (MedicineDispensing $d): string {
+                    $url = route('inventory.dispensings.show', $d);
+                    $num = e($d->dispensing_number);
+
+                    return "<a href=\"{$url}\" class=\"font-monospace fw-bold text-dark text-decoration-none\">{$num}</a>";
+                })
+                ->addColumn('date_col', fn (MedicineDispensing $d): string => '<span class="small text-muted">'.($d->dispensed_date ? e($d->dispensed_date->format('M d, Y')) : 'N/A').'</span>')
+                ->addColumn('patient_col', function (MedicineDispensing $d): string {
+                    $p = $d->patient;
+                    if (! $p) {
+                        return '<span class="text-muted">N/A</span>';
+                    }
+                    $url = route('patients.show', $p);
+                    $name = e($p->full_name);
+                    $sub = e($p->primary_identifier.' • '.ucfirst($p->type));
+
+                    return "<div><a href=\"{$url}\" class=\"fw-bold text-dark text-decoration-none\">{$name}</a></div><small class=\"text-muted\">{$sub}</small>";
+                })
+                ->addColumn('clinician_col', function (MedicineDispensing $d): string {
+                    if ($d->clinician) {
+                        return '<span class="fw-medium text-dark">'.e($d->clinician->name).'</span><small class="text-muted d-block">'.e($d->clinician->title).'</small>';
+                    }
+
+                    return '<span class="text-muted">Direct / OTC</span>';
+                })
+                ->addColumn('items_col', fn (MedicineDispensing $d): string => '<span class="badge badge-soft-blue">'.(int) $d->total_items.' items</span>')
+                ->addColumn('diagnosis_col', function (MedicineDispensing $d): string {
+                    $diag = e($d->diagnosis ?: 'N/A');
+
+                    return "<span class=\"small text-truncate d-inline-block\" style=\"max-width: 220px;\" title=\"{$diag}\">{$diag}</span>";
+                })
+                ->addColumn('dispenser_col', fn (MedicineDispensing $d): string => '<span class="small text-muted">'.e($d->dispenser?->name ?? 'System').'</span>')
+                ->addColumn('actions', function (MedicineDispensing $d): string {
+                    $showUrl = route('inventory.dispensings.show', $d);
+                    $printUrl = route('inventory.dispensings.print', $d);
+
+                    return "<div class=\"d-flex align-items-center justify-content-end gap-1\">
+                        <a href=\"{$showUrl}\" class=\"btn btn-sm btn-light border p-1 px-2\" title=\"View Details\">
+                            <i class=\"bi bi-eye\"></i>
+                        </a>
+                        <a href=\"{$printUrl}\" target=\"_blank\" class=\"btn btn-sm btn-light border p-1 px-2 text-primary\" title=\"Print Dispensing Slip\">
+                            <i class=\"bi bi-printer\"></i>
+                        </a>
+                    </div>";
+                })
+                ->orderColumn('slip_col', 'dispensing_number $1')
+                ->orderColumn('date_col', 'dispensed_date $1')
+                ->orderColumn('items_col', 'total_items $1')
+                ->rawColumns(['slip_col', 'date_col', 'patient_col', 'clinician_col', 'items_col', 'diagnosis_col', 'dispenser_col', 'actions'])
+                ->make(true);
+        }
+
+        $todayDate = now()->toDateString();
+        $agg = MedicineDispensing::query()
+            ->selectRaw('COUNT(*) as total_dispensed')
+            ->selectRaw('SUM(CASE WHEN dispensed_date = ? THEN 1 ELSE 0 END) as today_dispensed', [$todayDate])
+            ->first();
 
         $stats = [
-            'total_dispensed' => MedicineDispensing::count(),
-            'today_dispensed' => MedicineDispensing::whereDate('dispensed_date', now()->today())->count(),
-            'total_items_dispensed' => MedicineDispensingItem::sum('quantity'),
+            'total_dispensed' => (int) ($agg?->total_dispensed ?? 0),
+            'today_dispensed' => (int) ($agg?->today_dispensed ?? 0),
+            'total_items_dispensed' => (int) MedicineDispensingItem::sum('quantity'),
         ];
 
-        return view('inventory.dispensings.index', compact('dispensings', 'stats', 'search'));
+        return view('inventory.dispensings.index', compact('stats', 'search', 'dateFrom', 'dateTo'));
     }
 
     public function create(Request $request): View

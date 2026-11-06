@@ -9,7 +9,6 @@ use App\Models\Patient;
 use App\Services\ClinicVisitService;
 use App\Services\Pdf\MedicalDocumentPdfService;
 use App\Services\SettingService;
-use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -37,19 +36,14 @@ class ClinicVisitController extends Controller implements HasMiddleware
     {
         if ($request->ajax()) {
             $query = ClinicVisit::query()
-                ->with(['patient.college', 'clinician', 'recorder', 'medicalConsultation', 'dentalConsultation', 'emergencyRecord', 'firstAidRecord', 'physicalExamination'])
+                ->with(['patient', 'clinician', 'recorder', 'medicalConsultation', 'dentalConsultation', 'emergencyRecord', 'firstAidRecord', 'physicalExamination'])
                 ->filter($request->only(['visit_type', 'patient_classification', 'status', 'disposition', 'college_id', 'date_from', 'date_to', 'patient_id']))
                 ->latest('visit_date');
 
             return $this->visitService->dataTable($query);
         }
 
-        $stats = [
-            'total' => ClinicVisit::count(),
-            'today' => ClinicVisit::whereDate('visit_date', Carbon::today())->count(),
-            'students' => ClinicVisit::where('patient_classification', 'student')->count(),
-            'employees' => ClinicVisit::where('patient_classification', 'employee')->count(),
-        ];
+        $stats = $this->visitService->stats();
 
         return view('clinic-visits.index', [
             'stats' => $stats,

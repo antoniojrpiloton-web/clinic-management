@@ -109,6 +109,8 @@ class PhysicalExaminationTest extends TestCase
     {
         $user = User::role(User::SUPER_ADMIN_ROLE)->first();
         $exam = PhysicalExamination::first();
+        $exam->update(['examiner_id' => $user->id]);
+        $exam->refresh();
 
         $peForm = $this->actingAs($user)->get(route('physical-examinations.print-pe', $exam));
         $peForm->assertOk()->assertSee('PHYSICAL EXAMINATION RECORD');

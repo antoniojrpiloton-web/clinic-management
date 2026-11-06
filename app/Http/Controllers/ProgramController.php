@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\College;
 use App\Models\Program;
 use App\Services\AuditLogger;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\View\View;
+use Yajra\DataTables\Facades\DataTables;
 
 class ProgramController extends Controller implements HasMiddleware
 {
@@ -25,20 +27,83 @@ class ProgramController extends Controller implements HasMiddleware
         ];
     }
 
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
         $collegeFilter = $request->query('college_id');
 
-        $programs = Program::query()
-            ->with('college:id,name,code')
-            ->when($collegeFilter, fn ($q) => $q->where('college_id', $collegeFilter))
-            ->latest()
-            ->paginate(15)
-            ->withQueryString();
+        if ($request->ajax()) {
+            $canEdit = $request->user()?->can('programs.edit') ?? false;
+            $canDelete = $request->user()?->can('programs.delete') ?? false;
+
+            $query = Program::query()
+                ->with('college:id,name,code')
+                ->when($collegeFilter, fn ($q) => $q->where('college_id', $collegeFilter))
+                ->latest();
+
+            return DataTables::eloquent($query)
+                ->addColumn('code_col', fn (Program $p): string => '<span class="fw-bold text-dark">'.e($p->code).'</span>')
+                ->addColumn('name_col', fn (Program $p): string => '<div class="fw-semibold text-dark">'.e($p->name).'</div>')
+                ->addColumn('college_col', function (Program $p): string {
+                    $code = e($p->college?->code ?? 'N/A');
+                    $name = e($p->college?->name ?? '');
+
+                    return "<span class=\"badge badge-pill badge-soft-blue\">{$code}</span> <small class=\"text-muted ms-1\">{$name}</small>";
+                })
+                ->addColumn('level_col', fn (Program $p): string => '<span class="badge badge-pill badge-soft-gray">'.e($p->degree_level).'</span>')
+                ->addColumn('years_col', fn (Program $p): string => "{$p->years} Years")
+                ->addColumn('status_col', function (Program $p): string {
+                    $cls = $p->is_active ? 'completed' : 'pending';
+                    $lbl = $p->is_active ? 'active' : 'inactive';
+
+                    return "<span class=\"status-badge {$cls}\">{$lbl}</span>";
+                })
+                ->addColumn('actions_col', function (Program $p) use ($canEdit, $canDelete): string {
+                    $html = '<div class="d-inline-flex gap-1">';
+
+                    if ($canEdit) {
+                        $updateUrl = route('programs.update', $p);
+                        $code = e($p->code);
+                        $name = e($p->name);
+                        $level = e($p->degree_level);
+                        $active = $p->is_active ? '1' : '0';
+
+                        $html .= "<button type=\"button\" class=\"btn btn-sm btn-light border p-1\" data-bs-toggle=\"modal\" data-bs-target=\"#edit-program-modal\" data-update-url=\"{$updateUrl}\" data-college-id=\"{$p->college_id}\" data-code=\"{$code}\" data-name=\"{$name}\" data-level=\"{$level}\" data-years=\"{$p->years}\" data-active=\"{$active}\" title=\"Edit\"><i class=\"bi bi-pencil\"></i></button>";
+                    }
+
+                    if ($canDelete) {
+                        $deleteUrl = route('programs.destroy', $p);
+                        $csrf = csrf_field();
+                        $method = method_field('DELETE');
+
+                        $html .= "<form method=\"POST\" action=\"{$deleteUrl}\" data-confirm=\"Are you sure you want to delete this program?\" class=\"d-inline\">{$csrf}{$method}<button type=\"submit\" class=\"btn btn-sm btn-light border text-danger p-1\" title=\"Delete\"><i class=\"bi bi-trash\"></i></button></form>";
+                    }
+
+                    $html .= '</div>';
+
+                    return $html;
+                })
+                ->orderColumn('code_col', 'code $1')
+                ->orderColumn('name_col', 'name $1')
+                ->orderColumn('level_col', 'degree_level $1')
+                ->orderColumn('years_col', 'years $1')
+                ->orderColumn('status_col', 'is_active $1')
+                ->rawColumns(['code_col', 'name_col', 'college_col', 'level_col', 'status_col', 'actions_col'])
+                ->make(true);
+        }
 
         $colleges = College::orderBy('name')->get(['id', 'name', 'code']);
+        $agg = Program::query()
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active')
+            ->first();
 
-        return view('programs.index', compact('programs', 'colleges', 'collegeFilter'));
+        $stats = [
+            'total' => (int) ($agg?->total ?? 0),
+            'active' => (int) ($agg?->active ?? 0),
+            'colleges' => $colleges->count(),
+        ];
+
+        return view('programs.index', compact('colleges', 'collegeFilter', 'stats'));
     }
 
     public function store(Request $request): RedirectResponse

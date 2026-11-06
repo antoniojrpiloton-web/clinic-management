@@ -16,53 +16,56 @@ class DentalPdfService
         $doc->AliasNbPages();
         $doc->AddPage();
 
-        $doc->SetY(44);
-        $doc->SetFont('Arial', 'B', 11);
-        $doc->Cell(0, 5.5, 'ORAL HEALTH EXAMINATION CARD', 0, 1, 'C');
-        $doc->Ln(2);
+        $doc->SetY(42);
+        $doc->SetFont('Arial', 'B', 11.5);
+        $doc->Cell(0, 5.0, 'ORAL HEALTH EXAMINATION CARD', 0, 1, 'C');
+        $doc->Ln(1.0);
 
-        $x = 20;
-        $w = 170;
+        $x = $doc->GetX();
+        $w = 166.0;
 
-        $doc->SetFont('Arial', 'B', 9);
-        $doc->SetFillColor(235, 238, 242);
-        $doc->Cell($w, 5, ' I. PATIENT INFORMATION', 1, 1, 'L', true);
+        $doc->drawSectionHeader('I. PATIENT INFORMATION', $w, 4.6);
 
-        $doc->SetFont('Arial', '', 8.5);
-        $doc->Cell(28, 5, 'Full Name:', 1, 0, 'L');
-        $doc->SetFont('Arial', 'B', 8.5);
-        $doc->Cell(72, 5, $doc->conv($patient?->full_name ?? ''), 1, 0, 'L');
-        $doc->SetFont('Arial', '', 8.5);
-        $doc->Cell(22, 5, 'Date:', 1, 0, 'L');
-        $doc->Cell(48, 5, $doc->conv($visit->visit_date->format('M d, Y')), 1, 1, 'L');
+        $courseYr = $patient?->type === 'student'
+            ? trim(($patient->college?->code ?? '').($patient->program?->code ? ' / '.$patient->program->code : '').($patient->year_level ? ' - '.$patient->year_level : ''))
+            : trim(($patient?->position ?? '').($patient?->office_department ? ' / '.$patient->office_department : ''));
 
-        $doc->Cell(28, 5, 'Age / Sex:', 1, 0, 'L');
-        $doc->Cell(42, 5, $doc->conv(($patient?->age ?? '—').' y/o / '.($patient?->gender ?? '—')), 1, 0, 'L');
-        $doc->Cell(30, 5, 'Course / Yr:', 1, 0, 'L');
-        $doc->Cell(70, 5, $doc->conv(($patient?->program?->code ?? '—').' '.($patient?->year_level ?? '')), 1, 1, 'L');
-        $doc->Ln(2);
+        $doc->drawRow([
+            ['w' => 26, 'text' => 'Full Name:', 'size' => 8.0],
+            ['w' => 70, 'text' => $patient?->full_name ?? '-', 'style' => 'B', 'size' => 8.0],
+            ['w' => 22, 'text' => 'Date:', 'size' => 8.0],
+            ['w' => 48, 'text' => $visit->visit_date->format('M d, Y'), 'style' => 'B', 'size' => 8.0],
+        ], 3.8, 4.6, 0.7);
 
-        $doc->SetFont('Arial', 'B', 9);
-        $doc->Cell($w, 5, ' II. DENTAL HISTORY', 1, 1, 'L', true);
+        $doc->drawRow([
+            ['w' => 26, 'text' => 'Age / Sex:', 'size' => 8.0],
+            ['w' => 42, 'text' => ($patient?->age ?? '-').' y/o / '.($patient?->gender ?? '-'), 'size' => 8.0],
+            ['w' => 28, 'text' => 'Course / Dept:', 'size' => 8.0],
+            ['w' => 70, 'text' => $courseYr ?: '-', 'size' => 8.0],
+        ], 3.8, 4.6, 0.7);
+        $doc->Ln(1.0);
+
+        $doc->drawSectionHeader('II. DENTAL HISTORY', $w, 4.6);
 
         $freq = $detail?->dental_treatment_frequency;
-        $freqLabel = $freq ? (DentalConsultation::TREATMENT_FREQUENCIES[$freq] ?? $freq) : '—';
-        $doc->SetFont('Arial', '', 8.5);
-        $doc->Cell(50, 5, 'Treatment Frequency:', 1, 0, 'L');
-        $doc->Cell(50, 5, $doc->conv($freqLabel), 1, 0, 'L');
-        $doc->Cell(30, 5, 'Last Dental Visit:', 1, 0, 'L');
-        $doc->Cell(40, 5, $doc->conv($detail?->last_dental_visit?->format('M d, Y') ?? '—'), 1, 1, 'L');
+        $freqLabel = $freq ? (DentalConsultation::TREATMENT_FREQUENCIES[$freq] ?? $freq) : '-';
 
-        $doc->Cell(40, 5, 'Dental Fears:', 1, 0, 'L');
-        $doc->Cell(130, 5, $doc->conv($detail?->dental_fears ? 'Yes' : 'No'), 1, 1, 'L');
+        $doc->drawRow([
+            ['w' => 36, 'text' => 'Treatment Frequency:', 'size' => 8.0],
+            ['w' => 47, 'text' => $freqLabel, 'size' => 8.0],
+            ['w' => 30, 'text' => 'Last Dental Visit:', 'size' => 8.0],
+            ['w' => 25, 'text' => $detail?->last_dental_visit?->format('M d, Y') ?? '-', 'size' => 8.0],
+            ['w' => 18, 'text' => 'Fears:', 'size' => 8.0],
+            ['w' => 10, 'text' => $detail?->dental_fears ? 'Yes' : 'No', 'align' => 'C', 'size' => 8.0],
+        ], 3.8, 4.6, 0.7);
 
-        $concerns = $detail?->dental_concerns ?? '—';
-        $doc->Cell(40, 5, 'Dental Concerns:', 1, 0, 'L');
-        $doc->MultiCell(130, 5, $doc->conv(mb_strimwidth($concerns, 0, 160, '...')), 'TBR', 'L');
-        $doc->Ln(1);
+        $doc->drawRow([
+            ['w' => 36, 'text' => 'Dental Concerns:', 'size' => 8.0],
+            ['w' => 130, 'text' => $detail?->dental_concerns ?: 'None reported', 'size' => 8.0],
+        ], 3.8, 4.6, 0.7);
+        $doc->Ln(1.0);
 
-        $doc->SetFont('Arial', 'B', 9);
-        $doc->Cell($w, 5, ' III. ORAL HEALTH CONDITIONS', 1, 1, 'L', true);
+        $doc->drawSectionHeader('III. ORAL HEALTH & SYSTEMIC CONDITIONS', $w, 4.6);
 
         $oralConditions = [
             'has_toothache' => 'Toothache',
@@ -73,26 +76,7 @@ class DentalPdfService
             'has_loose_teeth' => 'Loose Teeth',
             'has_swelling' => 'Swelling',
         ];
-
-        $doc->SetFont('Arial', '', 8.5);
-        $colW = $w / 4;
-        $i = 0;
-        foreach ($oralConditions as $field => $label) {
-            $checked = $detail?->{$field} ?? false;
-            $doc->drawCheckbox($checked, $label, $colW);
-            $i++;
-            if ($i % 4 === 0) {
-                $doc->Ln(5);
-                $doc->SetX($x);
-            }
-        }
-        if ($i % 4 !== 0) {
-            $doc->Ln(5);
-        }
-        $doc->Ln(1);
-
-        $doc->SetFont('Arial', 'B', 9);
-        $doc->Cell($w, 5, ' IV. SYSTEMIC CONDITIONS', 1, 1, 'L', true);
+        $this->renderCheckboxGridBox($doc, 'Presenting Oral Symptoms:', $oralConditions, $detail, $x, $w);
 
         $systemicConditions = [
             'systemic_diabetes' => 'Diabetes',
@@ -101,159 +85,135 @@ class DentalPdfService
             'systemic_bleeding_disorder' => 'Bleeding Disorder',
             'systemic_allergies' => 'Allergies',
         ];
-
-        $doc->SetFont('Arial', '', 8.5);
-        $i = 0;
-        foreach ($systemicConditions as $field => $label) {
-            $checked = $detail?->{$field} ?? false;
-            $doc->drawCheckbox($checked, $label, $colW);
-            $i++;
-            if ($i % 4 === 0) {
-                $doc->Ln(5);
-                $doc->SetX($x);
-            }
-        }
-        if ($i % 4 !== 0) {
-            $doc->Ln(5);
-        }
+        $this->renderCheckboxGridBox($doc, 'Systemic / Medical History:', $systemicConditions, $detail, $x, $w);
 
         if ($detail?->systemic_allergies && $detail?->systemic_allergy_details) {
-            $doc->SetFont('Arial', '', 8.5);
-            $doc->Cell(40, 5, 'Allergy Details:', 1, 0, 'L');
-            $doc->Cell(130, 5, $doc->conv($detail->systemic_allergy_details), 1, 1, 'L');
+            $doc->drawRow([
+                ['w' => 36, 'text' => 'Allergy Details:', 'style' => 'B', 'size' => 8.0],
+                ['w' => 130, 'text' => $detail->systemic_allergy_details, 'size' => 8.0],
+            ], 3.6, 4.5, 0.6);
         }
-        $doc->Ln(2);
+        $doc->Ln(1.0);
 
-        $doc->AddPage();
+        $doc->drawSectionHeader('IV. SOFT TISSUE & PERIODONTAL EXAMINATION', $w, 4.6);
 
-        $doc->SetFont('Arial', 'B', 9);
-        $doc->Cell($w, 5, ' V. SOFT TISSUE EXAMINATION', 1, 1, 'L', true);
+        $softStatus = fn (string $field): string => ($detail?->{$field} ?? '')
+            ? (DentalConsultation::SOFT_TISSUE_STATUSES[$detail->{$field}] ?? $detail->{$field})
+            : 'Normal';
 
-        $softTissues = [
-            'soft_tissue_lips' => 'Lips',
-            'soft_tissue_cheeks' => 'Cheeks',
-            'soft_tissue_tongue' => 'Tongue',
-            'soft_tissue_palate' => 'Palate',
-            'soft_tissue_gingiva' => 'Gingiva',
-            'soft_tissue_floor_of_mouth' => 'Floor of Mouth',
-        ];
+        $doc->drawRow([
+            ['w' => 24, 'text' => 'Lips:', 'style' => 'B', 'size' => 8.0, 'fill' => true],
+            ['w' => 31.3, 'text' => $softStatus('soft_tissue_lips'), 'size' => 8.0],
+            ['w' => 24, 'text' => 'Cheeks:', 'style' => 'B', 'size' => 8.0, 'fill' => true],
+            ['w' => 31.3, 'text' => $softStatus('soft_tissue_cheeks'), 'size' => 8.0],
+            ['w' => 24, 'text' => 'Tongue:', 'style' => 'B', 'size' => 8.0, 'fill' => true],
+            ['w' => 31.4, 'text' => $softStatus('soft_tissue_tongue'), 'size' => 8.0],
+        ], 3.6, 4.5, 0.6);
 
-        $doc->SetFont('Arial', 'B', 8.5);
-        $doc->Cell(50, 5, 'Area', 1, 0, 'C');
-        $doc->Cell(120, 5, 'Status', 1, 1, 'C');
+        $doc->drawRow([
+            ['w' => 24, 'text' => 'Palate:', 'style' => 'B', 'size' => 8.0, 'fill' => true],
+            ['w' => 31.3, 'text' => $softStatus('soft_tissue_palate'), 'size' => 8.0],
+            ['w' => 24, 'text' => 'Gingiva:', 'style' => 'B', 'size' => 8.0, 'fill' => true],
+            ['w' => 31.3, 'text' => $softStatus('soft_tissue_gingiva'), 'size' => 8.0],
+            ['w' => 24, 'text' => 'Floor/Mouth:', 'style' => 'B', 'size' => 8.0, 'fill' => true],
+            ['w' => 31.4, 'text' => $softStatus('soft_tissue_floor_of_mouth'), 'size' => 8.0],
+        ], 3.6, 4.5, 0.6);
 
-        $doc->SetFont('Arial', '', 8.5);
-        foreach ($softTissues as $field => $areaLabel) {
-            $val = $detail?->{$field} ?? '';
-            $statusLabel = $val ? (DentalConsultation::SOFT_TISSUE_STATUSES[$val] ?? $val) : 'Normal';
-            $doc->Cell(50, 5, $doc->conv($areaLabel), 1, 0, 'L');
-            $doc->Cell(120, 5, $doc->conv($statusLabel), 1, 1, 'L');
-        }
-        $doc->Ln(2);
+        $perioLabel = $detail?->periodontal_status ? (DentalConsultation::PERIODONTAL_STATUSES[$detail->periodontal_status] ?? $detail->periodontal_status) : '-';
+        $calculusLabel = $detail?->calculus_index ? (DentalConsultation::CALCULUS_INDICES[$detail->calculus_index] ?? $detail->calculus_index) : '-';
+        $gingivalLabel = $detail?->gingival_index ? (DentalConsultation::GINGIVAL_INDICES[$detail->gingival_index] ?? $detail->gingival_index) : '-';
+        $plaqueLabel = $detail?->plaque_index ? (DentalConsultation::PLAQUE_INDICES[$detail->plaque_index] ?? $detail->plaque_index) : '-';
 
-        $doc->SetFont('Arial', 'B', 9);
-        $doc->Cell($w, 5, ' VI. PERIODONTAL ASSESSMENT', 1, 1, 'L', true);
+        $doc->drawRow([
+            ['w' => 28, 'text' => 'Periodontal:', 'style' => 'B', 'size' => 8.0],
+            ['w' => 27.3, 'text' => $perioLabel, 'size' => 8.0],
+            ['w' => 24, 'text' => 'Calculus:', 'style' => 'B', 'size' => 8.0],
+            ['w' => 31.3, 'text' => $calculusLabel, 'size' => 8.0],
+            ['w' => 24, 'text' => 'Oral Hygiene:', 'style' => 'B', 'size' => 8.0],
+            ['w' => 31.4, 'text' => $detail?->oral_hygiene_status ?? '-', 'size' => 8.0],
+        ], 3.6, 4.5, 0.6);
 
-        $doc->SetFont('Arial', '', 8.5);
-        $perioLabel = $detail?->periodontal_status ? (DentalConsultation::PERIODONTAL_STATUSES[$detail->periodontal_status] ?? $detail->periodontal_status) : '—';
-        $calculusLabel = $detail?->calculus_index ? (DentalConsultation::CALCULUS_INDICES[$detail->calculus_index] ?? $detail->calculus_index) : '—';
-        $gingivalLabel = $detail?->gingival_index ? (DentalConsultation::GINGIVAL_INDICES[$detail->gingival_index] ?? $detail->gingival_index) : '—';
-        $plaqueLabel = $detail?->plaque_index ? (DentalConsultation::PLAQUE_INDICES[$detail->plaque_index] ?? $detail->plaque_index) : '—';
+        $doc->drawRow([
+            ['w' => 28, 'text' => 'Gingival Index:', 'style' => 'B', 'size' => 8.0],
+            ['w' => 55.3, 'text' => $gingivalLabel, 'size' => 8.0],
+            ['w' => 28, 'text' => 'Plaque Index:', 'style' => 'B', 'size' => 8.0],
+            ['w' => 54.7, 'text' => $plaqueLabel, 'size' => 8.0],
+        ], 3.6, 4.5, 0.6);
+        $doc->Ln(1.0);
 
-        $doc->Cell(45, 5, 'Periodontal Status:', 1, 0, 'L');
-        $doc->Cell(40, 5, $doc->conv($perioLabel), 1, 0, 'L');
-        $doc->Cell(45, 5, 'Calculus Index:', 1, 0, 'L');
-        $doc->Cell(40, 5, $doc->conv($calculusLabel), 1, 1, 'L');
+        $doc->drawSectionHeader('V. ODONTOGRAM / TOOTH CHART (PERMANENT & PRIMARY DENTITION)', $w, 4.6);
+        $this->renderToothChartSection($doc, 'PERMANENT TEETH (FDI 11-48)', DentalConsultation::permanentTeeth(), $detail?->tooth_chart ?? [], $x, $w);
+        $this->renderToothChartSection($doc, 'PRIMARY / DECIDUOUS TEETH (FDI 51-85)', DentalConsultation::deciduousTeeth(), $detail?->primary_tooth_chart ?? [], $x, $w);
+        $doc->Ln(1.0);
 
-        $doc->Cell(45, 5, 'Gingival Index:', 1, 0, 'L');
-        $doc->Cell(40, 5, $doc->conv($gingivalLabel), 1, 0, 'L');
-        $doc->Cell(45, 5, 'Plaque Index:', 1, 0, 'L');
-        $doc->Cell(40, 5, $doc->conv($plaqueLabel), 1, 1, 'L');
+        $doc->drawSectionHeader('VI. DMFT / DMFS DENTAL CARIES INDICES', $w, 4.6);
 
-        $doc->Cell(45, 5, 'Oral Hygiene Status:', 1, 0, 'L');
-        $doc->Cell(125, 5, $doc->conv($detail?->oral_hygiene_status ?? '—'), 1, 1, 'L');
-        $doc->Ln(2);
+        $doc->drawRow([
+            ['w' => 26, 'text' => 'Index', 'style' => 'B', 'align' => 'C', 'size' => 8.0, 'fill' => true],
+            ['w' => 35, 'text' => 'Decayed (D)', 'style' => 'B', 'align' => 'C', 'size' => 8.0, 'fill' => true],
+            ['w' => 35, 'text' => 'Missing (M)', 'style' => 'B', 'align' => 'C', 'size' => 8.0, 'fill' => true],
+            ['w' => 35, 'text' => 'Filled (F)', 'style' => 'B', 'align' => 'C', 'size' => 8.0, 'fill' => true],
+            ['w' => 35, 'text' => 'Total Score', 'style' => 'B', 'align' => 'C', 'size' => 8.0, 'fill' => true],
+        ], 3.6, 4.4, 0.6);
 
-        $doc->SetFont('Arial', 'B', 9);
-        $doc->Cell($w, 5, ' VII. TOOTH CHART (PERMANENT TEETH)', 1, 1, 'L', true);
+        $doc->drawRow([
+            ['w' => 26, 'text' => 'DMFT', 'style' => 'B', 'align' => 'C', 'size' => 8.0],
+            ['w' => 35, 'text' => (string) ($detail?->dmft_decayed ?? '0'), 'align' => 'C', 'size' => 8.0],
+            ['w' => 35, 'text' => (string) ($detail?->dmft_missing ?? '0'), 'align' => 'C', 'size' => 8.0],
+            ['w' => 35, 'text' => (string) ($detail?->dmft_filled ?? '0'), 'align' => 'C', 'size' => 8.0],
+            ['w' => 35, 'text' => $detail ? (string) $detail->dmft_total : '0', 'style' => 'B', 'align' => 'C', 'size' => 8.0],
+        ], 3.6, 4.4, 0.6);
 
-        $this->renderToothChartSection($doc, DentalConsultation::permanentTeeth(), $detail?->tooth_chart ?? [], $x, $w);
-        $doc->Ln(2);
+        $doc->drawRow([
+            ['w' => 26, 'text' => 'DMFS', 'style' => 'B', 'align' => 'C', 'size' => 8.0],
+            ['w' => 35, 'text' => (string) ($detail?->dmfs_decayed ?? '0'), 'align' => 'C', 'size' => 8.0],
+            ['w' => 35, 'text' => (string) ($detail?->dmfs_missing ?? '0'), 'align' => 'C', 'size' => 8.0],
+            ['w' => 35, 'text' => (string) ($detail?->dmfs_filled ?? '0'), 'align' => 'C', 'size' => 8.0],
+            ['w' => 35, 'text' => $detail ? (string) $detail->dmfs_total : '0', 'style' => 'B', 'align' => 'C', 'size' => 8.0],
+        ], 3.6, 4.4, 0.6);
+        $doc->Ln(1.0);
 
-        $doc->SetFont('Arial', 'B', 9);
-        $doc->Cell($w, 5, ' VIII. TOOTH CHART (PRIMARY / DECIDUOUS TEETH)', 1, 1, 'L', true);
-
-        $this->renderToothChartSection($doc, DentalConsultation::deciduousTeeth(), $detail?->primary_tooth_chart ?? [], $x, $w);
-        $doc->Ln(2);
-
-        $doc->AddPage();
-
-        $doc->SetFont('Arial', 'B', 9);
-        $doc->Cell($w, 5, ' IX. CLINICAL MANAGEMENT', 1, 1, 'L', true);
-
-        $doc->SetFont('Arial', '', 8.5);
-        $doc->Cell(28, 5, 'Diagnosis:', 1, 0, 'L');
-        $doc->MultiCell(142, 5, $doc->conv(mb_strimwidth($detail?->diagnosis ?? '—', 0, 180, '...')), 'TBR', 'L');
+        $doc->drawSectionHeader('VII. CLINICAL MANAGEMENT, TREATMENT & FOLLOW-UP', $w, 4.6);
 
         $procedures = implode(', ', $detail?->procedures ?? []);
-        $doc->Cell(28, 5, 'Procedures:', 1, 0, 'L');
-        $doc->MultiCell(142, 5, $doc->conv(mb_strimwidth($procedures ?: '—', 0, 180, '...')), 'TBR', 'L');
+        $priorityLabel = $detail?->priority_level ? (DentalConsultation::PRIORITY_LEVELS[$detail->priority_level] ?? $detail->priority_level) : 'Routine';
 
-        $doc->Cell(28, 5, 'Teeth Involved:', 1, 0, 'L');
-        $doc->Cell(72, 5, $doc->conv($detail?->teeth_involved ?? '—'), 1, 0, 'L');
-        $doc->Cell(30, 5, 'Anesthesia:', 1, 0, 'L');
-        $doc->Cell(40, 5, $doc->conv(mb_strimwidth($detail?->anesthesia_used ?? '—', 0, 40, '...')), 1, 1, 'L');
+        $doc->drawRow([
+            ['w' => 28, 'text' => 'Diagnosis:', 'style' => 'B', 'size' => 8.0],
+            ['w' => 96, 'text' => $detail?->diagnosis ?: '-', 'size' => 8.0],
+            ['w' => 18, 'text' => 'Priority:', 'style' => 'B', 'size' => 8.0],
+            ['w' => 24, 'text' => $priorityLabel, 'align' => 'C', 'style' => 'B', 'size' => 8.0],
+        ], 3.6, 4.5, 0.6);
 
-        $doc->Cell(28, 5, 'Priority:', 1, 0, 'L');
-        $priorityLabel = $detail?->priority_level ? (DentalConsultation::PRIORITY_LEVELS[$detail->priority_level] ?? $detail->priority_level) : '—';
-        $doc->Cell(142, 5, $doc->conv($priorityLabel), 1, 1, 'L');
+        $doc->drawRow([
+            ['w' => 28, 'text' => 'Procedures:', 'style' => 'B', 'size' => 8.0],
+            ['w' => 138, 'text' => $procedures ?: '-', 'size' => 8.0],
+        ], 3.6, 4.5, 0.6);
 
-        $treatmentRendered = $detail?->treatment_rendered ?? '—';
-        $doc->Cell(28, 5, 'Treatment:', 1, 0, 'L');
-        $doc->MultiCell(142, 5, $doc->conv(mb_strimwidth($treatmentRendered, 0, 240, '...')), 'TBR', 'L');
+        $doc->drawRow([
+            ['w' => 28, 'text' => 'Teeth Involved:', 'style' => 'B', 'size' => 8.0],
+            ['w' => 55, 'text' => $detail?->teeth_involved ?: '-', 'size' => 8.0],
+            ['w' => 24, 'text' => 'Anesthesia:', 'style' => 'B', 'size' => 8.0],
+            ['w' => 59, 'text' => $detail?->anesthesia_used ?: 'None', 'size' => 8.0],
+        ], 3.6, 4.5, 0.6);
 
-        $recs = $detail?->recommendations ?? '—';
-        $doc->Cell(28, 5, 'Recommendations:', 1, 0, 'L');
-        $doc->MultiCell(142, 5, $doc->conv(mb_strimwidth($recs, 0, 240, '...')), 'TBR', 'L');
-        $doc->Ln(2);
+        $doc->drawRow([
+            ['w' => 28, 'text' => 'Treatment:', 'style' => 'B', 'size' => 8.0],
+            ['w' => 138, 'text' => $detail?->treatment_rendered ?: '-', 'size' => 8.0],
+        ], 3.6, 4.5, 0.6);
 
-        $doc->SetFont('Arial', 'B', 9);
-        $doc->Cell($w, 5, ' X. DMFT / DMFS INDICES', 1, 1, 'L', true);
+        $doc->drawRow([
+            ['w' => 28, 'text' => 'Instructions:', 'style' => 'B', 'size' => 8.0],
+            ['w' => 138, 'text' => $detail?->recommendations ?: '-', 'size' => 8.0],
+        ], 3.6, 4.5, 0.6);
 
-        $doc->SetFont('Arial', 'B', 8.5);
-        $doc->Cell(28, 5, 'Index', 1, 0, 'C');
-        $doc->Cell(28, 5, 'Decayed (D)', 1, 0, 'C');
-        $doc->Cell(28, 5, 'Missing (M)', 1, 0, 'C');
-        $doc->Cell(28, 5, 'Filled (F)', 1, 0, 'C');
-        $doc->Cell(58, 5, 'Total (D+M+F)', 1, 1, 'C');
-
-        $doc->SetFont('Arial', '', 8.5);
-        $doc->Cell(28, 5, 'DMFT', 1, 0, 'C');
-        $doc->Cell(28, 5, $doc->conv((string) ($detail?->dmft_decayed ?? '—')), 1, 0, 'C');
-        $doc->Cell(28, 5, $doc->conv((string) ($detail?->dmft_missing ?? '—')), 1, 0, 'C');
-        $doc->Cell(28, 5, $doc->conv((string) ($detail?->dmft_filled ?? '—')), 1, 0, 'C');
-        $doc->Cell(58, 5, $doc->conv($detail ? (string) $detail->dmft_total : '—'), 1, 1, 'C');
-
-        $doc->Cell(28, 5, 'DMFS', 1, 0, 'C');
-        $doc->Cell(28, 5, $doc->conv((string) ($detail?->dmfs_decayed ?? '—')), 1, 0, 'C');
-        $doc->Cell(28, 5, $doc->conv((string) ($detail?->dmfs_missing ?? '—')), 1, 0, 'C');
-        $doc->Cell(28, 5, $doc->conv((string) ($detail?->dmfs_filled ?? '—')), 1, 0, 'C');
-        $doc->Cell(58, 5, $doc->conv($detail ? (string) $detail->dmfs_total : '—'), 1, 1, 'C');
-        $doc->Ln(3);
-
-        $doc->SetFont('Arial', 'B', 9);
-        $doc->Cell($w, 5, ' XI. TREATMENT PLAN & FOLLOW-UP', 1, 1, 'L', true);
-
-        $treatmentPlan = $detail?->treatment_plan ?? '—';
-        $doc->SetFont('Arial', '', 8.5);
-        $doc->Cell(38, 5, 'Treatment Plan:', 1, 0, 'L');
-        $doc->MultiCell(132, 5, $doc->conv(mb_strimwidth($treatmentPlan, 0, 300, '...')), 'TBR', 'L');
-
-        $doc->Cell(38, 5, 'Follow-up Date:', 1, 0, 'L');
-        $doc->Cell(72, 5, $doc->conv($detail?->follow_up_date?->format('M d, Y') ?? '—'), 1, 0, 'L');
-        $doc->Cell(30, 5, 'Disposition:', 1, 0, 'L');
-        $doc->Cell(30, 5, $doc->conv($visit->disposition_label ?? '—'), 1, 1, 'L');
-        $doc->Ln(8);
+        $doc->drawRow([
+            ['w' => 28, 'text' => 'Treatment Plan:', 'style' => 'B', 'size' => 8.0],
+            ['w' => 55, 'text' => $detail?->treatment_plan ?: '-', 'size' => 8.0],
+            ['w' => 24, 'text' => 'Follow-up:', 'style' => 'B', 'size' => 8.0],
+            ['w' => 22, 'text' => $detail?->follow_up_date?->format('M d, Y') ?? '-', 'size' => 8.0],
+            ['w' => 37, 'text' => $visit->disposition_label ?? '-', 'align' => 'C', 'size' => 7.5],
+        ], 3.6, 4.5, 0.6);
 
         $clinician = $visit->clinician;
         $dentistName = $clinician?->name ?? ($settings['clinic_head'] ?? 'Attending Dentist');
@@ -265,31 +225,79 @@ class DentalPdfService
     }
 
     /**
+     * @param  array<string, string>  $conditions
+     */
+    protected function renderCheckboxGridBox(ClinicFpdf $doc, string $groupLabel, array $conditions, ?DentalConsultation $detail, float $x, float $w): void
+    {
+        $itemsPerRow = 4;
+        $rowsCount = (int) ceil(count($conditions) / $itemsPerRow);
+        $boxH = 4.5 + ($rowsCount * 4.5);
+
+        $doc->checkPageBreak($boxH);
+        $startY = $doc->GetY();
+        $doc->Rect($x, $startY, $w, $boxH);
+
+        $doc->SetXY($x + 1.5, $startY + 0.6);
+        $doc->SetFont('Arial', 'B', 7.5);
+        $doc->Cell($w - 3, 3.8, $doc->conv($groupLabel), 0, 1, 'L');
+
+        $colW = ($w - 4) / $itemsPerRow;
+        $i = 0;
+        $curY = $startY + 4.2;
+        $doc->SetXY($x + 2, $curY);
+
+        foreach ($conditions as $field => $label) {
+            $checked = (bool) ($detail?->{$field} ?? false);
+            $doc->drawCheckbox($checked, $label, $colW);
+            $i++;
+            if ($i % $itemsPerRow === 0 && $i < count($conditions)) {
+                $curY += 4.4;
+                $doc->SetXY($x + 2, $curY);
+            }
+        }
+
+        $doc->SetXY($x, $startY + $boxH);
+    }
+
+    /**
      * @param  array<string|int, string>  $chart
      * @param  array{upper: list<int>, lower: list<int>}  $teethDef
      */
-    protected function renderToothChartSection(ClinicFpdf $doc, array $teethDef, array $chart, float $x, float $w): void
+    protected function renderToothChartSection(ClinicFpdf $doc, string $sectionLabel, array $teethDef, array $chart, float $x, float $w): void
     {
-        $doc->SetFont('Arial', 'I', 7.5);
-        $doc->Cell($w, 4, 'MAXILLARY / UPPER ARCH', 0, 1, 'C');
+        $doc->checkPageBreak(19);
 
-        $doc->SetFont('Arial', 'B', 7);
-        $cellW = $w / count($teethDef['upper']);
-        foreach ($teethDef['upper'] as $tooth) {
-            $condition = $chart[(string) $tooth] ?? '';
-            $doc->Cell($cellW, 4, $doc->conv($condition ? "#{$tooth}\n{$condition}" : "#{$tooth}"), 1, 0, 'C');
+        $doc->SetFont('Arial', 'B', 7.5);
+        $doc->SetFillColor(248, 249, 250);
+        $doc->Cell($w, 4.2, '  '.$doc->conv($sectionLabel).' — Upper (Maxillary) & Lower (Mandibular)', 1, 1, 'L', true);
+
+        foreach (['upper', 'lower'] as $arch) {
+            $teeth = $teethDef[$arch];
+            $cellW = $w / count($teeth);
+            $rowY = $doc->GetY();
+            $rowH = 6.8;
+
+            foreach ($teeth as $idx => $tooth) {
+                $cx = $x + ($idx * $cellW);
+                $condition = (string) ($chart[(string) $tooth] ?? '');
+
+                if ($condition !== '') {
+                    $doc->SetFillColor(255, 248, 230);
+                    $doc->Rect($cx, $rowY, $cellW, $rowH, 'DF');
+                } else {
+                    $doc->Rect($cx, $rowY, $cellW, $rowH, 'D');
+                }
+
+                $doc->SetFont('Arial', 'B', 6.8);
+                $doc->SetXY($cx, $rowY + 0.5);
+                $doc->Cell($cellW, 3.0, "#{$tooth}", 0, 0, 'C');
+
+                $doc->SetFont('Arial', $condition !== '' ? 'B' : '', 6.5);
+                $doc->SetXY($cx, $rowY + 3.4);
+                $doc->Cell($cellW, 3.0, $doc->conv($condition !== '' ? $condition : '—'), 0, 0, 'C');
+            }
+
+            $doc->SetXY($x, $rowY + $rowH);
         }
-        $doc->Ln(4);
-
-        $doc->SetFont('Arial', 'I', 7.5);
-        $doc->Cell($w, 4, 'MANDIBULAR / LOWER ARCH', 0, 1, 'C');
-
-        $doc->SetFont('Arial', 'B', 7);
-        $cellW = $w / count($teethDef['lower']);
-        foreach ($teethDef['lower'] as $tooth) {
-            $condition = $chart[(string) $tooth] ?? '';
-            $doc->Cell($cellW, 4, $doc->conv($condition ? "#{$tooth}\n{$condition}" : "#{$tooth}"), 1, 0, 'C');
-        }
-        $doc->Ln(4);
     }
 }

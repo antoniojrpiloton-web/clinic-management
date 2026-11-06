@@ -162,7 +162,9 @@
                             <th>EXAM DATE</th>
                         </tr>
                     </thead>
-                    <tbody></tbody>
+                    <tbody>
+                        <x-table-skeleton :cols="8" :rows="8" />
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -182,6 +184,7 @@
                     serverSide: true,
                     pageLength: 25,
                     lengthMenu: [10, 25, 50, 100],
+                    order: [[7, 'desc']],
                     dom: "<'row p-3 align-items-center'<'col-sm-6'l><'col-sm-6'f>>" +
                          "<'row'<'col-sm-12'tr>>" +
                          "<'row p-3 align-items-center'<'col-sm-5'i><'col-sm-7'p>>",
@@ -200,13 +203,13 @@
                     },
                     columns: [
                         { data: 'actions', name: 'actions', orderable: false, searchable: false },
-                        { data: 'pe_number', name: 'pe_number', className: 'fw-bold text-dark' },
-                        { data: 'patient_card', name: 'patient.first_name', orderable: false },
-                        { data: 'vitals_summary', name: 'systolic', orderable: false },
-                        { data: 'bmi_badge', name: 'bmi', orderable: true },
-                        { data: 'fitness_badge', name: 'fitness_assessment', orderable: true },
-                        { data: 'purpose', name: 'purpose', orderable: true },
-                        { data: 'exam_date_formatted', name: 'exam_date', orderable: true }
+                        { data: 'pe_number', name: 'pe_number', className: 'fw-bold text-dark', searchable: false },
+                        { data: 'patient_card', name: 'patient_id', orderable: false, searchable: false },
+                        { data: 'vitals_summary', name: 'systolic', orderable: false, searchable: false },
+                        { data: 'bmi_badge', name: 'bmi', orderable: true, searchable: false },
+                        { data: 'fitness_badge', name: 'fitness_assessment', orderable: true, searchable: false },
+                        { data: 'purpose', name: 'purpose', orderable: true, searchable: false },
+                        { data: 'exam_date_formatted', name: 'exam_date', orderable: true, searchable: false }
                     ],
                     language: {
                         search: "",
@@ -214,6 +217,12 @@
                         emptyTable: "No physical examination records found",
                         processing: '<div class="spinner-border spinner-border-sm text-primary me-1"></div> Loading...'
                     }
+                });
+
+                let searchTimer;
+                $('input[name="search"]').on('input', function () {
+                    clearTimeout(searchTimer);
+                    searchTimer = setTimeout(() => table.draw(), 300);
                 });
 
                 $('#pe-filter-form').on('submit', function (e) {
@@ -225,7 +234,7 @@
                     setTimeout(() => table.draw(), 50);
                 });
 
-                $('#filter-purpose, #filter-fitness, #filter-ay').on('change', function () {
+                $('#filter-purpose, #filter-fitness, #filter-ay, input[name="date_from"]').on('change', function () {
                     table.draw();
                 });
             });

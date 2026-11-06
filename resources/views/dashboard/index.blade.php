@@ -1,14 +1,85 @@
 <x-layouts.app title="Health Services Dashboard">
-    <div class="breadcrumb-nav">
-        <i class="bi bi-house"></i>
-        <span>&gt;</span>
-        <span>Dashboard Overview</span>
+    <style>
+        @keyframes dashboardShimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .dash-skeleton {
+            display: inline-block;
+            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+            background-size: 200% 100%;
+            animation: dashboardShimmer 1.4s infinite linear;
+            border-radius: 6px;
+            vertical-align: middle;
+        }
+        .dash-skeleton-lg {
+            height: 30px;
+            width: 110px;
+            border-radius: 8px;
+        }
+        .dash-skeleton-sm {
+            height: 16px;
+            width: 85px;
+        }
+        .dash-skeleton-row {
+            height: 14px;
+            width: 100%;
+        }
+        .chart-loader-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(2px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            transition: opacity 0.25s ease, visibility 0.25s ease;
+        }
+        .chart-loader-overlay.is-loaded {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .db-stat-tile {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 0.75rem 0.9rem;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            text-decoration: none;
+            display: block;
+            height: 100%;
+        }
+        .db-stat-tile:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+            border-color: #cbd5e1;
+        }
+    </style>
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+        <div class="breadcrumb-nav mb-0">
+            <i class="bi bi-house"></i>
+            <span>&gt;</span>
+            <span>Dashboard Overview</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span id="dashboard-sync-status" class="badge badge-soft-blue d-inline-flex align-items-center gap-1 py-1 px-2">
+                <span class="spinner-border spinner-border-sm" style="width: 0.7rem; height: 0.7rem;" role="status"></span>
+                <span>Loading live clinic data...</span>
+            </span>
+            <button type="button" id="btn-refresh-dashboard" class="btn btn-light border btn-sm px-2 py-1" title="Refresh Live Metrics">
+                <i class="bi bi-arrow-clockwise me-1" id="refresh-icon"></i>Refresh
+            </button>
+        </div>
     </div>
 
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
-            <h1 class="dashboard-heading mb-1">Health Services Executive Dashboard</h1>
-            <p class="dashboard-subheading mb-0">Integrated monitoring of clinical encounters, patient records, pharmacy inventory, and physical examination metrics.</p>
+            <h1 class="dashboard-heading mb-1">NVC Health Services Executive Dashboard</h1>
+            <p class="dashboard-subheading mb-0">Data aggregation &amp; real-time clinical monitoring across patient registries, consultations, dental cards, and pharmacy inventory.</p>
         </div>
 
         <div class="d-flex flex-wrap gap-2">
@@ -24,17 +95,23 @@
         </div>
     </div>
 
-    <div class="row g-3 mb-4">
+    <div class="row g-3 mb-4" id="dashboard-kpi-cards" data-metrics-url="{{ route('dashboard.metrics') }}">
         <div class="col-sm-6 col-xl-3">
             <div class="kpi-card">
                 <div class="d-flex justify-content-between align-items-start">
                     <span class="kpi-label">Clinic Encounters</span>
                     <span class="kpi-icon-box blue"><i class="bi bi-clipboard2-pulse"></i></span>
                 </div>
-                <div class="kpi-value">{{ number_format($stats['total_visits']) }}</div>
+                <div class="kpi-value" data-kpi="total_visits">
+                    <span class="dash-skeleton dash-skeleton-lg"></span>
+                </div>
                 <div class="kpi-trend">
-                    <span class="trend-badge up"><i class="bi bi-calendar-check"></i> {{ $stats['today_visits'] }} today</span>
-                    <span class="trend-compare">{{ $stats['this_month_visits'] }} this month</span>
+                    <span class="trend-badge up" data-kpi="today_visits_badge">
+                        <span class="dash-skeleton dash-skeleton-sm"></span>
+                    </span>
+                    <span class="trend-compare" data-kpi="this_month_visits_label">
+                        <span class="dash-skeleton dash-skeleton-sm" style="width: 65px;"></span>
+                    </span>
                 </div>
             </div>
         </div>
@@ -45,10 +122,16 @@
                     <span class="kpi-label">Clientele Masterlist</span>
                     <span class="kpi-icon-box green"><i class="bi bi-people"></i></span>
                 </div>
-                <div class="kpi-value">{{ number_format($stats['total_patients']) }}</div>
+                <div class="kpi-value" data-kpi="total_patients">
+                    <span class="dash-skeleton dash-skeleton-lg"></span>
+                </div>
                 <div class="kpi-trend">
-                    <span class="trend-badge neutral"><i class="bi bi-mortarboard"></i> {{ number_format($stats['students_count']) }} students</span>
-                    <span class="trend-compare">{{ number_format($stats['employees_count']) }} employees</span>
+                    <span class="trend-badge neutral" data-kpi="students_count_badge">
+                        <span class="dash-skeleton dash-skeleton-sm"></span>
+                    </span>
+                    <span class="trend-compare" data-kpi="employees_count_label">
+                        <span class="dash-skeleton dash-skeleton-sm" style="width: 65px;"></span>
+                    </span>
                 </div>
             </div>
         </div>
@@ -59,9 +142,13 @@
                     <span class="kpi-label">Physical Examinations</span>
                     <span class="kpi-icon-box cyan"><i class="bi bi-person-check"></i></span>
                 </div>
-                <div class="kpi-value">{{ number_format($stats['total_pe']) }}</div>
+                <div class="kpi-value" data-kpi="total_pe">
+                    <span class="dash-skeleton dash-skeleton-lg"></span>
+                </div>
                 <div class="kpi-trend">
-                    <span class="trend-badge info"><i class="bi bi-check2-circle"></i> {{ number_format($stats['completed_pe']) }} completed</span>
+                    <span class="trend-badge info" data-kpi="completed_pe_badge">
+                        <span class="dash-skeleton dash-skeleton-sm"></span>
+                    </span>
                     <span class="trend-compare">annual physical exams</span>
                 </div>
             </div>
@@ -73,42 +160,89 @@
                     <span class="kpi-label">Medicines Dispensed</span>
                     <span class="kpi-icon-box amber"><i class="bi bi-capsule"></i></span>
                 </div>
-                <div class="kpi-value">{{ number_format($stats['medicines_dispensed']) }} <small class="fs-6 text-muted fw-normal">units</small></div>
+                <div class="kpi-value" data-kpi="medicines_dispensed">
+                    <span class="dash-skeleton dash-skeleton-lg"></span>
+                </div>
                 <div class="kpi-trend">
-                    <span class="trend-badge neutral"><i class="bi bi-boxes"></i> {{ number_format($stats['dispensing_orders']) }} orders</span>
+                    <span class="trend-badge neutral" data-kpi="dispensing_orders_badge">
+                        <span class="dash-skeleton dash-skeleton-sm"></span>
+                    </span>
                     <span class="trend-compare">total issued</span>
                 </div>
             </div>
         </div>
     </div>
 
-    @if($stats['low_stock_count'] > 0 || $stats['expiring_count'] > 0 || $stats['expired_count'] > 0)
-        <div class="row g-3 mb-4">
-            <div class="col-12">
-                <div class="alert alert-warning border-warning border-opacity-25 d-flex flex-wrap justify-content-between align-items-center gap-3 mb-0 py-2">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-exclamation-triangle-fill text-warning fs-5"></i>
-                        <div>
-                            <strong>Pharmacy Inventory Alerts:</strong>
-                            @if($stats['low_stock_count'] > 0)
-                                <span class="badge badge-soft-amber me-1">{{ $stats['low_stock_count'] }} item(s) below reorder level</span>
-                            @endif
-                            @if($stats['expiring_count'] > 0)
-                                <span class="badge badge-soft-red me-1">{{ $stats['expiring_count'] }} batch(es) expiring in &le; 30 days</span>
-                            @endif
-                            @if($stats['expired_count'] > 0)
-                                <span class="badge bg-danger me-1">{{ $stats['expired_count'] }} batch(es) already expired</span>
-                            @endif
-                        </div>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <a href="{{ route('inventory.expirations') }}" class="btn btn-warning btn-sm">Inspect Expirations</a>
-                        <a href="{{ route('inventory.reports') }}" class="btn btn-outline-dark btn-sm">Stock Reports</a>
-                    </div>
+    <div class="row g-2 mb-4">
+        <div class="col-6 col-md-4 col-xl-2">
+            <a href="{{ route('medical-consultations.index') }}" class="db-stat-tile">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="small text-muted fw-medium">1. Medical Consults</span>
+                    <i class="bi bi-heart-pulse text-primary"></i>
                 </div>
-            </div>
+                <div class="fs-5 fw-bold text-dark" data-kpi="medical_consultations_count">
+                    <span class="dash-skeleton dash-skeleton-sm" style="width: 55px; height: 22px;"></span>
+                </div>
+            </a>
         </div>
-    @endif
+        <div class="col-6 col-md-4 col-xl-2">
+            <a href="{{ route('dental-consultations.index') }}" class="db-stat-tile">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="small text-muted fw-medium">2. Dental Consults</span>
+                    <i class="bi bi-emoji-smile text-info"></i>
+                </div>
+                <div class="fs-5 fw-bold text-dark" data-kpi="dental_consultations_count">
+                    <span class="dash-skeleton dash-skeleton-sm" style="width: 55px; height: 22px;"></span>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+            <a href="{{ route('emergency-records.index') }}" class="db-stat-tile">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="small text-muted fw-medium">3. Emergency Triage</span>
+                    <i class="bi bi-truck-flatbed text-danger"></i>
+                </div>
+                <div class="fs-5 fw-bold text-dark" data-kpi="emergency_records_count">
+                    <span class="dash-skeleton dash-skeleton-sm" style="width: 55px; height: 22px;"></span>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+            <a href="{{ route('first-aid-records.index') }}" class="db-stat-tile">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="small text-muted fw-medium">4. First Aid Logs</span>
+                    <i class="bi bi-bandaid text-warning"></i>
+                </div>
+                <div class="fs-5 fw-bold text-dark" data-kpi="first_aid_records_count">
+                    <span class="dash-skeleton dash-skeleton-sm" style="width: 55px; height: 22px;"></span>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+            <a href="{{ route('physical-exam-schedules.index') }}" class="db-stat-tile">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="small text-muted fw-medium">5. Scheduled PE</span>
+                    <i class="bi bi-calendar2-week text-success"></i>
+                </div>
+                <div class="fs-5 fw-bold text-dark" data-kpi="pe_schedules_count">
+                    <span class="dash-skeleton dash-skeleton-sm" style="width: 55px; height: 22px;"></span>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+            <a href="{{ route('inventory.transactions') }}" class="db-stat-tile">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="small text-muted fw-medium">Inventory Ledger</span>
+                    <i class="bi bi-arrow-left-right text-secondary"></i>
+                </div>
+                <div class="fs-5 fw-bold text-dark" data-kpi="inventory_transactions_count">
+                    <span class="dash-skeleton dash-skeleton-sm" style="width: 55px; height: 22px;"></span>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div id="dashboard-alerts-container"></div>
 
     <div class="row g-4 mb-4">
         <div class="col-lg-8">
@@ -122,6 +256,10 @@
                 </div>
                 <div class="card-body px-4 pt-3 pb-3">
                     <div style="height: 310px; position: relative;">
+                        <div class="chart-loader-overlay">
+                            <div class="spinner-border text-primary spinner-border-sm mb-2" role="status"></div>
+                            <span class="small text-muted fw-medium">Aggregating 6-month visit trend...</span>
+                        </div>
                         <canvas id="monthly-utilization-chart"></canvas>
                     </div>
                 </div>
@@ -136,6 +274,10 @@
                 </div>
                 <div class="card-body px-4 pt-3 pb-3 d-flex flex-column align-items-center justify-content-center">
                     <div style="height: 240px; width: 100%; position: relative;">
+                        <div class="chart-loader-overlay">
+                            <div class="spinner-border text-primary spinner-border-sm mb-2" role="status"></div>
+                            <span class="small text-muted fw-medium">Loading clientele breakdown...</span>
+                        </div>
                         <canvas id="classification-donut-chart"></canvas>
                     </div>
                 </div>
@@ -152,6 +294,10 @@
                 </div>
                 <div class="card-body px-4 pt-3 pb-3">
                     <div style="height: 250px; position: relative;">
+                        <div class="chart-loader-overlay">
+                            <div class="spinner-border text-info spinner-border-sm mb-2" role="status"></div>
+                            <span class="small text-muted fw-medium">Loading service distribution...</span>
+                        </div>
                         <canvas id="services-breakdown-chart"></canvas>
                     </div>
                 </div>
@@ -166,6 +312,10 @@
                 </div>
                 <div class="card-body px-4 pt-3 pb-3">
                     <div style="height: 250px; position: relative;">
+                        <div class="chart-loader-overlay">
+                            <div class="spinner-border text-primary spinner-border-sm mb-2" role="status"></div>
+                            <span class="small text-muted fw-medium">Ranking chief complaints...</span>
+                        </div>
                         <canvas id="top-complaints-chart"></canvas>
                     </div>
                 </div>
@@ -180,6 +330,10 @@
                 </div>
                 <div class="card-body px-4 pt-3 pb-3">
                     <div style="height: 250px; position: relative;">
+                        <div class="chart-loader-overlay">
+                            <div class="spinner-border text-success spinner-border-sm mb-2" role="status"></div>
+                            <span class="small text-muted fw-medium">Loading fitness classifications...</span>
+                        </div>
                         <canvas id="fitness-assessment-chart"></canvas>
                     </div>
                 </div>
@@ -197,45 +351,31 @@
                         </h5>
                         <small class="text-muted">Infectious, respiratory &amp; viral cases</small>
                     </div>
-                    <span class="badge badge-soft-red">{{ $charts['disease_classification']['communicable_count'] }} total cases</span>
+                    <span class="badge badge-soft-red" data-kpi="communicable_badge">
+                        <span class="dash-skeleton dash-skeleton-sm" style="width: 65px;"></span>
+                    </span>
                 </div>
                 <div class="card-body px-4 py-3">
-                    @if(empty($charts['disease_classification']['top_communicable']))
-                        <div class="text-center text-muted py-4">
-                            <i class="bi bi-shield-check fs-2 text-success d-block mb-2"></i>
-                            No communicable illnesses recorded in registry.
-                        </div>
-                    @else
-                        <div class="table-responsive">
-                            <table class="table table-sm table-hover align-middle mb-0">
-                                <thead class="table-light">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Infectious Condition</th>
+                                    <th class="text-end">Cases</th>
+                                    <th class="text-end" style="width: 140px;">Proportion</th>
+                                </tr>
+                            </thead>
+                            <tbody id="communicable-morbidity-body">
+                                @for($r = 0; $r < 4; $r++)
                                     <tr>
-                                        <th>Infectious Condition</th>
-                                        <th class="text-end">Cases</th>
-                                        <th class="text-end" style="width: 140px;">Proportion</th>
+                                        <td><span class="dash-skeleton dash-skeleton-row" style="width: 75%;"></span></td>
+                                        <td class="text-end"><span class="dash-skeleton dash-skeleton-row" style="width: 45px;"></span></td>
+                                        <td><span class="dash-skeleton dash-skeleton-row"></span></td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    @php $totalComm = max(1, $charts['disease_classification']['communicable_count']); @endphp
-                                    @foreach($charts['disease_classification']['top_communicable'] as $comm)
-                                        @php $pct = round(($comm['count'] / $totalComm) * 100, 1); @endphp
-                                        <tr>
-                                            <td class="fw-semibold text-dark">{{ $comm['name'] }}</td>
-                                            <td class="text-end fw-bold">{{ $comm['count'] }}</td>
-                                            <td class="text-end">
-                                                <div class="d-flex align-items-center justify-content-end gap-2">
-                                                    <div class="progress flex-grow-1" style="height: 6px;">
-                                                        <div class="progress-bar bg-danger" style="width: {{ $pct }}%"></div>
-                                                    </div>
-                                                    <span class="small text-muted" style="min-width: 38px;">{{ $pct }}%</span>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    @endif
+                                @endfor
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -249,45 +389,31 @@
                         </h5>
                         <small class="text-muted">Lifestyle, chronic &amp; degenerative cases</small>
                     </div>
-                    <span class="badge badge-soft-blue">{{ $charts['disease_classification']['non_communicable_count'] }} total cases</span>
+                    <span class="badge badge-soft-blue" data-kpi="non_communicable_badge">
+                        <span class="dash-skeleton dash-skeleton-sm" style="width: 65px;"></span>
+                    </span>
                 </div>
                 <div class="card-body px-4 py-3">
-                    @if(empty($charts['disease_classification']['top_non_communicable']))
-                        <div class="text-center text-muted py-4">
-                            <i class="bi bi-shield-check fs-2 text-primary d-block mb-2"></i>
-                            No chronic conditions recorded in registry.
-                        </div>
-                    @else
-                        <div class="table-responsive">
-                            <table class="table table-sm table-hover align-middle mb-0">
-                                <thead class="table-light">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Chronic Condition</th>
+                                    <th class="text-end">Cases</th>
+                                    <th class="text-end" style="width: 140px;">Proportion</th>
+                                </tr>
+                            </thead>
+                            <tbody id="non-communicable-morbidity-body">
+                                @for($r = 0; $r < 4; $r++)
                                     <tr>
-                                        <th>Chronic Condition</th>
-                                        <th class="text-end">Cases</th>
-                                        <th class="text-end" style="width: 140px;">Proportion</th>
+                                        <td><span class="dash-skeleton dash-skeleton-row" style="width: 75%;"></span></td>
+                                        <td class="text-end"><span class="dash-skeleton dash-skeleton-row" style="width: 45px;"></span></td>
+                                        <td><span class="dash-skeleton dash-skeleton-row"></span></td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    @php $totalNonComm = max(1, $charts['disease_classification']['non_communicable_count']); @endphp
-                                    @foreach($charts['disease_classification']['top_non_communicable'] as $nonComm)
-                                        @php $pct = round(($nonComm['count'] / $totalNonComm) * 100, 1); @endphp
-                                        <tr>
-                                            <td class="fw-semibold text-dark">{{ $nonComm['name'] }}</td>
-                                            <td class="text-end fw-bold">{{ $nonComm['count'] }}</td>
-                                            <td class="text-end">
-                                                <div class="d-flex align-items-center justify-content-end gap-2">
-                                                    <div class="progress flex-grow-1" style="height: 6px;">
-                                                        <div class="progress-bar bg-primary" style="width: {{ $pct }}%"></div>
-                                                    </div>
-                                                    <span class="small text-muted" style="min-width: 38px;">{{ $pct }}%</span>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    @endif
+                                @endfor
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -306,6 +432,10 @@
                 </div>
                 <div class="card-body px-4 py-3">
                     <div style="height: 250px; position: relative;">
+                        <div class="chart-loader-overlay">
+                            <div class="spinner-border text-info spinner-border-sm mb-2" role="status"></div>
+                            <span class="small text-muted fw-medium">Aggregating college visits...</span>
+                        </div>
                         <canvas id="college-utilization-chart"></canvas>
                     </div>
                 </div>
@@ -324,7 +454,167 @@
                 </div>
                 <div class="card-body px-4 py-3">
                     <div style="height: 250px; position: relative;">
+                        <div class="chart-loader-overlay">
+                            <div class="spinner-border text-success spinner-border-sm mb-2" role="status"></div>
+                            <span class="small text-muted fw-medium">Calculating dispensed medicines...</span>
+                        </div>
                         <canvas id="medicine-utilization-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border mb-4">
+        <div class="card-header bg-white py-3 px-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <h5 class="fw-bold mb-0 text-dark" style="font-size: 1.05rem;">
+                    <i class="bi bi-layers text-primary me-2"></i>Clinical Operations &amp; System Activity Explorer
+                </h5>
+                <small class="text-muted">Live records across Medical, Dental, Emergency, First Aid, and System Audit tables</small>
+            </div>
+            <ul class="nav nav-pills nav-fill gap-1" id="clinicalExplorerTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active py-1 px-3 small fw-semibold" data-bs-toggle="tab" data-bs-target="#tab-medical" type="button" role="tab">
+                        1. Medical
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link py-1 px-3 small fw-semibold" data-bs-toggle="tab" data-bs-target="#tab-dental" type="button" role="tab">
+                        2. Dental (DMFT)
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link py-1 px-3 small fw-semibold" data-bs-toggle="tab" data-bs-target="#tab-emergency" type="button" role="tab">
+                        3. Emergency
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link py-1 px-3 small fw-semibold" data-bs-toggle="tab" data-bs-target="#tab-firstaid" type="button" role="tab">
+                        4. First Aid
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link py-1 px-3 small fw-semibold" data-bs-toggle="tab" data-bs-target="#tab-audit" type="button" role="tab">
+                        Audit Logs
+                    </button>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body p-0">
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="tab-medical" role="tabpanel">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Visit #</th>
+                                    <th>Patient</th>
+                                    <th>Diagnosis</th>
+                                    <th>Issued Documents</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-medical-body">
+                                @for($r = 0; $r < 4; $r++)
+                                    <tr>
+                                        <td colspan="5"><span class="dash-skeleton dash-skeleton-row"></span></td>
+                                    </tr>
+                                @endfor
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="tab-dental" role="tabpanel">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Visit #</th>
+                                    <th>Patient &amp; Hygiene</th>
+                                    <th>Dental Diagnosis</th>
+                                    <th>DMFT Score</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-dental-body">
+                                @for($r = 0; $r < 4; $r++)
+                                    <tr>
+                                        <td colspan="5"><span class="dash-skeleton dash-skeleton-row"></span></td>
+                                    </tr>
+                                @endfor
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="tab-emergency" role="tabpanel">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Incident #</th>
+                                    <th>Patient &amp; Location</th>
+                                    <th>Emergency Nature</th>
+                                    <th>Triage</th>
+                                    <th>Outcome</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-emergency-body">
+                                @for($r = 0; $r < 4; $r++)
+                                    <tr>
+                                        <td colspan="5"><span class="dash-skeleton dash-skeleton-row"></span></td>
+                                    </tr>
+                                @endfor
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="tab-firstaid" role="tabpanel">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Visit #</th>
+                                    <th>Patient &amp; Location</th>
+                                    <th>Injury &amp; Body Part</th>
+                                    <th>Supplies Used</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-first-aid-body">
+                                @for($r = 0; $r < 4; $r++)
+                                    <tr>
+                                        <td colspan="5"><span class="dash-skeleton dash-skeleton-row"></span></td>
+                                    </tr>
+                                @endfor
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="tab-audit" role="tabpanel">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Event</th>
+                                    <th>Actor</th>
+                                    <th>Activity Description</th>
+                                    <th>IP Address</th>
+                                    <th>Timestamp</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-audit-body">
+                                @for($r = 0; $r < 4; $r++)
+                                    <tr>
+                                        <td colspan="5"><span class="dash-skeleton dash-skeleton-row"></span></td>
+                                    </tr>
+                                @endfor
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -350,31 +640,16 @@
                                     <th>Disposition</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                @forelse($recentVisits as $visit)
+                            <tbody id="recent-visits-body">
+                                @for($r = 0; $r < 4; $r++)
                                     <tr>
-                                        <td>
-                                            <a href="{{ $visit->detail_url }}" class="fw-bold font-monospace text-primary text-decoration-none">
-                                                {{ $visit->visit_number }}
-                                            </a>
-                                        </td>
-                                        <td>
-                                            <div class="fw-semibold text-dark">{{ $visit->patient?->full_name ?? '—' }}</div>
-                                            <small class="text-muted">{{ ucfirst($visit->patient_classification) }}</small>
-                                        </td>
-                                        <td>
-                                            <span class="badge {{ $visit->type_badge }}">{{ $visit->type_label }}</span>
-                                        </td>
-                                        <td class="small">{{ $visit->visit_date->format('M d, h:i A') }}</td>
-                                        <td>
-                                            <span class="badge badge-soft-gray">{{ $visit->disposition_label }}</span>
-                                        </td>
+                                        <td><span class="dash-skeleton dash-skeleton-row" style="width: 80px;"></span></td>
+                                        <td><span class="dash-skeleton dash-skeleton-row" style="width: 120px;"></span></td>
+                                        <td><span class="dash-skeleton dash-skeleton-row" style="width: 65px;"></span></td>
+                                        <td><span class="dash-skeleton dash-skeleton-row" style="width: 75px;"></span></td>
+                                        <td><span class="dash-skeleton dash-skeleton-row" style="width: 65px;"></span></td>
                                     </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="text-center text-muted py-4">No recent clinic visits recorded.</td>
-                                    </tr>
-                                @endforelse
+                                @endfor
                             </tbody>
                         </table>
                     </div>
@@ -400,31 +675,16 @@
                                     <th>Status</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                @forelse($recentPhysicalExams as $pe)
+                            <tbody id="recent-pe-body">
+                                @for($r = 0; $r < 4; $r++)
                                     <tr>
-                                        <td>
-                                            <a href="{{ route('physical-examinations.show', $pe) }}" class="fw-bold font-monospace text-primary text-decoration-none">
-                                                {{ $pe->pe_number }}
-                                            </a>
-                                        </td>
-                                        <td>
-                                            <div class="fw-semibold text-dark">{{ $pe->patient?->full_name ?? '—' }}</div>
-                                            <small class="text-muted">{{ $pe->patient?->primary_identifier }}</small>
-                                        </td>
-                                        <td class="small">{{ $pe->exam_date->format('M d, Y') }}</td>
-                                        <td>
-                                            <span class="badge {{ $pe->fitness_badge_class }}">{{ $pe->fitness_assessment ?: 'Class A' }}</span>
-                                        </td>
-                                        <td>
-                                            <span class="badge badge-soft-gray">{{ ucfirst($pe->status) }}</span>
-                                        </td>
+                                        <td><span class="dash-skeleton dash-skeleton-row" style="width: 80px;"></span></td>
+                                        <td><span class="dash-skeleton dash-skeleton-row" style="width: 120px;"></span></td>
+                                        <td><span class="dash-skeleton dash-skeleton-row" style="width: 75px;"></span></td>
+                                        <td><span class="dash-skeleton dash-skeleton-row" style="width: 65px;"></span></td>
+                                        <td><span class="dash-skeleton dash-skeleton-row" style="width: 65px;"></span></td>
                                     </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="text-center text-muted py-4">No physical exam assessments recorded yet.</td>
-                                    </tr>
-                                @endforelse
+                                @endfor
                             </tbody>
                         </table>
                     </div>
@@ -452,34 +712,16 @@
                                     <th>Status</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                @forelse($upcomingSchedules as $sched)
+                            <tbody id="upcoming-schedules-body">
+                                @for($r = 0; $r < 4; $r++)
                                     <tr>
-                                        <td>
-                                            <a href="{{ route('physical-exam-schedules.show', $sched) }}" class="fw-bold font-monospace text-primary text-decoration-none">
-                                                {{ $sched->schedule_number }}
-                                            </a>
-                                        </td>
-                                        <td>
-                                            <div class="fw-semibold text-dark">{{ $sched->title }}</div>
-                                            <small class="text-muted">{{ ucfirst($sched->target_classification) }}</small>
-                                        </td>
-                                        <td>
-                                            <div class="small fw-medium">{{ $sched->scheduled_date->format('M d, Y') }}</div>
-                                            <small class="text-muted">{{ $sched->venue ?: 'Main Clinic' }}</small>
-                                        </td>
-                                        <td class="small">
-                                            <span class="badge badge-soft-blue">{{ $sched->attendees()->count() }} / {{ $sched->capacity ?: '∞' }}</span>
-                                        </td>
-                                        <td>
-                                            <span class="badge {{ $sched->status === 'completed' ? 'badge-soft-green' : 'badge-soft-amber' }}">{{ ucfirst($sched->status) }}</span>
-                                        </td>
+                                        <td><span class="dash-skeleton dash-skeleton-row" style="width: 80px;"></span></td>
+                                        <td><span class="dash-skeleton dash-skeleton-row" style="width: 130px;"></span></td>
+                                        <td><span class="dash-skeleton dash-skeleton-row" style="width: 85px;"></span></td>
+                                        <td><span class="dash-skeleton dash-skeleton-row" style="width: 55px;"></span></td>
+                                        <td><span class="dash-skeleton dash-skeleton-row" style="width: 65px;"></span></td>
                                     </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="text-center text-muted py-4">No scheduled mass checkups pending.</td>
-                                    </tr>
-                                @endforelse
+                                @endfor
                             </tbody>
                         </table>
                     </div>
@@ -504,33 +746,15 @@
                                     <th>Date</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                @forelse($recentDispensings as $disp)
+                            <tbody id="recent-dispensings-body">
+                                @for($r = 0; $r < 4; $r++)
                                     <tr>
-                                        <td>
-                                            <a href="{{ route('inventory.dispensings.show', $disp) }}" class="fw-bold font-monospace text-primary text-decoration-none">
-                                                {{ $disp->dispensing_number }}
-                                            </a>
-                                        </td>
-                                        <td>
-                                            <div class="fw-semibold text-dark">{{ $disp->patient?->full_name ?? 'Walk-in' }}</div>
-                                            <small class="text-muted">{{ $disp->items->count() }} item(s)</small>
-                                        </td>
-                                        <td>
-                                            @foreach($disp->items->take(2) as $it)
-                                                <span class="badge badge-soft-gray me-1">{{ $it->medicine?->generic_name }} ({{ $it->quantity }})</span>
-                                            @endforeach
-                                            @if($disp->items->count() > 2)
-                                                <small class="text-muted">+{{ $disp->items->count() - 2 }} more</small>
-                                            @endif
-                                        </td>
-                                        <td class="small">{{ $disp->dispensed_date?->format('M d, Y') ?? '—' }}</td>
+                                        <td><span class="dash-skeleton dash-skeleton-row" style="width: 80px;"></span></td>
+                                        <td><span class="dash-skeleton dash-skeleton-row" style="width: 120px;"></span></td>
+                                        <td><span class="dash-skeleton dash-skeleton-row" style="width: 140px;"></span></td>
+                                        <td><span class="dash-skeleton dash-skeleton-row" style="width: 75px;"></span></td>
                                     </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="4" class="text-center text-muted py-4">No recent dispensary records.</td>
-                                    </tr>
-                                @endforelse
+                                @endfor
                             </tbody>
                         </table>
                     </div>
@@ -538,8 +762,6 @@
             </div>
         </div>
     </div>
-
-    <script id="dashboard-chart-data" type="application/json">@json($charts)</script>
 
     @pushOnce('scripts', 'chartjs-scripts')
         <script src="{{ asset('assets/plugins/chartjs/chart.umd.min.js') }}"></script>

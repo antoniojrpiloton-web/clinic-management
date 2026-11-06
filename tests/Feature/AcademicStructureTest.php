@@ -61,27 +61,27 @@ class AcademicStructureTest extends TestCase
         $collegeResponse->assertOk();
 
         $createCollege = $this->actingAs($admin)->post(route('colleges.store'), [
-            'code' => 'CTE',
-            'name' => 'College of Teacher Education',
+            'code' => 'CGS',
+            'name' => 'College of Graduate Studies',
             'dean' => 'Dr. Maria Santos',
             'is_active' => 1,
         ]);
         $createCollege->assertRedirect(route('colleges.index'));
 
-        $college = College::where('code', 'CTE')->first();
+        $college = College::where('code', 'CGS')->first();
         $this->assertNotNull($college);
 
         $createProgram = $this->actingAs($admin)->post(route('programs.store'), [
             'college_id' => $college->id,
-            'code' => 'BSED',
-            'name' => 'Bachelor of Secondary Education',
+            'code' => 'BSED-MATH',
+            'name' => 'Bachelor of Secondary Education Major in Mathematics',
             'degree_level' => 'Undergraduate',
             'years' => 4,
             'is_active' => 1,
         ]);
         $createProgram->assertRedirect(route('programs.index'));
 
-        $program = Program::where('code', 'BSED')->first();
+        $program = Program::where('code', 'BSED-MATH')->first();
         $this->assertNotNull($program);
         $this->assertEquals($college->id, $program->college_id);
 

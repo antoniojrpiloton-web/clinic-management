@@ -29,7 +29,9 @@
                     @endforeach
                 </tr>
             </thead>
-            <tbody></tbody>
+            <tbody>
+                <x-table-skeleton :cols="max(1, count($columns))" :rows="8" />
+            </tbody>
         @endif
     </table>
 </div>

@@ -53,85 +53,28 @@
             <div class="d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center gap-2">
                     <i class="bi bi-tags text-primary fs-5"></i>
-                    <span class="fw-bold text-dark">Category Directory ({{ $categories->count() }})</span>
+                    <span class="fw-bold text-dark">Category Directory ({{ number_format($totalCategories) }})</span>
                 </div>
             </div>
         </div>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th class="ps-3">Code</th>
-                        <th>Category Name</th>
-                        <th>Description</th>
-                        <th class="text-center">Medicines Count</th>
-                        <th class="text-center">Status</th>
-                        <th class="text-end pe-3">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($categories as $cat)
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="medicine-categories-table" class="table table-hover align-middle w-100 mb-0">
+                    <thead class="table-light">
                         <tr>
-                            <td class="ps-3">
-                                <span class="badge badge-soft-blue font-monospace">{{ $cat->code }}</span>
-                            </td>
-                            <td class="fw-bold text-dark">
-                                {{ $cat->name }}
-                            </td>
-                            <td class="text-muted small">
-                                {{ $cat->description ?: 'N/A' }}
-                            </td>
-                            <td class="text-center">
-                                <a href="{{ route('medicines.index', ['category_id' => $cat->id]) }}" class="badge badge-soft-gray text-decoration-none">
-                                    {{ $cat->medicines_count }} items
-                                </a>
-                            </td>
-                            <td class="text-center">
-                                @if($cat->is_active)
-                                    <span class="badge badge-soft-green"><i class="bi bi-check-circle me-1"></i>Active</span>
-                                @else
-                                    <span class="badge badge-soft-gray"><i class="bi bi-pause-circle me-1"></i>Inactive</span>
-                                @endif
-                            </td>
-                            <td class="text-end pe-3">
-                                <div class="d-flex align-items-center justify-content-end gap-1">
-                                    @can('medicine-categories.edit')
-                                        <button
-                                            type="button"
-                                            class="btn btn-sm btn-light border p-1 px-2"
-                                            title="Edit Category"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#modal-edit-category"
-                                            data-category-id="{{ $cat->id }}"
-                                            data-category-name="{{ $cat->name }}"
-                                            data-category-code="{{ $cat->code }}"
-                                            data-category-description="{{ $cat->description }}"
-                                            data-category-active="{{ $cat->is_active ? '1' : '0' }}"
-                                            data-update-url="{{ route('medicine-categories.update', $cat) }}"
-                                        >
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                    @endcan
-
-                                    @can('medicine-categories.delete')
-                                        <form method="POST" action="{{ route('medicine-categories.destroy', $cat) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to remove category {{ $cat->name }}?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-light border text-danger p-1 px-2" title="Delete">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
-                                    @endcan
-                                </div>
-                            </td>
+                            <th>Code</th>
+                            <th>Category Name</th>
+                            <th>Description</th>
+                            <th class="text-center">Medicines Count</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-end">Actions</th>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="text-center py-4 text-muted">No medicine categories created yet.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <x-table-skeleton :cols="6" :rows="6" />
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -212,9 +155,30 @@
         </div>
     @endcan
 
+    @include('partials.plugins.datatables')
+
     @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', function () {
+                const $ = window.jQuery;
+                if ($ && $.fn.DataTable) {
+                    $('#medicine-categories-table').DataTable({
+                        processing: true,
+                        serverSide: true,
+                        ajax: '{{ route('medicine-categories.index') }}',
+                        pageLength: 25,
+                        order: [[1, 'asc']],
+                        columns: [
+                            { data: 'code_col', name: 'code' },
+                            { data: 'name_col', name: 'name' },
+                            { data: 'desc_col', name: 'description', orderable: false },
+                            { data: 'count_col', name: 'medicines_count', className: 'text-center', searchable: false },
+                            { data: 'status_col', name: 'is_active', className: 'text-center', searchable: false },
+                            { data: 'actions_col', orderable: false, searchable: false, className: 'text-end' }
+                        ]
+                    });
+                }
+
                 const editModalEl = document.getElementById('modal-edit-category');
                 if (!editModalEl) return;
 

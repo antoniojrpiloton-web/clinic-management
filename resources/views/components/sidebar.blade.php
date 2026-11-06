@@ -4,9 +4,10 @@
     $patientActive = request()->routeIs(['patients.*']);
     $operationsActive = request()->routeIs(['clinic-visits.*', 'medical-consultations.*', 'dental-consultations.*', 'emergency-records.*', 'first-aid-records.*', 'physical-exam-schedules.*']);
     $clinicalActive = request()->routeIs(['physical-examinations.*', 'medical-profiles.*', 'clinicians.*']);
-    $pharmacyActive = request()->routeIs(['medicines.*', 'medicine-categories.*', 'inventory.*']);
+    $pharmacyActive = request()->routeIs(['medicines.*', 'medicine-categories.*', 'inventory.*']) && ! request()->routeIs('inventory.reports');
+    $reportsActive = request()->routeIs(['reports.clinic.*', 'inventory.reports']);
     $adminActive = request()->routeIs(['users.*', 'roles.*', 'permissions.*', 'audit-logs.*']);
-    $configActive = request()->routeIs(['settings.*', 'academic-years.*', 'colleges.*', 'programs.*']);
+    $configActive = request()->routeIs(['settings.*', 'academic-years.*', 'colleges.*', 'programs.*', 'disease-categories.*']);
     $dbActive = request()->routeIs(['backups.*']);
     $accountActive = request()->routeIs(['profile.*']);
     $sidebarLogo = ! empty($appSettings['logo_compact'])
@@ -14,11 +15,16 @@
         : (! empty($appSettings['logo_primary'])
             ? asset('storage/'.$appSettings['logo_primary'])
             : null);
+    $faviconUrl = ! empty($appSettings['logo_compact'])
+            ? asset('storage/'.$appSettings['logo_compact'])
+            : (! empty($appSettings['logo_primary'])
+                ? asset('storage/'.$appSettings['logo_primary'])
+                : asset('assets/images/logo.svg'));        
 @endphp
 <aside class="app-sidebar" aria-label="Main navigation">
     <a href="{{ route('dashboard') }}" class="sidebar-brand">
-        @if ($sidebarLogo)
-            <img src="{{ $sidebarLogo }}" alt="Logo" class="rounded" style="width: 34px; height: 34px; object-fit: contain;">
+        @if ($faviconUrl)
+            <img src="{{ $faviconUrl }}" alt="Logo" class="rounded" style="width: 34px; height: 34px; object-fit: contain;">
         @else
             <div class="brand-badge">{{ substr($clinicName, 0, 1) ?: 'C' }}</div>
         @endif
@@ -230,18 +236,6 @@
                         </a>
                     </li>
                 @endcan
-                @can('inventory.reports')
-                    <li>
-                        <a href="{{ route('reports.clinic.index') }}" @class(['submenu-link', 'active' => request()->routeIs('reports.clinic.*')])>
-                            <span>Morbidity Reports</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('inventory.reports') }}" @class(['submenu-link', 'active' => request()->routeIs('inventory.reports')])>
-                            <span>Inventory Reports</span>
-                        </a>
-                    </li>
-                @endcan
                 @can('medicine-categories.view')
                     <li>
                         <a href="{{ route('medicine-categories.index') }}" @class(['submenu-link', 'active' => request()->routeIs('medicine-categories.*')])>
@@ -251,6 +245,56 @@
                 @endcan
             </ul>
         </div>
+
+        @can('inventory.reports')
+            <button
+                type="button"
+                @class(['nav-dropdown-toggle', 'active' => $reportsActive])
+                data-bs-toggle="collapse"
+                data-bs-target="#submenu-reports"
+                aria-expanded="{{ $reportsActive ? 'true' : 'false' }}"
+            >
+                <div class="nav-left">
+                    <i class="bi bi-bar-chart-line menu-icon"></i>
+                    <span>Reports &amp; Analytics</span>
+                </div>
+                <i class="bi bi-chevron-right menu-chevron"></i>
+            </button>
+            <div @class(['collapse', 'show' => $reportsActive]) id="submenu-reports">
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ route('reports.clinic.medical-dental') }}" @class(['submenu-link', 'active' => request()->routeIs('reports.clinic.medical-dental')])>
+                            <span>Medical &amp; Dental Records</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('reports.clinic.login-records') }}" @class(['submenu-link', 'active' => request()->routeIs('reports.clinic.login-records')])>
+                            <span>Medical &amp; Dental Log-In</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('reports.clinic.communicable') }}" @class(['submenu-link', 'active' => request()->routeIs('reports.clinic.communicable')])>
+                            <span>Communicable Diseases</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('reports.clinic.non-communicable') }}" @class(['submenu-link', 'active' => request()->routeIs('reports.clinic.non-communicable')])>
+                            <span>Non-Communicable Diseases</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('reports.clinic.index') }}" @class(['submenu-link', 'active' => request()->routeIs('reports.clinic.index')])>
+                            <span>Morbidity &amp; Utilization</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('inventory.reports') }}" @class(['submenu-link', 'active' => request()->routeIs('inventory.reports')])>
+                            <span>Inventory &amp; Stock Reports</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        @endcan
 
         <button
             type="button"
@@ -338,6 +382,13 @@
                     <li>
                         <a href="{{ route('programs.index') }}" @class(['submenu-link', 'active' => request()->routeIs('programs.*')])>
                             <span>Programs</span>
+                        </a>
+                    </li>
+                @endcan
+                @can('medical-consultations.view')
+                    <li>
+                        <a href="{{ route('disease-categories.index') }}" @class(['submenu-link', 'active' => request()->routeIs('disease-categories.*')])>
+                            <span>Disease Categories</span>
                         </a>
                     </li>
                 @endcan

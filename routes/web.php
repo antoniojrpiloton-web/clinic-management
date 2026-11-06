@@ -13,6 +13,7 @@ use App\Http\Controllers\ClinicVisitController;
 use App\Http\Controllers\CollegeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DentalConsultationController;
+use App\Http\Controllers\DiseaseCategoryController;
 use App\Http\Controllers\EmergencyRecordController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\FirstAidRecordController;
@@ -56,6 +57,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::redirect('/', '/dashboard');
     Route::post('logout', [LoginController::class, 'destroy'])->name('logout');
     Route::get('dashboard', DashboardController::class)->name('dashboard');
+    Route::get('dashboard/metrics', [DashboardController::class, 'metrics'])->name('dashboard.metrics');
 
     Route::controller(ProfileController::class)->prefix('profile')->name('profile.')->group(function () {
         Route::get('/', 'edit')->name('edit');
@@ -152,7 +154,15 @@ Route::middleware(['auth', 'active'])->group(function () {
 
     Route::controller(ClinicReportController::class)->prefix('reports/clinic')->name('reports.clinic.')->group(function () {
         Route::get('/', 'index')->name('index');
+        Route::get('medical-dental-records', 'medicalDentalRecords')->name('medical-dental');
+        Route::get('login-records', 'loginRecords')->name('login-records');
+        Route::get('communicable-diseases', 'communicableDiseases')->name('communicable');
+        Route::get('non-communicable-diseases', 'nonCommunicableDiseases')->name('non-communicable');
         Route::get('print-pdf', 'printPdf')->name('print-pdf');
+        Route::get('print-medical-dental-records', 'printMedicalDentalRecords')->name('print-medical-dental-records');
+        Route::get('print-login-records', 'printLoginRecords')->name('print-login-records');
+        Route::get('print-communicable-diseases', 'printCommunicableDiseases')->name('print-communicable-diseases');
+        Route::get('print-non-communicable-diseases', 'printNonCommunicableDiseases')->name('print-non-communicable-diseases');
     });
 
     Route::controller(MedicineDispensingController::class)->prefix('inventory/dispensings')->name('inventory.dispensings.')->group(function () {
@@ -167,6 +177,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::resource('academic-years', AcademicYearController::class)->except(['create', 'edit', 'show']);
     Route::resource('colleges', CollegeController::class)->except(['create', 'edit', 'show']);
     Route::resource('programs', ProgramController::class)->except(['create', 'edit', 'show']);
+    Route::resource('disease-categories', DiseaseCategoryController::class)->except(['create', 'edit', 'show']);
 
     Route::resource('users', UserController::class)->except('show');
     Route::resource('roles', RoleController::class)->except('show');

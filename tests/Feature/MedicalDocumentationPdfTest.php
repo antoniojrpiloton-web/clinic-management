@@ -4,10 +4,14 @@ namespace Tests\Feature;
 
 use App\Models\Clinician;
 use App\Models\ClinicVisit;
+use App\Models\College;
+use App\Models\DentalConsultation;
+use App\Models\DiseaseCategory;
 use App\Models\MedicineDispensing;
 use App\Models\Patient;
 use App\Models\PhysicalExamination;
 use App\Models\PhysicalExamSchedule;
+use App\Models\Program;
 use App\Models\User;
 use App\Services\SettingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -196,5 +200,117 @@ class MedicalDocumentationPdfTest extends TestCase
         $this->assertStringContainsString('CUSTOM UNIVERSITY MEDICAL CLINIC', $content);
         $this->assertStringContainsString('DR. ALEXANDRA CRUZ, MD', $content);
         $this->assertStringContainsString('License #: DOH-LIC-998877', $content);
+    }
+
+    public function test_oral_health_card_pdf_uses_dynamic_rows_and_maximizes_page_space(): void
+    {
+        $admin = User::role(User::SUPER_ADMIN_ROLE)->first();
+        $consultation = DentalConsultation::first();
+        $this->assertNotNull($consultation);
+
+        $consultation->update([
+            'anesthesia_used' => 'Lidocaine 2% with 1:100,000 Epinephrine',
+            'treatment_rendered' => 'Tooth extraction under local infiltration anesthesia; post-op gauze pack applied and hemostasis achieved.',
+            'recommendations' => 'Bite firmly on sterile gauze for 30 minutes; avoid hot food and vigorous rinsing for 24 hours.',
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('dental-consultations.print-card', $consultation->clinic_visit_id));
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/pdf');
+
+        $content = $response->getContent();
+        $this->assertStringStartsWith('%PDF-', $content);
+        $this->assertStringContainsString('ORAL HEALTH EXAMINATION CARD', $content);
+        $this->assertStringContainsString('Lidocaine 2% with 1:100,000 Epinephrine', $content);
+        $this->assertStringContainsString('/Count 1', $content);
+    }
+
+    public function test_medical_and_dental_records_and_login_records_reports_render_and_export_pdf(): void
+    {
+        $admin = User::role(User::SUPER_ADMIN_ROLE)->first();
+        $year = (int) now()->year;
+
+        $college = College::first();
+        Program::firstOrCreate(
+            ['code' => 'BSMT'],
+            [
+                'college_id' => $college->id,
+                'name' => 'Bachelor of Science in Marine Transportation',
+                'is_active' => true,
+            ]
+        );
+
+        $indexResponse = $this->actingAs($admin)->get(route('reports.clinic.index', ['year' => $year]));
+        $indexResponse->assertOk();
+        $indexResponse->assertSee('Reports & Analytics');
+        $indexResponse->assertSee('MEDICAL AND DENTAL RECORDS');
+        $indexResponse->assertSee('MEDICAL AND DENTAL LOG-IN RECORDS');
+        $indexResponse->assertSee('CRIM Students');
+        $indexResponse->assertSee('BSHM/ TM Students');
+        $indexResponse->assertSee('Forensic Students');
+        $indexResponse->assertSee('TESDA Students');
+        $indexResponse->assertSee('BSMT Students');
+
+        $medDentalPdf = $this->actingAs($admin)->get(route('reports.clinic.print-medical-dental-records', ['year' => $year]));
+        $medDentalPdf->assertOk();
+        $medDentalPdf->assertHeader('Content-Type', 'application/pdf');
+        $medDentalContent = $medDentalPdf->getContent();
+        $this->assertStringStartsWith('%PDF-', $medDentalContent);
+        $this->assertStringContainsString('MEDICAL AND DENTAL RECORDS', $medDentalContent);
+        $this->assertStringContainsString('SCHEDULED', $medDentalContent);
+        $this->assertStringContainsString('EXAMINATION', $medDentalContent);
+        $this->assertStringContainsString('BSHM/ TM Students', $medDentalContent);
+        $this->assertStringContainsString('BSMT Students', $medDentalContent);
+        $this->assertStringContainsString('Athletes', $medDentalContent);
+        $this->assertStringContainsString('TOTAL FOR THE MONTH', $medDentalContent);
+        $this->assertStringContainsString('KIEN I. IGUP, RN', $medDentalContent);
+        $this->assertStringContainsString('/Count 1', $medDentalContent);
+
+        $loginPdf = $this->actingAs($admin)->get(route('reports.clinic.print-login-records', ['year' => $year]));
+        $loginPdf->assertOk();
+        $loginPdf->assertHeader('Content-Type', 'application/pdf');
+        $loginContent = $loginPdf->getContent();
+        $this->assertStringStartsWith('%PDF-', $loginContent);
+        $this->assertStringContainsString('MEDICAL AND DENTAL LOG-IN RECORDS', $loginContent);
+        $this->assertStringContainsString('BSHM Students', $loginContent);
+        $this->assertStringContainsString('BSTM Students', $loginContent);
+        $this->assertStringContainsString('BSMT Students', $loginContent);
+        $this->assertStringContainsString('ELEMENTARY', $loginContent);
+        $this->assertStringContainsString('TOTAL FOR THE MONTH', $loginContent);
+        $this->assertStringContainsString('/Count 1', $loginContent);
+
+        DiseaseCategory::firstOrCreate(
+            ['code' => 'COMM-MONKEYPOX'],
+            [
+                'name' => 'Mpox / Viral Exanthem Surveillance',
+                'classification' => DiseaseCategory::TYPE_COMMUNICABLE,
+                'keywords' => 'mpox,monkeypox',
+                'sort_order' => 40,
+                'is_active' => true,
+            ]
+        );
+
+        $commPdf = $this->actingAs($admin)->get(route('reports.clinic.print-communicable-diseases', ['year' => $year]));
+        $commPdf->assertOk();
+        $commPdf->assertHeader('Content-Type', 'application/pdf');
+        $commContent = $commPdf->getContent();
+        $this->assertStringStartsWith('%PDF-', $commContent);
+        $this->assertStringContainsString("COMMUNICABLE DISEASES {$year} DATA", $commContent);
+        $this->assertStringContainsString('Tuberculosis', $commContent);
+        $this->assertStringContainsString('URTI \\(cough, colds, fever, runny nose, sore throat and tonsilitis\\)', $commContent);
+        $this->assertStringContainsString('SVI \\(Chickenpox, Conjunctivitis, Dengue, Herpes Zoster\\)', $commContent);
+        $this->assertStringContainsString('Mpox / Viral Exanthem Surveillance', $commContent);
+        $this->assertStringContainsString('/Count 1', $commContent);
+
+        $nonCommPdf = $this->actingAs($admin)->get(route('reports.clinic.print-non-communicable-diseases', ['year' => $year]));
+        $nonCommPdf->assertOk();
+        $nonCommPdf->assertHeader('Content-Type', 'application/pdf');
+        $nonCommContent = $nonCommPdf->getContent();
+        $this->assertStringStartsWith('%PDF-', $nonCommContent);
+        $this->assertStringContainsString("NON- COMMUNICABLE DISEASES {$year} DATA", $nonCommContent);
+        $this->assertStringContainsString('Illness of Student of Disabiltiy', $nonCommContent);
+        $this->assertStringContainsString('Reproductive \\(Pregnancy, Cyst and Dysmenorrhea\\)', $nonCommContent);
+        $this->assertStringContainsString('Cardiovascular', $nonCommContent);
+        $this->assertStringContainsString('/Count 1', $nonCommContent);
     }
 }

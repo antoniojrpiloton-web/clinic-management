@@ -141,7 +141,9 @@
                             <th class="text-end pe-3" style="width: 110px;">ACTIONS</th>
                         </tr>
                     </thead>
-                    <tbody></tbody>
+                    <tbody>
+                        <x-table-skeleton :cols="6" :rows="8" />
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -161,6 +163,7 @@
                     serverSide: true,
                     pageLength: 25,
                     lengthMenu: [10, 25, 50, 100],
+                    order: [[2, 'desc']],
                     dom: "<'row p-3 align-items-center'<'col-sm-6'l><'col-sm-6'f>>" +
                          "<'row'<'col-sm-12'tr>>" +
                          "<'row p-3 align-items-center'<'col-sm-5'i><'col-sm-7'p>>",
@@ -175,10 +178,10 @@
                     },
                     columns: [
                         { data: 'schedule_card', name: 'title' },
-                        { data: 'target_group', name: 'target_classification', orderable: false },
-                        { data: 'schedule_timing', name: 'scheduled_date' },
+                        { data: 'target_group', name: 'target_classification', orderable: false, searchable: false },
+                        { data: 'schedule_timing', name: 'scheduled_date', searchable: false },
                         { data: 'progress_summary', name: 'total_attendees', orderable: false, searchable: false },
-                        { data: 'status_badge', name: 'status' },
+                        { data: 'status_badge', name: 'status', searchable: false },
                         { data: 'actions', name: 'actions', orderable: false, searchable: false }
                     ],
                     language: {
@@ -198,7 +201,7 @@
                     setTimeout(() => table.draw(), 50);
                 });
 
-                $('#filter-status, #filter-classification, #filter-college').on('change', function () {
+                $('#filter-status, #filter-classification, #filter-college, input[name="date_from"]').on('change', function () {
                     table.draw();
                 });
             });

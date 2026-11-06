@@ -31,9 +31,12 @@ class MedicineController extends Controller implements HasMiddleware
 
     public function index(Request $request): View|JsonResponse
     {
+        $todayStart = now()->startOfDay();
+
         if ($request->ajax()) {
             $query = Medicine::query()
-                ->with(['category', 'batches'])
+                ->with(['category:id,name'])
+                ->withSum(['batches as active_stock' => fn ($q) => $q->where('expiration_date', '>=', $todayStart)], 'quantity_remaining')
                 ->when($request->filled('category_id'), fn ($q) => $q->where('category_id', $request->category_id))
                 ->when($request->filled('dosage_form'), fn ($q) => $q->where('dosage_form', $request->dosage_form))
                 ->when($request->filled('status'), fn ($q) => $q->where('is_active', $request->status === 'active'))
@@ -68,7 +71,7 @@ class MedicineController extends Controller implements HasMiddleware
                     return "<span class=\"badge badge-soft-blue\">{$cat}</span>";
                 })
                 ->addColumn('stock_summary', function (Medicine $m) {
-                    $stock = $m->stock_on_hand;
+                    $stock = (int) ($m->active_stock ?? 0);
                     $unit = e($m->unit);
 
                     if ($stock <= 0) {
@@ -134,11 +137,15 @@ class MedicineController extends Controller implements HasMiddleware
         }
 
         $categories = MedicineCategory::active()->orderBy('name')->get();
-        $totalMedicines = Medicine::count();
-        $totalStockUnits = MedicineBatch::where('expiration_date', '>=', now()->startOfDay())->sum('quantity_remaining');
+        $medicinesWithStock = Medicine::query()
+            ->select(['id', 'reorder_level'])
+            ->withSum(['batches as active_stock' => fn ($q) => $q->where('expiration_date', '>=', $todayStart)], 'quantity_remaining')
+            ->get();
 
-        $lowStockCount = Medicine::all()->filter(fn (Medicine $m) => $m->stock_on_hand <= $m->reorder_level && $m->stock_on_hand > 0)->count();
-        $outOfStockCount = Medicine::all()->filter(fn (Medicine $m) => $m->stock_on_hand <= 0)->count();
+        $totalMedicines = $medicinesWithStock->count();
+        $totalStockUnits = (int) $medicinesWithStock->sum('active_stock');
+        $lowStockCount = $medicinesWithStock->filter(fn (Medicine $m) => (int) $m->active_stock <= $m->reorder_level && (int) $m->active_stock > 0)->count();
+        $outOfStockCount = $medicinesWithStock->filter(fn (Medicine $m) => (int) $m->active_stock <= 0)->count();
         $expiringSoonCount = MedicineBatch::expiringSoon(60)->where('quantity_remaining', '>', 0)->count();
         $expiredCount = MedicineBatch::expired()->where('quantity_remaining', '>', 0)->count();
 

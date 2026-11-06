@@ -172,6 +172,8 @@ h1, h2, h3, h4, h5, h6,
 .app-wrapper {
     min-height: 100vh;
     display: flex;
+    max-width: 100%;
+    overflow-x: clip;
 }
 
 .app-sidebar {
@@ -358,7 +360,10 @@ h1, h2, h3, h4, h5, h6,
 .app-main {
     margin-left: var(--app-sidebar-width);
     min-height: 100vh;
-    flex: 1;
+    flex: 1 1 0%;
+    min-width: 0;
+    width: calc(100% - var(--app-sidebar-width));
+    max-width: calc(100% - var(--app-sidebar-width));
     display: flex;
     flex-direction: column;
 }
@@ -463,7 +468,11 @@ h1, h2, h3, h4, h5, h6,
 }
 
 .app-content {
-    flex: 1;
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
     padding: 1.25rem 1.45rem;
 }
 
@@ -726,6 +735,8 @@ h1, h2, h3, h4, h5, h6,
 
     .app-main {
         margin-left: 0;
+        width: 100%;
+        max-width: 100%;
     }
 
     .sidebar-backdrop.show {
@@ -735,4 +746,91 @@ h1, h2, h3, h4, h5, h6,
         background: rgba(15, 23, 42, 0.4);
         z-index: 1035;
     }
+}
+
+@keyframes dtSkeletonShimmer {
+    0% {
+        background-position: -600px 0;
+    }
+    100% {
+        background-position: 600px 0;
+    }
+}
+
+.dt-skeleton-bar {
+    display: inline-block;
+    height: 14px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background-size: 600px 100%;
+    animation: dtSkeletonShimmer 1.35s infinite linear;
+    vertical-align: middle;
+}
+
+.dt-skeleton-bar.sm {
+    height: 10px;
+    width: 55%;
+    margin-top: 5px;
+    display: block;
+}
+
+.dt-skeleton-pill {
+    display: inline-block;
+    height: 22px;
+    width: 72px;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background-size: 600px 100%;
+    animation: dtSkeletonShimmer 1.35s infinite linear;
+}
+
+.dt-skeleton-btn {
+    display: inline-block;
+    height: 28px;
+    width: 68px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background-size: 600px 100%;
+    animation: dtSkeletonShimmer 1.35s infinite linear;
+}
+
+table.dataTable.dt-is-loading tbody tr:not(.dt-skeleton-row) {
+    opacity: 0.35;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+}
+
+div.dataTables_wrapper div.dataTables_processing {
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid var(--app-border-color);
+    border-radius: 9999px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+    padding: 0.45rem 1rem;
+    font-weight: 600;
+    font-size: 0.78rem;
+    color: var(--app-heading-color);
+    width: auto;
+    margin-left: 0;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+}
+
+.report-matrix-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.report-matrix-table > :not(caption) > * > * {
+    padding: 0.3rem 0.35rem;
+    font-size: 0.72rem;
+    line-height: 1.2;
+}
+
+.report-matrix-table thead th {
+    background-color: #76923c !important;
+    color: #000000 !important;
+    font-size: 0.66rem;
+    letter-spacing: 0.02em;
+    padding: 0.4rem 0.28rem;
+    border-color: #1e293b !important;
 }

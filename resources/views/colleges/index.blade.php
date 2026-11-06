@@ -36,7 +36,7 @@
                         <i class="bi bi-diagram-3"></i>
                     </span>
                 </div>
-                <div class="kpi-value">{{ $colleges->total() }}</div>
+                <div class="kpi-value">{{ number_format($stats['total_colleges']) }}</div>
                 <div class="kpi-trend">
                     <span class="trend-badge up"><i class="bi bi-building"></i> Academic units</span>
                     <span class="trend-compare">all campuses</span>
@@ -52,7 +52,7 @@
                         <i class="bi bi-patch-check"></i>
                     </span>
                 </div>
-                <div class="kpi-value">{{ \App\Models\College::active()->count() }}</div>
+                <div class="kpi-value">{{ number_format($stats['active_colleges']) }}</div>
                 <div class="kpi-trend">
                     <span class="trend-badge up">Operational</span>
                     <span class="trend-compare">accepting records</span>
@@ -68,7 +68,7 @@
                         <i class="bi bi-mortarboard"></i>
                     </span>
                 </div>
-                <div class="kpi-value">{{ \App\Models\Program::count() }}</div>
+                <div class="kpi-value">{{ number_format($stats['total_programs']) }}</div>
                 <div class="kpi-trend">
                     <span class="trend-badge up">Curricula</span>
                     <span class="trend-compare">active degree tracks</span>
@@ -84,7 +84,7 @@
                         <i class="bi bi-award"></i>
                     </span>
                 </div>
-                <div class="kpi-value">{{ \App\Models\Program::where('degree_level', 'Undergraduate')->count() }}</div>
+                <div class="kpi-value">{{ number_format($stats['undergrad_programs']) }}</div>
                 <div class="kpi-trend">
                     <span class="trend-badge up">Degree tracks</span>
                     <span class="trend-compare">bachelor programs</span>
@@ -94,9 +94,9 @@
     </div>
 
     <div class="card border">
-        <div class="card-body p-0">
+        <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table id="colleges-table" class="table table-hover align-middle w-100 mb-0">
                     <thead>
                         <tr>
                             <th>CODE</th>
@@ -108,110 +108,51 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse ($colleges as $college)
-                            <tr>
-                                <td>
-                                    <span class="fw-bold text-dark">{{ $college->code }}</span>
-                                </td>
-                                <td>
-                                    <div class="fw-semibold text-dark">{{ $college->name }}</div>
-                                    @if ($college->description)
-                                        <small class="text-muted text-truncate d-block" style="max-width: 320px;">{{ $college->description }}</small>
-                                    @endif
-                                </td>
-                                <td>
-                                    <span class="text-muted">{{ $college->dean ?: 'Not Assigned' }}</span>
-                                </td>
-                                <td>
-                                    <a href="{{ route('programs.index', ['college_id' => $college->id]) }}" class="badge badge-pill badge-soft-blue text-decoration-none">
-                                        {{ $college->programs_count }} Programs
-                                    </a>
-                                </td>
-                                <td>
-                                    <span class="status-badge {{ $college->is_active ? 'completed' : 'pending' }}">
-                                        {{ $college->is_active ? 'active' : 'inactive' }}
-                                    </span>
-                                </td>
-                                <td class="text-end">
-                                    <div class="d-inline-flex gap-1">
-                                        @can('colleges.edit')
-                                            <button
-                                                type="button"
-                                                class="btn btn-sm btn-light border p-1"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#edit-college-modal-{{ $college->id }}"
-                                                title="Edit"
-                                            >
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                        @endcan
-                                        @can('colleges.delete')
-                                            <form method="POST" action="{{ route('colleges.destroy', $college) }}" data-confirm="Are you sure you want to delete this college?" class="d-inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-light border text-danger p-1" title="Delete">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </form>
-                                        @endcan
-                                    </div>
-                                </td>
-                            </tr>
-
-                            <div class="modal fade" id="edit-college-modal-{{ $college->id }}" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <form method="POST" action="{{ route('colleges.update', $college) }}">
-                                            @csrf
-                                            @method('PUT')
-                                            <div class="modal-header">
-                                                <h5 class="modal-title fw-bold">Edit College</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <div class="mb-3">
-                                                    <label class="form-label">College Code</label>
-                                                    <input type="text" name="code" value="{{ old('code', $college->code) }}" class="form-control" required>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">College Name</label>
-                                                    <input type="text" name="name" value="{{ old('name', $college->name) }}" class="form-control" required>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">Dean / Head</label>
-                                                    <input type="text" name="dean" value="{{ old('dean', $college->dean) }}" class="form-control">
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">Description</label>
-                                                    <textarea name="description" rows="2" class="form-control">{{ old('description', $college->description) }}</textarea>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input type="checkbox" name="is_active" value="1" id="college_active_{{ $college->id }}" class="form-check-input" @checked($college->is_active)>
-                                                    <label class="form-check-label" for="college_active_{{ $college->id }}">Active status</label>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                                                <button type="submit" class="btn btn-primary">Save Changes</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="text-center text-muted py-4">No colleges registered yet.</td>
-                            </tr>
-                        @endforelse
+                        <x-table-skeleton :cols="6" :rows="6" />
                     </tbody>
                 </table>
             </div>
+        </div>
+    </div>
 
-            @if ($colleges->hasPages())
-                <div class="p-3 border-top">
-                    {{ $colleges->links() }}
-                </div>
-            @endif
+    <div class="modal fade" id="edit-college-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="edit-college-form" method="POST" action="">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold">Edit College</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">College Code</label>
+                            <input type="text" name="code" id="edit_college_code" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">College Name</label>
+                            <input type="text" name="name" id="edit_college_name" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Dean / Head</label>
+                            <input type="text" name="dean" id="edit_college_dean" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" id="edit_college_desc" rows="2" class="form-control"></textarea>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" name="is_active" value="1" id="edit_college_active" class="form-check-input">
+                            <label class="form-check-label" for="edit_college_active">Active status</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -254,5 +195,45 @@
             </div>
         </div>
     </div>
+
+    @include('partials.plugins.datatables')
+
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const $ = window.jQuery;
+                if ($ && $.fn.DataTable) {
+                    $('#colleges-table').DataTable({
+                        processing: true,
+                        serverSide: true,
+                        ajax: '{{ route('colleges.index') }}',
+                        pageLength: 25,
+                        order: [[0, 'asc']],
+                        columns: [
+                            { data: 'code_col', name: 'code' },
+                            { data: 'name_col', name: 'name' },
+                            { data: 'dean_col', name: 'dean' },
+                            { data: 'programs_col', name: 'programs_count', searchable: false },
+                            { data: 'status_col', name: 'is_active', searchable: false },
+                            { data: 'actions_col', orderable: false, searchable: false, className: 'text-end' }
+                        ]
+                    });
+                }
+
+                const editModal = document.getElementById('edit-college-modal');
+                if (editModal) {
+                    editModal.addEventListener('show.bs.modal', function (event) {
+                        const btn = event.relatedTarget;
+                        document.getElementById('edit-college-form').action = btn.getAttribute('data-update-url');
+                        document.getElementById('edit_college_code').value = btn.getAttribute('data-code') || '';
+                        document.getElementById('edit_college_name').value = btn.getAttribute('data-name') || '';
+                        document.getElementById('edit_college_dean').value = btn.getAttribute('data-dean') || '';
+                        document.getElementById('edit_college_desc').value = btn.getAttribute('data-description') || '';
+                        document.getElementById('edit_college_active').checked = btn.getAttribute('data-active') === '1';
+                    });
+                }
+            });
+        </script>
+    @endpush
 </x-layouts.app>
 

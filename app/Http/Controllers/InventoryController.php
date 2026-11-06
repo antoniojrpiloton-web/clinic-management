@@ -8,12 +8,15 @@ use App\Models\MedicineBatch;
 use App\Models\MedicineCategory;
 use App\Services\AuditLogger;
 use App\Support\IdObfuscator;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use Yajra\DataTables\Facades\DataTables;
 
 class InventoryController extends Controller implements HasMiddleware
 {
@@ -168,35 +171,124 @@ class InventoryController extends Controller implements HasMiddleware
             ->with('success', "Stock-Out recorded: {$quantity} {$medicine->unit}s deducted from batch {$batch->batch_number}.");
     }
 
-    public function expirations(Request $request): View
+    public function expirations(Request $request): View|JsonResponse
     {
         $filter = $request->query('status', 'all_risk');
+        $today = now()->startOfDay()->toDateString();
+        $day30 = now()->addDays(30)->endOfDay()->toDateString();
+        $day90 = now()->addDays(90)->endOfDay()->toDateString();
 
-        $query = MedicineBatch::query()
-            ->with('medicine.category')
-            ->where('quantity_remaining', '>', 0)
-            ->orderBy('expiration_date');
+        if ($request->ajax()) {
+            $canStockOut = $request->user()?->can('inventory.stock-out') ?? false;
 
-        if ($filter === 'expired') {
-            $query->where('expiration_date', '<', now()->startOfDay());
-        } elseif ($filter === 'critical') {
-            $query->where('expiration_date', '>=', now()->startOfDay())
-                ->where('expiration_date', '<=', now()->addDays(30)->endOfDay());
-        } elseif ($filter === 'warning') {
-            $query->where('expiration_date', '>', now()->addDays(30)->endOfDay())
-                ->where('expiration_date', '<=', now()->addDays(90)->endOfDay());
-        } elseif ($filter === 'all_risk') {
-            $query->where('expiration_date', '<=', now()->addDays(90)->endOfDay());
+            $query = MedicineBatch::query()
+                ->with(['medicine.category'])
+                ->where('quantity_remaining', '>', 0);
+
+            if ($filter === 'expired') {
+                $query->where('expiration_date', '<', $today);
+            } elseif ($filter === 'critical') {
+                $query->where('expiration_date', '>=', $today)
+                    ->where('expiration_date', '<=', $day30);
+            } elseif ($filter === 'warning') {
+                $query->where('expiration_date', '>', $day30)
+                    ->where('expiration_date', '<=', $day90);
+            } elseif ($filter === 'all_risk') {
+                $query->where('expiration_date', '<=', $day90);
+            }
+
+            return DataTables::eloquent($query)
+                ->filter(function (Builder $q) use ($request): void {
+                    $term = $request->input('search.value');
+                    if (is_string($term) && trim($term) !== '') {
+                        $term = trim($term);
+                        $q->where(function (Builder $inner) use ($term): void {
+                            $inner->where('batch_number', 'like', "%{$term}%")
+                                ->orWhere('supplier', 'like', "%{$term}%")
+                                ->orWhereHas('medicine', fn (Builder $m) => $m->search($term));
+                        });
+                    }
+                })
+                ->addColumn('medicine_col', function (MedicineBatch $batch): string {
+                    $m = $batch->medicine;
+                    if (! $m) {
+                        return '<span class="text-muted">N/A</span>';
+                    }
+                    $url = route('medicines.show', $m);
+                    $name = e($m->generic_name);
+                    $brand = $m->brand_name ? ' <span class="text-primary fw-medium">('.e($m->brand_name).')</span>' : '';
+                    $sub = e($m->code.' • '.$m->dosage_form);
+
+                    return "<div><a href=\"{$url}\" class=\"fw-bold text-dark text-decoration-none\">{$name}{$brand}</a></div><small class=\"text-muted\">{$sub}</small>";
+                })
+                ->addColumn('category_col', fn (MedicineBatch $batch): string => '<span class="badge badge-soft-blue">'.e($batch->medicine?->category?->name ?? 'N/A').'</span>')
+                ->addColumn('batch_col', fn (MedicineBatch $batch): string => '<span class="font-monospace fw-semibold">'.e($batch->batch_number).'</span>')
+                ->addColumn('expiration_col', fn (MedicineBatch $batch): string => '<span class="fw-medium">'.e($batch->expiration_date->format('M d, Y')).'</span>')
+                ->addColumn('risk_col', function (MedicineBatch $batch): string {
+                    if ($batch->is_expired) {
+                        return '<span class="badge badge-soft-red"><i class="bi bi-exclamation-octagon me-1"></i>EXPIRED ('.abs($batch->days_until_expiration).'d ago)</span>';
+                    }
+                    if ($batch->days_until_expiration <= 30) {
+                        return '<span class="badge badge-soft-red"><i class="bi bi-exclamation-triangle me-1"></i>'.$batch->days_until_expiration.' days left (Critical)</span>';
+                    }
+                    if ($batch->days_until_expiration <= 90) {
+                        return '<span class="badge badge-soft-amber"><i class="bi bi-hourglass-split me-1"></i>'.$batch->days_until_expiration.' days left</span>';
+                    }
+
+                    return '<span class="badge badge-soft-green"><i class="bi bi-shield-check me-1"></i>Good ('.$batch->days_until_expiration.' days)</span>';
+                })
+                ->addColumn('remaining_col', function (MedicineBatch $batch): string {
+                    $cls = $batch->is_expired ? 'text-danger' : 'text-dark';
+                    $qty = number_format($batch->quantity_remaining);
+                    $unit = e($batch->medicine?->unit ?? 'unit');
+
+                    return "<span class=\"fw-bold {$cls}\">{$qty}</span> <small class=\"text-muted\">{$unit}s</small>";
+                })
+                ->addColumn('supplier_col', fn (MedicineBatch $batch): string => '<span class="text-muted small">'.e($batch->supplier ?? 'N/A').'</span>')
+                ->addColumn('actions', function (MedicineBatch $batch) use ($canStockOut): string {
+                    if (! $canStockOut) {
+                        return '';
+                    }
+                    if ($batch->is_expired) {
+                        $disposeUrl = route('inventory.batches.dispose', $batch);
+                        $csrf = csrf_field();
+                        $qty = (int) $batch->quantity_remaining;
+
+                        return "<form method=\"POST\" action=\"{$disposeUrl}\" class=\"d-inline\" data-confirm=\"Confirm safe medical disposal and write-off of remaining {$qty} units?\">
+                            {$csrf}
+                            <button type=\"submit\" class=\"btn btn-sm btn-danger py-1 px-2\">
+                                <i class=\"bi bi-trash3 me-1\"></i> Dispose Batch
+                            </button>
+                        </form>";
+                    }
+
+                    $stockOutUrl = route('inventory.stock-out', ['medicine_id' => $batch->medicine_id, 'batch_id' => $batch->id]);
+
+                    return "<a href=\"{$stockOutUrl}\" class=\"btn btn-sm btn-light border py-1 px-2 text-danger\">
+                        <i class=\"bi bi-box-arrow-up me-1\"></i> Deduct
+                    </a>";
+                })
+                ->orderColumn('batch_col', 'batch_number $1')
+                ->orderColumn('expiration_col', 'expiration_date $1')
+                ->orderColumn('remaining_col', 'quantity_remaining $1')
+                ->rawColumns(['medicine_col', 'category_col', 'batch_col', 'expiration_col', 'risk_col', 'remaining_col', 'supplier_col', 'actions'])
+                ->make(true);
         }
 
-        $batches = $query->paginate(20)->withQueryString();
+        $agg = MedicineBatch::query()
+            ->where('quantity_remaining', '>', 0)
+            ->selectRaw('SUM(CASE WHEN expiration_date < ? THEN 1 ELSE 0 END) as expired_count', [$today])
+            ->selectRaw('SUM(CASE WHEN expiration_date >= ? AND expiration_date <= ? THEN 1 ELSE 0 END) as critical_count', [$today, $day30])
+            ->selectRaw('SUM(CASE WHEN expiration_date > ? AND expiration_date <= ? THEN 1 ELSE 0 END) as warning_count', [$day30, $day90])
+            ->selectRaw('SUM(CASE WHEN expiration_date > ? THEN 1 ELSE 0 END) as good_count', [$day90])
+            ->first();
 
-        $expiredCount = MedicineBatch::where('quantity_remaining', '>', 0)->where('expiration_date', '<', now()->startOfDay())->count();
-        $criticalCount = MedicineBatch::where('quantity_remaining', '>', 0)->where('expiration_date', '>=', now()->startOfDay())->where('expiration_date', '<=', now()->addDays(30)->endOfDay())->count();
-        $warningCount = MedicineBatch::where('quantity_remaining', '>', 0)->where('expiration_date', '>', now()->addDays(30)->endOfDay())->where('expiration_date', '<=', now()->addDays(90)->endOfDay())->count();
-        $goodCount = MedicineBatch::where('quantity_remaining', '>', 0)->where('expiration_date', '>', now()->addDays(90)->endOfDay())->count();
+        $expiredCount = (int) ($agg?->expired_count ?? 0);
+        $criticalCount = (int) ($agg?->critical_count ?? 0);
+        $warningCount = (int) ($agg?->warning_count ?? 0);
+        $goodCount = (int) ($agg?->good_count ?? 0);
 
-        return view('inventory.expirations', compact('batches', 'filter', 'expiredCount', 'criticalCount', 'warningCount', 'goodCount'));
+        return view('inventory.expirations', compact('filter', 'expiredCount', 'criticalCount', 'warningCount', 'goodCount'));
     }
 
     public function disposeBatch(Request $request, MedicineBatch $batch): RedirectResponse
@@ -236,52 +328,132 @@ class InventoryController extends Controller implements HasMiddleware
             ->with('success', "Disposed {$qtyToDispose} {$medicine->unit}s from batch {$batch->batch_number} for {$medicine->display_name}.");
     }
 
-    public function transactions(Request $request): View
+    public function transactions(Request $request): View|JsonResponse
     {
         $type = $request->query('type');
         $medicineId = $request->query('medicine_id');
         $dateFrom = $request->query('date_from');
         $dateTo = $request->query('date_to');
 
-        $query = InventoryTransaction::query()
-            ->with(['medicine', 'batch', 'patient', 'user', 'clinician'])
-            ->when($type, fn ($q) => $q->where('type', $type))
-            ->when($medicineId, fn ($q) => $q->where('medicine_id', $medicineId))
-            ->when($dateFrom, fn ($q) => $q->whereDate('transaction_date', '>=', $dateFrom))
-            ->when($dateTo, fn ($q) => $q->whereDate('transaction_date', '<=', $dateTo))
-            ->latest('transaction_date');
+        if ($request->ajax()) {
+            $query = InventoryTransaction::query()
+                ->with([
+                    'medicine:id,generic_name,brand_name,dosage_form',
+                    'batch:id,batch_number',
+                    'patient:id,first_name,middle_name,last_name,suffix,type,school_id_number',
+                    'user:id,name',
+                ])
+                ->when($type, fn (Builder $q) => $q->where('type', $type))
+                ->when($medicineId, fn (Builder $q) => $q->where('medicine_id', $medicineId))
+                ->when($dateFrom, fn (Builder $q) => $q->whereDate('transaction_date', '>=', $dateFrom))
+                ->when($dateTo, fn (Builder $q) => $q->whereDate('transaction_date', '<=', $dateTo))
+                ->latest('transaction_date');
 
-        $transactions = $query->paginate(20)->withQueryString();
-        $medicines = Medicine::orderBy('generic_name')->get();
+            return DataTables::eloquent($query)
+                ->filter(function (Builder $q) use ($request): void {
+                    $term = $request->input('search.value');
+                    if (is_string($term) && trim($term) !== '') {
+                        $term = trim($term);
+                        $q->where(function (Builder $inner) use ($term): void {
+                            $inner->where('transaction_number', 'like', "%{$term}%")
+                                ->orWhere('reason', 'like', "%{$term}%")
+                                ->orWhere('reference_number', 'like', "%{$term}%")
+                                ->orWhereHas('medicine', fn (Builder $m) => $m->search($term));
+                        });
+                    }
+                })
+                ->addColumn('date_col', fn (InventoryTransaction $txn): string => '<span class="small text-muted text-nowrap">'.($txn->transaction_date ? e($txn->transaction_date->format('M d, Y h:i A')) : 'N/A').'</span>')
+                ->addColumn('txn_col', fn (InventoryTransaction $txn): string => '<span class="font-monospace small fw-medium">'.e($txn->transaction_number).'</span>')
+                ->addColumn('type_col', function (InventoryTransaction $txn): string {
+                    if ($txn->type === 'stock_in') {
+                        return '<span class="badge badge-soft-green"><i class="bi bi-arrow-down-left me-1"></i>Stock In</span>';
+                    }
+                    if ($txn->type === 'dispensed') {
+                        return '<span class="badge badge-soft-blue"><i class="bi bi-person-fill-check me-1"></i>Dispensed</span>';
+                    }
+                    if ($txn->type === 'disposal') {
+                        return '<span class="badge badge-soft-red"><i class="bi bi-trash3 me-1"></i>Disposal</span>';
+                    }
 
-        return view('inventory.transactions', compact('transactions', 'medicines', 'type', 'medicineId', 'dateFrom', 'dateTo'));
+                    return '<span class="badge badge-soft-amber"><i class="bi bi-arrow-up-right me-1"></i>Stock Out</span>';
+                })
+                ->addColumn('medicine_col', function (InventoryTransaction $txn): string {
+                    if (! $txn->medicine) {
+                        return '<span class="text-muted">N/A</span>';
+                    }
+                    $url = route('medicines.show', $txn->medicine);
+                    $name = e($txn->medicine->generic_name);
+                    $form = e($txn->medicine->dosage_form);
+
+                    return "<a href=\"{$url}\" class=\"fw-semibold text-dark text-decoration-none\">{$name}</a><small class=\"text-muted d-block\">{$form}</small>";
+                })
+                ->addColumn('batch_col', fn (InventoryTransaction $txn): string => '<span class="font-monospace small">'.e($txn->batch?->batch_number ?? 'N/A').'</span>')
+                ->addColumn('qty_col', function (InventoryTransaction $txn): string {
+                    $cls = $txn->quantity > 0 ? 'text-success' : 'text-danger';
+                    $val = $txn->quantity > 0 ? '+'.$txn->quantity : (string) $txn->quantity;
+
+                    return "<span class=\"fw-bold {$cls}\">{$val}</span>";
+                })
+                ->addColumn('balance_col', fn (InventoryTransaction $txn): string => '<span class="fw-semibold text-dark">'.number_format($txn->quantity_after).'</span>')
+                ->addColumn('reason_col', function (InventoryTransaction $txn): string {
+                    if ($txn->patient) {
+                        $url = route('patients.show', $txn->patient);
+                        $name = e($txn->patient->full_name);
+                        $id = e($txn->patient->primary_identifier);
+
+                        return "<div><i class=\"bi bi-person me-1 text-primary\"></i><a href=\"{$url}\" class=\"text-decoration-none fw-medium text-dark\">{$name}</a></div><span class=\"text-muted small\">{$id}</span>";
+                    }
+                    $reason = e($txn->reason ?: 'N/A');
+
+                    return "<span class=\"text-muted text-truncate d-block\" style=\"max-width: 260px;\" title=\"{$reason}\">{$reason}</span>";
+                })
+                ->addColumn('user_col', fn (InventoryTransaction $txn): string => '<span class="small text-muted">'.e($txn->user?->name ?? 'System').'</span>')
+                ->orderColumn('date_col', 'transaction_date $1')
+                ->orderColumn('txn_col', 'transaction_number $1')
+                ->orderColumn('qty_col', 'quantity $1')
+                ->orderColumn('balance_col', 'quantity_after $1')
+                ->rawColumns(['date_col', 'txn_col', 'type_col', 'medicine_col', 'batch_col', 'qty_col', 'balance_col', 'reason_col', 'user_col'])
+                ->make(true);
+        }
+
+        $medicines = Medicine::orderBy('generic_name')->get(['id', 'generic_name', 'brand_name']);
+
+        return view('inventory.transactions', compact('medicines', 'type', 'medicineId', 'dateFrom', 'dateTo'));
     }
 
     public function reports(Request $request): View
     {
-        $categories = MedicineCategory::withCount('medicines')->get();
+        $today = now()->toDateString();
+        $categories = MedicineCategory::withCount('medicines')->orderBy('name')->get();
 
-        $allMedicines = Medicine::with(['category', 'batches'])->get();
+        $allMedicines = Medicine::query()
+            ->with('category:id,name,code')
+            ->withSum(['batches as computed_stock_on_hand' => fn (Builder $b) => $b->where('quantity_remaining', '>', 0)->where('expiration_date', '>=', $today)], 'quantity_remaining')
+            ->orderBy('generic_name')
+            ->get();
+
         $totalItems = $allMedicines->count();
-        $totalStockUnits = 0;
-        $totalInventoryValuation = 0.00;
 
-        foreach ($allMedicines as $med) {
-            foreach ($med->batches as $b) {
-                if ($b->quantity_remaining > 0 && ! $b->is_expired) {
-                    $totalStockUnits += $b->quantity_remaining;
-                    $unitCost = (float) ($b->unit_cost ?? 0);
-                    $totalInventoryValuation += ($b->quantity_remaining * $unitCost);
-                }
-            }
-        }
+        $batchStats = MedicineBatch::query()
+            ->where('quantity_remaining', '>', 0)
+            ->where('expiration_date', '>=', $today)
+            ->selectRaw('COALESCE(SUM(quantity_remaining), 0) as total_units')
+            ->selectRaw('COALESCE(SUM(quantity_remaining * COALESCE(unit_cost, 0)), 0) as total_valuation')
+            ->first();
 
-        $lowStockList = $allMedicines->filter(fn (Medicine $m) => $m->stock_on_hand <= $m->reorder_level);
+        $totalStockUnits = (int) ($batchStats?->total_units ?? 0);
+        $totalInventoryValuation = (float) ($batchStats?->total_valuation ?? 0.0);
 
-        $expiredBatches = MedicineBatch::expired()->where('quantity_remaining', '>', 0)->with('medicine')->get();
-        $expiringSoonBatches = MedicineBatch::expiringSoon(60)->where('quantity_remaining', '>', 0)->with('medicine')->get();
+        $lowStockList = $allMedicines->filter(function (Medicine $med): bool {
+            $stock = (int) ($med->computed_stock_on_hand ?? 0);
 
-        $recentTransactions = InventoryTransaction::with(['medicine', 'user', 'patient'])
+            return $stock <= $med->reorder_level;
+        })->values();
+
+        $expiredBatches = MedicineBatch::expired()->where('quantity_remaining', '>', 0)->with('medicine:id,generic_name,brand_name,unit')->get();
+        $expiringSoonBatches = MedicineBatch::expiringSoon(60)->where('quantity_remaining', '>', 0)->with('medicine:id,generic_name,brand_name,unit')->get();
+
+        $recentTransactions = InventoryTransaction::with(['medicine:id,generic_name,brand_name', 'user:id,name', 'patient:id,first_name,middle_name,last_name,suffix,type,school_id_number'])
             ->latest('transaction_date')
             ->take(10)
             ->get();

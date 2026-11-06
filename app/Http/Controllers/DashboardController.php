@@ -3,14 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
-use App\Models\Backup;
 use App\Models\ClinicVisit;
-use App\Models\Medicine;
-use App\Models\MedicineBatch;
+use App\Models\DentalConsultation;
+use App\Models\EmergencyRecord;
+use App\Models\FirstAidRecord;
+use App\Models\MedicalConsultation;
 use App\Models\MedicineDispensing;
 use App\Models\PhysicalExamination;
 use App\Models\PhysicalExamSchedule;
 use App\Services\DashboardAnalyticsService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Cache;
@@ -27,8 +30,22 @@ class DashboardController extends Controller implements HasMiddleware
 
     public function __invoke(): View
     {
-        $stats = Cache::remember('dashboard.stats', now()->addMinutes(2), fn (): array => $this->analyticsService->stats());
+        return view('dashboard.index', [
+            'stats' => [],
+            'charts' => [],
+            'recentVisits' => collect(),
+            'recentDispensings' => collect(),
+        ]);
+    }
 
+    public function metrics(Request $request): JsonResponse
+    {
+        if ($request->boolean('refresh')) {
+            Cache::forget('dashboard.stats');
+            Cache::forget('dashboard.charts');
+        }
+
+        $stats = Cache::remember('dashboard.stats', now()->addMinutes(2), fn (): array => $this->analyticsService->stats());
         $charts = Cache::remember('dashboard.charts', now()->addMinutes(2), fn (): array => $this->analyticsService->charts());
 
         $recentVisits = ClinicVisit::query()
@@ -50,45 +67,81 @@ class DashboardController extends Controller implements HasMiddleware
             ->get();
 
         $upcomingSchedules = PhysicalExamSchedule::query()
+            ->withCount('attendees')
             ->whereDate('scheduled_date', '>=', now())
             ->orderBy('scheduled_date')
             ->limit(4)
             ->get();
 
-        $expiringBatches = MedicineBatch::query()
-            ->where('quantity_remaining', '>', 0)
-            ->whereDate('expiration_date', '<=', now()->addDays(60))
-            ->orderBy('expiration_date')
-            ->with('medicine:id,generic_name,brand_name,dosage_form')
+        $recentMedicalConsultations = MedicalConsultation::query()
+            ->with(['visit.patient'])
+            ->latest('id')
             ->limit(5)
             ->get();
 
-        $lowStockMedicines = Medicine::query()
-            ->where('is_active', true)
-            ->with(['batches' => fn ($q) => $q->where('expiration_date', '>', now())])
-            ->get()
-            ->filter(fn (Medicine $med): bool => $med->stock_on_hand <= $med->reorder_level)
-            ->take(5);
+        $recentDentalConsultations = DentalConsultation::query()
+            ->with(['visit.patient'])
+            ->latest('id')
+            ->limit(5)
+            ->get();
+
+        $recentEmergencyRecords = EmergencyRecord::query()
+            ->with(['visit.patient'])
+            ->latest('id')
+            ->limit(5)
+            ->get();
+
+        $recentFirstAidRecords = FirstAidRecord::query()
+            ->with(['visit.patient'])
+            ->latest('id')
+            ->limit(5)
+            ->get();
 
         $recentActivity = AuditLog::query()
             ->with('user:id,name')
             ->latest('created_at')
             ->limit(5)
-            ->get(['id', 'user_id', 'event', 'description', 'created_at']);
+            ->get(['id', 'user_id', 'event', 'description', 'ip_address', 'created_at']);
 
-        $latestBackup = Backup::where('status', Backup::STATUS_COMPLETED)->latest()->first(['id', 'filename', 'size', 'created_at']);
-
-        return view('dashboard.index', compact(
+        $shared = compact(
             'stats',
             'charts',
             'recentVisits',
             'recentDispensings',
             'recentPhysicalExams',
             'upcomingSchedules',
-            'expiringBatches',
-            'lowStockMedicines',
-            'recentActivity',
-            'latestBackup'
-        ));
+            'recentMedicalConsultations',
+            'recentDentalConsultations',
+            'recentEmergencyRecords',
+            'recentFirstAidRecords',
+            'recentActivity'
+        );
+
+        $sections = [];
+        $parts = [
+            'alerts',
+            'communicable',
+            'non_communicable',
+            'recent_visits',
+            'recent_pe',
+            'upcoming_schedules',
+            'recent_dispensings',
+            'recent_medical',
+            'recent_dental',
+            'recent_emergency',
+            'recent_first_aid',
+            'recent_audit',
+        ];
+
+        foreach ($parts as $part) {
+            $sections[$part] = view('dashboard.partials.table-rows', array_merge($shared, ['part' => $part]))->render();
+        }
+
+        return response()->json([
+            'stats' => $stats,
+            'charts' => $charts,
+            'sections' => $sections,
+            'generated_at' => now()->format('h:i:s A'),
+        ]);
     }
 }

@@ -109,12 +109,20 @@ class PhysicalExaminationController extends Controller
         }
 
         $academicYears = AcademicYear::orderByDesc('start_date')->get();
+        $todayDate = Carbon::today()->toDateString();
+
+        $agg = PhysicalExamination::query()
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(CASE WHEN exam_date = ? THEN 1 ELSE 0 END) as today', [$todayDate])
+            ->selectRaw("SUM(CASE WHEN fitness_assessment = 'Class A' THEN 1 ELSE 0 END) as class_a")
+            ->selectRaw("SUM(CASE WHEN fitness_assessment IN ('Class B', 'Class C', 'Class D', 'Class E') THEN 1 ELSE 0 END) as needs_attention")
+            ->first();
 
         $stats = [
-            'total' => PhysicalExamination::count(),
-            'today' => PhysicalExamination::whereDate('exam_date', Carbon::today())->count(),
-            'class_a' => PhysicalExamination::where('fitness_assessment', 'Class A')->count(),
-            'needs_attention' => PhysicalExamination::whereIn('fitness_assessment', ['Class B', 'Class C', 'Class D', 'Class E'])->count(),
+            'total' => (int) ($agg?->total ?? 0),
+            'today' => (int) ($agg?->today ?? 0),
+            'class_a' => (int) ($agg?->class_a ?? 0),
+            'needs_attention' => (int) ($agg?->needs_attention ?? 0),
         ];
 
         return view('physical-examinations.index', [
@@ -204,7 +212,7 @@ class PhysicalExaminationController extends Controller
 
     public function printPe(Request $request, PhysicalExamination $physicalExamination, SettingService $settingService, MedicalDocumentPdfService $pdfService): View|Response
     {
-        $physicalExamination->load(['patient.college', 'patient.program', 'patient.academicYear', 'patient.medicalProfile', 'academicYear', 'examiner']);
+        $physicalExamination->load(['patient.college', 'patient.program', 'patient.academicYear', 'patient.medicalProfile', 'academicYear', 'examiner', 'clinician']);
 
         if ($request->query('format') === 'html') {
             return view('physical-examinations.print.pe-form', [
@@ -214,7 +222,7 @@ class PhysicalExaminationController extends Controller
             ]);
         }
 
-        $pdf = $pdfService->physicalExamination($physicalExamination, $settingService->all(), $physicalExamination->examiner);
+        $pdf = $pdfService->physicalExamination($physicalExamination, $settingService->all(), $physicalExamination->clinician);
         $filename = "PE-{$physicalExamination->pe_number}.pdf";
 
         return response($pdf->Output('S'), 200, [
@@ -225,7 +233,7 @@ class PhysicalExaminationController extends Controller
 
     public function printCertificate(Request $request, PhysicalExamination $physicalExamination, SettingService $settingService, MedicalDocumentPdfService $pdfService): View|Response
     {
-        $physicalExamination->load(['patient.college', 'patient.program', 'patient.academicYear', 'academicYear', 'examiner']);
+        $physicalExamination->load(['patient.college', 'patient.program', 'patient.academicYear', 'academicYear', 'examiner', 'clinician']);
 
         if ($request->query('format') === 'html') {
             return view('physical-examinations.print.medical-certificate', [
@@ -235,7 +243,7 @@ class PhysicalExaminationController extends Controller
             ]);
         }
 
-        $pdf = $pdfService->medicalCertificate($physicalExamination, $settingService->all(), $physicalExamination->examiner);
+        $pdf = $pdfService->medicalCertificate($physicalExamination, $settingService->all(), $physicalExamination->clinician);
         $filename = "Medical-Certificate-{$physicalExamination->pe_number}.pdf";
 
         return response($pdf->Output('S'), 200, [
@@ -246,7 +254,7 @@ class PhysicalExaminationController extends Controller
 
     public function printExemption(Request $request, PhysicalExamination $physicalExamination, SettingService $settingService, MedicalDocumentPdfService $pdfService): View|Response
     {
-        $physicalExamination->load(['patient.college', 'patient.program', 'patient.academicYear', 'academicYear', 'examiner']);
+        $physicalExamination->load(['patient.college', 'patient.program', 'patient.academicYear', 'academicYear', 'examiner', 'clinician']);
 
         if ($request->query('format') === 'html') {
             return view('physical-examinations.print.medical-exemption', [
@@ -256,7 +264,7 @@ class PhysicalExaminationController extends Controller
             ]);
         }
 
-        $pdf = $pdfService->medicalExemption($physicalExamination, $settingService->all(), $physicalExamination->examiner);
+        $pdf = $pdfService->medicalExemption($physicalExamination, $settingService->all(), $physicalExamination->clinician);
         $filename = "Medical-Exemption-{$physicalExamination->pe_number}.pdf";
 
         return response($pdf->Output('S'), 200, [
@@ -267,7 +275,7 @@ class PhysicalExaminationController extends Controller
 
     public function printReferral(Request $request, PhysicalExamination $physicalExamination, SettingService $settingService, MedicalDocumentPdfService $pdfService): View|Response
     {
-        $physicalExamination->load(['patient.college', 'patient.program', 'patient.academicYear', 'academicYear', 'examiner']);
+        $physicalExamination->load(['patient.college', 'patient.program', 'patient.academicYear', 'academicYear', 'examiner', 'clinician']);
 
         if ($request->query('format') === 'html') {
             return view('physical-examinations.print.medical-referral', [
@@ -277,7 +285,7 @@ class PhysicalExaminationController extends Controller
             ]);
         }
 
-        $pdf = $pdfService->medicalReferral($physicalExamination, $settingService->all(), $physicalExamination->examiner);
+        $pdf = $pdfService->medicalReferral($physicalExamination, $settingService->all(), $physicalExamination->clinician);
         $filename = "Medical-Referral-{$physicalExamination->pe_number}.pdf";
 
         return response($pdf->Output('S'), 200, [

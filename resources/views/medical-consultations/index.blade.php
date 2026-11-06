@@ -145,7 +145,9 @@
                             <th>DATE &amp; TIME</th>
                         </tr>
                     </thead>
-                    <tbody></tbody>
+                    <tbody>
+                        <x-table-skeleton :cols="8" :rows="8" />
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -165,6 +167,7 @@
                     serverSide: true,
                     pageLength: 25,
                     lengthMenu: [10, 25, 50, 100],
+                    order: [[7, 'desc']],
                     dom: "<'row p-3 align-items-center'<'col-sm-6'l><'col-sm-6'f>>" +
                          "<'row'<'col-sm-12'tr>>" +
                          "<'row p-3 align-items-center'<'col-sm-5'i><'col-sm-7'p>>",
@@ -183,13 +186,13 @@
                     },
                     columns: [
                         { data: 'actions', name: 'actions', orderable: false, searchable: false },
-                        { data: 'visit_card', name: 'visit_number' },
-                        { data: 'patient_card', name: 'patient.first_name', orderable: false },
-                        { data: 'summary_text', name: 'chief_complaint' },
-                        { data: 'vitals_summary', name: 'systolic', orderable: false },
-                        { data: 'attending', name: 'clinician.name', orderable: false },
-                        { data: 'disposition_badge', name: 'status', orderable: false },
-                        { data: 'visit_date_formatted', name: 'visit_date', orderable: true }
+                        { data: 'visit_card', name: 'visit_number', searchable: false },
+                        { data: 'patient_card', name: 'patient_id', orderable: false, searchable: false },
+                        { data: 'summary_text', name: 'chief_complaint', searchable: false },
+                        { data: 'vitals_summary', name: 'systolic', orderable: false, searchable: false },
+                        { data: 'attending', name: 'clinician_id', orderable: false, searchable: false },
+                        { data: 'disposition_badge', name: 'status', orderable: false, searchable: false },
+                        { data: 'visit_date_formatted', name: 'visit_date', orderable: true, searchable: false }
                     ],
                     language: {
                         search: "",
@@ -197,6 +200,12 @@
                         emptyTable: "No medical consultation records found",
                         processing: '<div class="spinner-border spinner-border-sm text-primary me-1"></div> Loading...'
                     }
+                });
+
+                let searchTimer;
+                $('input[name="search"]').on('input', function () {
+                    clearTimeout(searchTimer);
+                    searchTimer = setTimeout(() => table.draw(), 300);
                 });
 
                 $('#filter-form').on('submit', function (e) {
@@ -208,7 +217,7 @@
                     setTimeout(() => table.draw(), 50);
                 });
 
-                $('#filter-classification, #filter-college').on('change', function () {
+                $('#filter-classification, #filter-college, input[name="date_from"], input[name="date_to"]').on('change', function () {
                     table.draw();
                 });
             });

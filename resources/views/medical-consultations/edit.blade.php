@@ -72,15 +72,40 @@
                         @enderror
                     </div>
 
-                    <div class="col-md-9">
+                    <div class="col-md-5">
+                        <label class="form-label">Disease / Morbidity Category (Report Classification)</label>
+                        <select name="disease_category_id" id="disease_category_id" class="form-select @error('disease_category_id') is-invalid @enderror">
+                            <option value="">-- Auto-Detect from Diagnosis / Select Category --</option>
+                            <optgroup label="Communicable Diseases">
+                                @foreach(($diseaseCategories ?? collect())->where('classification', 'communicable') as $cat)
+                                    <option value="{{ $cat->id }}" @selected(old('disease_category_id', $detail->disease_category_id) == $cat->id)>{{ $cat->name }}</option>
+                                @endforeach
+                            </optgroup>
+                            <optgroup label="Non-Communicable Diseases">
+                                @foreach(($diseaseCategories ?? collect())->where('classification', 'non_communicable') as $cat)
+                                    <option value="{{ $cat->id }}" @selected(old('disease_category_id', $detail->disease_category_id) == $cat->id)>{{ $cat->name }}</option>
+                                @endforeach
+                            </optgroup>
+                        </select>
+                        @error('disease_category_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="col-md-5">
                         <label class="form-label required">Clinical Diagnosis</label>
-                        <input type="text" name="diagnosis" value="{{ old('diagnosis', $detail->diagnosis) }}" class="form-control @error('diagnosis') is-invalid @enderror" required>
+                        <input type="text" name="diagnosis" list="hsd-diagnosis-presets" value="{{ old('diagnosis', $detail->diagnosis) }}" class="form-control @error('diagnosis') is-invalid @enderror" required>
+                        <datalist id="hsd-diagnosis-presets">
+                            @foreach(($diseaseCategories ?? collect()) as $cat)
+                                <option value="{{ $cat->name }}">
+                            @endforeach
+                        </datalist>
                         @error('diagnosis')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label">ICD-10 Code</label>
                         <input type="text" name="icd_code" value="{{ old('icd_code', $detail->icd_code) }}" class="form-control @error('icd_code') is-invalid @enderror">
                         @error('icd_code')

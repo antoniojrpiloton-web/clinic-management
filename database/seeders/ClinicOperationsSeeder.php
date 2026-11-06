@@ -6,6 +6,7 @@ use App\Models\AcademicYear;
 use App\Models\Clinician;
 use App\Models\ClinicVisit;
 use App\Models\DentalConsultation;
+use App\Models\DiseaseCategory;
 use App\Models\EmergencyRecord;
 use App\Models\FirstAidRecord;
 use App\Models\MedicalConsultation;
@@ -61,6 +62,7 @@ class ClinicOperationsSeeder extends Seeder
 
             MedicalConsultation::create([
                 'clinic_visit_id' => $v1->id,
+                'disease_category_id' => DiseaseCategory::where('code', 'COMM-URTI')->value('id'),
                 'history_of_present_illness' => 'Patient reports gradual onset of body malaise and dry cough 48 hours prior to consult. No shortness of breath.',
                 'physical_findings' => 'Pharyngeal erythema (+), clear breath sounds, supple neck, soft non-tender abdomen.',
                 'diagnosis' => 'Acute Upper Respiratory Tract Infection (URTI)',

@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Http\Requests\RoleRequest;
 use App\Models\User;
 use App\Services\AuditLogger;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Collection;
@@ -14,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Yajra\DataTables\Facades\DataTables;
 
 class RoleController extends Controller implements HasMiddleware
 {
@@ -35,14 +38,65 @@ class RoleController extends Controller implements HasMiddleware
     /**
      * List roles.
      */
-    public function index(): View
+    public function index(Request $request): View|JsonResponse
     {
-        $roles = Role::query()
-            ->withCount(['users', 'permissions'])
-            ->orderBy('name')
-            ->get();
+        if ($request->ajax()) {
+            $canEdit = $request->user()?->can('roles.edit') ?? false;
+            $canDelete = $request->user()?->can('roles.delete') ?? false;
 
-        return view('roles.index', compact('roles'));
+            $query = Role::query()
+                ->withCount(['users', 'permissions'])
+                ->orderBy('name');
+
+            return DataTables::eloquent($query)
+                ->addColumn('role_col', function (Role $role): string {
+                    $name = e($role->name);
+                    if ($role->name === User::SUPER_ADMIN_ROLE) {
+                        return "<span class=\"fw-medium\">{$name}</span> <span class=\"badge text-bg-primary ms-1\">Protected</span>";
+                    }
+
+                    return "<span class=\"fw-medium\">{$name}</span>";
+                })
+                ->addColumn('users_col', fn (Role $role): string => (string) $role->users_count)
+                ->addColumn('permissions_col', function (Role $role): string {
+                    if ($role->name === User::SUPER_ADMIN_ROLE) {
+                        return '<span class="badge text-bg-success">All permissions</span>';
+                    }
+
+                    return (string) $role->permissions_count;
+                })
+                ->addColumn('actions_col', function (Role $role) use ($canEdit, $canDelete): string {
+                    if ($role->name === User::SUPER_ADMIN_ROLE) {
+                        return '';
+                    }
+
+                    $html = '<div class="d-inline-flex gap-1">';
+
+                    if ($canEdit) {
+                        $editUrl = route('roles.edit', $role);
+                        $html .= "<a href=\"{$editUrl}\" class=\"btn btn-sm btn-light\" title=\"Edit\"><i class=\"bi bi-pencil-square\"></i></a>";
+                    }
+
+                    if ($canDelete) {
+                        $deleteUrl = route('roles.destroy', $role);
+                        $csrf = csrf_field();
+                        $method = method_field('DELETE');
+                        $confirm = e("The role {$role->name} will be permanently deleted.");
+                        $html .= "<form method=\"POST\" action=\"{$deleteUrl}\" data-confirm=\"{$confirm}\">{$csrf}{$method}<button type=\"submit\" class=\"btn btn-sm btn-light text-danger\" title=\"Delete\"><i class=\"bi bi-trash\"></i></button></form>";
+                    }
+
+                    $html .= '</div>';
+
+                    return $html;
+                })
+                ->orderColumn('role_col', 'name $1')
+                ->orderColumn('users_col', 'users_count $1')
+                ->orderColumn('permissions_col', 'permissions_count $1')
+                ->rawColumns(['role_col', 'permissions_col', 'actions_col'])
+                ->make(true);
+        }
+
+        return view('roles.index');
     }
 
     /**

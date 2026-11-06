@@ -123,11 +123,19 @@ class PhysicalExamScheduleController extends Controller implements HasMiddleware
                 ->make(true);
         }
 
+        $todayDate = now()->toDateString();
+        $agg = PhysicalExamSchedule::query()
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw("SUM(CASE WHEN scheduled_date >= ? AND status IN ('scheduled', 'ongoing') THEN 1 ELSE 0 END) as upcoming", [$todayDate])
+            ->selectRaw("SUM(CASE WHEN status = 'ongoing' THEN 1 ELSE 0 END) as ongoing")
+            ->selectRaw("SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed")
+            ->first();
+
         $stats = [
-            'total' => PhysicalExamSchedule::count(),
-            'upcoming' => PhysicalExamSchedule::upcoming()->count(),
-            'ongoing' => PhysicalExamSchedule::where('status', 'ongoing')->count(),
-            'completed' => PhysicalExamSchedule::where('status', 'completed')->count(),
+            'total' => (int) ($agg?->total ?? 0),
+            'upcoming' => (int) ($agg?->upcoming ?? 0),
+            'ongoing' => (int) ($agg?->ongoing ?? 0),
+            'completed' => (int) ($agg?->completed ?? 0),
         ];
 
         return view('physical-exam-schedules.index', [

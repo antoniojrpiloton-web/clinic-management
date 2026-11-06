@@ -16,10 +16,8 @@ class DatabaseSeeder extends Seeder
             RolesAndPermissionsSeeder::class,
             SettingsSeeder::class,
             AcademicStructureSeeder::class,
+            DiseaseCategorySeeder::class,
             ClinicianSeeder::class,
-            PatientSeeder::class,
-            MedicineAndInventorySeeder::class,
-            ClinicOperationsSeeder::class,
         ]);
 
         $superAdmins = [
@@ -52,5 +50,12 @@ class DatabaseSeeder extends Seeder
                 $user->assignRole(User::SUPER_ADMIN_ROLE);
             }
         }
+
+        $this->call([
+            PatientSeeder::class,
+            MedicineAndInventorySeeder::class,
+            ClinicOperationsSeeder::class,
+            SimulationSeeder::class,
+        ]);
     }
 }

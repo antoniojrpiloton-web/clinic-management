@@ -81,10 +81,10 @@
                         <i class="bi bi-clock-history"></i>
                     </span>
                 </div>
-                <div class="kpi-value">{{ $backups->total() }} Snapshots</div>
+                <div class="kpi-value">{{ number_format($backupStats['total']) }} Snapshots</div>
                 <div class="kpi-trend">
                     <span class="trend-badge up">Archives</span>
-                    <span class="trend-compare">{{ $backups->where('status', \App\Models\Backup::STATUS_COMPLETED)->count() }} completed</span>
+                    <span class="trend-compare">{{ number_format($backupStats['completed']) }} completed</span>
                 </div>
             </div>
         </div>
@@ -101,72 +101,55 @@
             <span class="fw-bold text-dark">Backup History Registry</span>
             <span class="text-muted small">Storage target: <code>storage/app/backups/</code></span>
         </div>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead>
-                    <tr>
-                        <th>ARCHIVE FILENAME</th>
-                        <th>TRIGGER TYPE</th>
-                        <th>FILE SIZE</th>
-                        <th>STATUS</th>
-                        <th>OPERATOR</th>
-                        <th>TIMESTAMP</th>
-                        <th class="text-end">ACTIONS</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($backups as $backup)
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="backups-table" class="table table-hover align-middle w-100 mb-0">
+                    <thead>
                         <tr>
-                            <td class="font-monospace fw-semibold text-dark">{{ $backup->filename ?? 'Processing snapshot…' }}</td>
-                            <td class="text-capitalize">{{ $backup->type }}</td>
-                            <td>{{ $backup->isCompleted() ? $backup->humanSize() : '—' }}</td>
-                            <td>
-                                <span class="status-badge {{ $backup->status === 'completed' ? 'completed' : ($backup->status === 'pending' ? 'processing' : 'pending') }}">
-                                    {{ $backup->status }}
-                                </span>
-                                @if ($backup->error)
-                                    <i class="bi bi-info-circle text-danger ms-1" data-bs-toggle="tooltip" title="{{ $backup->error }}"></i>
-                                @endif
-                            </td>
-                            <td>{{ $backup->creator?->name ?? 'System' }}</td>
-                            <td class="text-muted small">{{ $backup->created_at->format('M d, Y h:i A') }}</td>
-                            <td class="text-end">
-                                <div class="d-inline-flex gap-1">
-                                    @if ($backup->isCompleted())
-                                        @can('backups.download')
-                                            <a href="{{ route('backups.download', $backup) }}" class="btn btn-sm btn-light border p-1" title="Download">
-                                                <i class="bi bi-download"></i>
-                                            </a>
-                                        @endcan
-                                    @endif
-
-                                    @can('backups.delete')
-                                        <form method="POST" action="{{ route('backups.destroy', $backup) }}" data-confirm="Backup {{ $backup->filename ?? '#'.$backup->id }} will be permanently removed.">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-light border text-danger p-1" title="Delete">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
-                                    @endcan
-                                </div>
-                            </td>
+                            <th>ARCHIVE FILENAME</th>
+                            <th>TRIGGER TYPE</th>
+                            <th>FILE SIZE</th>
+                            <th>STATUS</th>
+                            <th>OPERATOR</th>
+                            <th>TIMESTAMP</th>
+                            <th class="text-end">ACTIONS</th>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="7" class="text-center text-muted py-4">No backups have been created yet.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        @if ($backups->hasPages())
-            <div class="card-footer bg-transparent">
-                {{ $backups->links() }}
+                    </thead>
+                    <tbody>
+                        <x-table-skeleton :cols="7" :rows="6" />
+                    </tbody>
+                </table>
             </div>
-        @endif
+        </div>
     </div>
+
+    @include('partials.plugins.datatables')
+
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const $ = window.jQuery;
+                if ($ && $.fn.DataTable) {
+                    $('#backups-table').DataTable({
+                        processing: true,
+                        serverSide: true,
+                        ajax: '{{ route('backups.index') }}',
+                        pageLength: 25,
+                        order: [[5, 'desc']],
+                        columns: [
+                            { data: 'filename_col', name: 'filename' },
+                            { data: 'type_col', name: 'type' },
+                            { data: 'size_col', name: 'size', searchable: false },
+                            { data: 'status_col', name: 'status' },
+                            { data: 'operator_col', name: 'creator.name', orderable: false },
+                            { data: 'timestamp_col', name: 'created_at', searchable: false },
+                            { data: 'actions_col', orderable: false, searchable: false, className: 'text-end' }
+                        ]
+                    });
+                }
+            });
+        </script>
+    @endpush
 
     @pushOnce('scripts', 'backups-scripts')
         @vite(['resources/js/pages/backups.js'])

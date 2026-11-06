@@ -120,9 +120,9 @@
                     </div>
 
                     <div class="col-md-4">
-                        <label class="form-label required">Year Level</label>
+                        <label class="form-label required">Year / Grade Level</label>
                         <select name="year_level" class="form-select">
-                            @foreach (['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year', 'Graduate Studies'] as $lvl)
+                            @foreach (['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year', 'Grade 11 (SHS)', 'Grade 12 (SHS)', 'Junior High (Grades 7-10)', 'Elementary (Grades 1-6)', 'TESDA / TVET Trainee', 'Graduate Studies'] as $lvl)
                                 <option value="{{ $lvl }}" @selected(old('year_level', '1st Year') === $lvl)>{{ $lvl }}</option>
                             @endforeach
                         </select>

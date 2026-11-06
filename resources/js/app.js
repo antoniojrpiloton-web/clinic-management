@@ -107,6 +107,44 @@ document.addEventListener('DOMContentLoaded', () => {
             searchInputs[0]?.focus();
         }
     });
+
+    if (window.jQuery) {
+        const $ = window.jQuery;
+        const buildSkeletonRows = (colCount, rowCount = 8) => {
+            let html = '';
+            for (let r = 0; r < rowCount; r++) {
+                html += '<tr class="dt-skeleton-row">';
+                for (let c = 0; c < colCount; c++) {
+                    if (c === 0) {
+                        html += '<td><span class="dt-skeleton-bar" style="width: 75%;"></span></td>';
+                    } else if (c === 1) {
+                        html += '<td><span class="dt-skeleton-bar" style="width: 85%;"></span><span class="dt-skeleton-bar sm"></span></td>';
+                    } else if (c === colCount - 1) {
+                        html += '<td><span class="dt-skeleton-btn"></span></td>';
+                    } else if (c % 3 === 0) {
+                        html += '<td><span class="dt-skeleton-pill"></span></td>';
+                    } else {
+                        const width = 60 + ((r + c) % 3) * 12;
+                        html += `<td><span class="dt-skeleton-bar" style="width: ${width}%;"></span></td>`;
+                    }
+                }
+                html += '</tr>';
+            }
+            return html;
+        };
+
+        $(document).on('preXhr.dt', 'table', function () {
+            const $table = $(this);
+            const $tbody = $table.find('tbody');
+            const colCount = $table.find('thead th').length || 6;
+            $table.addClass('dt-is-loading');
+            $tbody.html(buildSkeletonRows(colCount, 8));
+        });
+
+        $(document).on('xhr.dt draw.dt error.dt', 'table', function () {
+            $(this).removeClass('dt-is-loading');
+        });
+    }
 });
 
 document.addEventListener('submit', async (event) => {

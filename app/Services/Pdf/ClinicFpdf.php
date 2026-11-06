@@ -59,7 +59,7 @@ class ClinicFpdf extends FPDF
 
     public function conv(?string $text): string
     {
-        $text = (string) $text;
+        $text = str_replace(['—', '–', '•'], ['-', '-', '*'], (string) $text);
         $converted = @iconv('UTF-8', 'windows-1252//TRANSLIT', $text);
 
         return $converted !== false ? $converted : utf8_decode($text);
@@ -339,51 +339,219 @@ class ClinicFpdf extends FPDF
     {
         $x = $this->GetX();
         $y = $this->GetY();
+        $converted = $this->conv($value);
 
-        $this->SetFont('Arial', $bold ? 'B' : '', 10);
-        $this->Cell($width, 5.5, $this->conv($value), 0, 0, $align);
+        $fontSize = 10.0;
+        $style = $bold ? 'B' : '';
+        $this->SetFont('Arial', $style, $fontSize);
+
+        while ($fontSize > 7.0 && $this->GetStringWidth($converted) > ($width - 2.0)) {
+            $fontSize -= 0.5;
+            $this->SetFont('Arial', $style, $fontSize);
+        }
+
+        if ($this->GetStringWidth($converted) > ($width - 1.5)) {
+            while ($converted !== '' && $this->GetStringWidth($converted.'...') > ($width - 1.5)) {
+                $converted = substr($converted, 0, -1);
+            }
+            $converted .= '...';
+        }
+
+        $this->Cell($width, 5.5, $converted, 0, 0, $align);
         $this->SetLineWidth(0.2);
         $this->Line($x, $y + 5.2, $x + $width, $y + 5.2);
+        $this->SetFont('Arial', '', 10);
     }
 
     public function drawRuledLines(float $x, float $y, float $width, int $lineCount, float $lineHeight, string $text = ''): float
     {
+        $this->SetFont('Arial', '', 9.5);
+        $converted = $this->conv(trim($text));
+        $neededLines = $converted !== '' ? $this->nbLines($width - 2.0, $converted) : 1;
+        $actualLines = max($lineCount, $neededLines);
+
         $this->SetLineWidth(0.2);
-        for ($i = 1; $i <= $lineCount; $i++) {
+        for ($i = 1; $i <= $actualLines; $i++) {
             $lineY = $y + ($i * $lineHeight);
             $this->Line($x, $lineY, $x + $width, $lineY);
         }
 
-        if (trim($text) !== '') {
+        if ($converted !== '') {
             $this->SetXY($x + 1, $y + 1.2);
-            $this->SetFont('Arial', '', 9.5);
-            $this->MultiCell($width - 2, $lineHeight, $this->conv($text), 0, 'L');
+            $this->MultiCell($width - 2, $lineHeight, $converted, 0, 'L');
         }
 
-        return $y + ($lineCount * $lineHeight);
+        return $y + ($actualLines * $lineHeight);
+    }
+
+    public function nbLines(float $w, string $txt): int
+    {
+        $cw = &$this->CurrentFont['cw'];
+        if ($w == 0) {
+            $w = $this->w - $this->rMargin - $this->x;
+        }
+        $wmax = ($w - 2 * $this->cMargin) * 1000 / $this->FontSize;
+        $s = str_replace("\r", '', $txt);
+        $nb = strlen($s);
+        if ($nb > 0 && $s[$nb - 1] == "\n") {
+            $nb--;
+        }
+        $sep = -1;
+        $i = 0;
+        $j = 0;
+        $l = 0;
+        $nl = 1;
+        while ($i < $nb) {
+            $c = $s[$i];
+            if ($c == "\n") {
+                $i++;
+                $sep = -1;
+                $j = $i;
+                $l = 0;
+                $nl++;
+
+                continue;
+            }
+            if ($c == ' ') {
+                $sep = $i;
+            }
+            $l += $cw[$c] ?? 500;
+            if ($l > $wmax) {
+                if ($sep == -1) {
+                    if ($i == $j) {
+                        $i++;
+                    }
+                } else {
+                    $i = $sep + 1;
+                }
+                $sep = -1;
+                $j = $i;
+                $l = 0;
+                $nl++;
+            } else {
+                $i++;
+            }
+        }
+
+        return $nl;
+    }
+
+    public function checkPageBreak(float $h): bool
+    {
+        if ($this->GetY() + $h > $this->PageBreakTrigger) {
+            $this->AddPage($this->CurOrientation);
+            $this->SetY(44);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Draw a dynamic-height table row where every cell shares the tallest wrapped height and a complete border.
+     *
+     * @param  list<array{w: float, text: string, align?: string, style?: string, size?: float, fill?: bool, family?: string}>  $cells
+     */
+    public function drawRow(array $cells, float $lineHeight = 4.3, float $minHeight = 5.5, float $padY = 1.0): float
+    {
+        $maxLines = 1;
+        foreach ($cells as $cell) {
+            $family = $cell['family'] ?? 'Arial';
+            $style = $cell['style'] ?? '';
+            $size = $cell['size'] ?? 8.5;
+            $this->SetFont($family, $style, $size);
+            $converted = $this->conv($cell['text'] ?? '');
+            $lines = $this->nbLines(max(2.0, $cell['w'] - 1.5), $converted);
+            if ($lines > $maxLines) {
+                $maxLines = $lines;
+            }
+        }
+
+        $rowH = max($minHeight, ($maxLines * $lineHeight) + ($padY * 2));
+        $this->checkPageBreak($rowH);
+
+        $startX = $this->lMargin;
+        $startY = $this->GetY();
+        $curX = $startX;
+
+        foreach ($cells as $cell) {
+            $w = (float) $cell['w'];
+            $align = $cell['align'] ?? 'L';
+            $style = $cell['style'] ?? '';
+            $size = $cell['size'] ?? 8.5;
+            $family = $cell['family'] ?? 'Arial';
+            $fill = (bool) ($cell['fill'] ?? false);
+            $converted = $this->conv($cell['text'] ?? '');
+
+            $this->Rect($curX, $startY, $w, $rowH, $fill ? 'DF' : 'D');
+
+            $this->SetFont($family, $style, $size);
+            $lines = $this->nbLines(max(2.0, $w - 1.5), $converted);
+            $textBlockH = $lines * $lineHeight;
+            $offsetY = max($padY, ($rowH - $textBlockH) / 2);
+
+            $this->SetXY($curX + 0.8, $startY + $offsetY);
+            $this->MultiCell($w - 1.6, $lineHeight, $converted, 0, $align);
+
+            $curX += $w;
+        }
+
+        $this->SetXY($startX, $startY + $rowH);
+
+        return $rowH;
+    }
+
+    public function drawSectionHeader(string $title, float $w = 166.0, float $h = 5.5): void
+    {
+        $this->checkPageBreak($h + 8);
+        $this->SetFont('Arial', 'B', 8.5);
+        $this->SetFillColor(242, 244, 247);
+        $this->SetTextColor(20, 25, 35);
+        $this->Cell($w, $h, '  '.$this->conv($title), 1, 1, 'L', true);
+        $this->SetTextColor(0, 0, 0);
     }
 
     public function drawHsdSignatureBlock(string $name, string $roleLabel, string $license, float $x = 122, float $y = 0): void
     {
+        $minAfterContent = $this->GetY() + 10;
         if ($y <= 0) {
-            $y = $this->GetY();
+            $y = max($minAfterContent, 236);
+        } else {
+            $y = max($y, $minAfterContent);
         }
 
-        $w = 64;
+        if ($y + 13 > $this->PageBreakTrigger) {
+            $this->AddPage($this->CurOrientation);
+            $y = $this->GetY() + 16;
+        }
+
+        $w = 66;
+        if ($x + $w > ($this->w - $this->rMargin)) {
+            $x = $this->w - $this->rMargin - $w;
+        }
+
         $this->SetLineWidth(0.25);
         $this->Line($x, $y, $x + $w, $y);
 
         $this->SetXY($x, $y + 1);
-        $this->SetFont('Arial', 'B', 9.5);
-        $this->Cell($w, 4.2, $this->conv(strtoupper($name)), 0, 1, 'C');
+        $nameUpper = $this->conv(strtoupper($name));
+        $fontSize = 9.5;
+        $this->SetFont('Arial', 'B', $fontSize);
+        while ($fontSize > 7.5 && $this->GetStringWidth($nameUpper) > ($w - 2)) {
+            $fontSize -= 0.5;
+            $this->SetFont('Arial', 'B', $fontSize);
+        }
+        $this->Cell($w, 4.2, $nameUpper, 0, 1, 'C');
 
         $this->SetX($x);
-        $this->SetFont('Arial', '', 9);
+        $this->SetFont('Arial', '', 8.5);
         $this->Cell($w, 4, $this->conv($roleLabel), 0, 1, 'C');
 
         if ($license !== '') {
             $this->SetX($x);
-            $this->Cell($w, 4, $this->conv("License #: {$license}"), 0, 1, 'C');
+            $this->SetFont('Arial', '', 8);
+            $this->Cell($w, 3.8, $this->conv("License #: {$license}"), 0, 1, 'C');
         }
     }
 

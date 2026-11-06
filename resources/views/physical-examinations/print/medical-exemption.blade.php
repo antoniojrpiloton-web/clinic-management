@@ -115,7 +115,7 @@
         <span class="underline-field" style="min-width: 40px; text-align: center;">{{ $patient->age }}</span>
         years old, {{ $patient->gender }}, a resident of
         <span class="underline-field" style="min-width: 260px;">{{ $patient->address ?: 'Kalibo, Aklan' }}</span>,
-        <span class="underline-field" style="min-width: 200px;">{{ $patient->studentProfile ? ($patient->studentProfile->program->code ?? 'Enrolled') : 'University' }}</span>
+        <span class="underline-field" style="min-width: 200px;">{{ $patient->program?->code ?? ($patient->college?->code ?? 'University') }}</span>
         student and found them to have a medical condition that requires them to be temporarily excused from certain school activities/can join activities but with limitation.
     </div>
 

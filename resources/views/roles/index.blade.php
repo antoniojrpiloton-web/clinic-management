@@ -9,62 +9,47 @@
 
     <div class="card">
         <div class="card-body">
-            <x-datatable id="roles-table">
-                <thead>
-                    <tr>
-                        <th>Role</th>
-                        <th>Users</th>
-                        <th>Permissions</th>
-                        <th class="no-sort text-end"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($roles as $role)
+            <div class="table-responsive">
+                <table id="roles-table" class="table table-hover align-middle w-100 mb-0">
+                    <thead>
                         <tr>
-                            <td class="fw-medium">
-                                {{ $role->name }}
-                                @if ($role->name === App\Models\User::SUPER_ADMIN_ROLE)
-                                    <span class="badge text-bg-primary ms-1">Protected</span>
-                                @endif
-                            </td>
-                            <td>{{ $role->users_count }}</td>
-                            <td>
-                                @if ($role->name === App\Models\User::SUPER_ADMIN_ROLE)
-                                    <span class="badge text-bg-success">All permissions</span>
-                                @else
-                                    {{ $role->permissions_count }}
-                                @endif
-                            </td>
-                            <td class="text-end">
-                                @if ($role->name !== App\Models\User::SUPER_ADMIN_ROLE)
-                                    <div class="d-inline-flex gap-1">
-                                        @can('roles.edit')
-                                            <a href="{{ route('roles.edit', $role) }}" class="btn btn-sm btn-light" title="Edit">
-                                                <i class="bi bi-pencil-square"></i>
-                                            </a>
-                                        @endcan
-
-                                        @can('roles.delete')
-                                            <form
-                                                method="POST"
-                                                action="{{ route('roles.destroy', $role) }}"
-                                                data-confirm="The role {{ $role->name }} will be permanently deleted."
-                                            >
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-light text-danger" title="Delete">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </form>
-                                        @endcan
-                                    </div>
-                                @endif
-                            </td>
+                            <th>Role</th>
+                            <th>Users</th>
+                            <th>Permissions</th>
+                            <th class="text-end"></th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </x-datatable>
+                    </thead>
+                    <tbody>
+                        <x-table-skeleton :cols="4" :rows="6" />
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
+
+    @include('partials.plugins.datatables')
+
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const $ = window.jQuery;
+                if ($ && $.fn.DataTable) {
+                    $('#roles-table').DataTable({
+                        processing: true,
+                        serverSide: true,
+                        ajax: '{{ route('roles.index') }}',
+                        pageLength: 25,
+                        order: [[0, 'asc']],
+                        columns: [
+                            { data: 'role_col', name: 'name' },
+                            { data: 'users_col', name: 'users_count', searchable: false },
+                            { data: 'permissions_col', name: 'permissions_count', searchable: false },
+                            { data: 'actions_col', orderable: false, searchable: false, className: 'text-end' }
+                        ]
+                    });
+                }
+            });
+        </script>
+    @endpush
 </x-layouts.app>
 

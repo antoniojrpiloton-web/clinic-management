@@ -161,14 +161,26 @@ class ClinicVisitService
      */
     public function stats(?string $type = null): array
     {
-        $base = fn () => ClinicVisit::query()->when($type, fn (Builder $q) => $q->where('visit_type', $type));
+        $todayStart = now()->startOfDay()->toDateTimeString();
+        $todayEnd = now()->endOfDay()->toDateTimeString();
+        $monthStart = now()->startOfMonth()->toDateTimeString();
+        $monthEnd = now()->endOfMonth()->toDateTimeString();
+
+        $agg = ClinicVisit::query()
+            ->when($type, fn (Builder $q) => $q->where('visit_type', $type))
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(CASE WHEN visit_date >= ? AND visit_date <= ? THEN 1 ELSE 0 END) as today', [$todayStart, $todayEnd])
+            ->selectRaw('SUM(CASE WHEN visit_date >= ? AND visit_date <= ? THEN 1 ELSE 0 END) as this_month', [$monthStart, $monthEnd])
+            ->selectRaw("SUM(CASE WHEN patient_classification = 'student' THEN 1 ELSE 0 END) as students")
+            ->selectRaw("SUM(CASE WHEN patient_classification = 'employee' THEN 1 ELSE 0 END) as employees")
+            ->first();
 
         return [
-            'total' => $base()->count(),
-            'today' => $base()->whereDate('visit_date', now()->toDateString())->count(),
-            'this_month' => $base()->whereYear('visit_date', now()->year)->whereMonth('visit_date', now()->month)->count(),
-            'students' => $base()->where('patient_classification', 'student')->count(),
-            'employees' => $base()->where('patient_classification', 'employee')->count(),
+            'total' => (int) ($agg?->total ?? 0),
+            'today' => (int) ($agg?->today ?? 0),
+            'this_month' => (int) ($agg?->this_month ?? 0),
+            'students' => (int) ($agg?->students ?? 0),
+            'employees' => (int) ($agg?->employees ?? 0),
         ];
     }
 

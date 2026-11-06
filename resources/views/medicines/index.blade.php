@@ -155,7 +155,9 @@
                             <th class="text-end">Actions</th>
                         </tr>
                     </thead>
-                    <tbody></tbody>
+                    <tbody>
+                        <x-table-skeleton :cols="7" :rows="8" />
+                    </tbody>
                 </table>
             </div>
         </div>

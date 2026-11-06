@@ -36,7 +36,7 @@
                         <i class="bi bi-book"></i>
                     </span>
                 </div>
-                <div class="kpi-value">{{ $programs->total() }}</div>
+                <div class="kpi-value">{{ number_format($stats['total']) }}</div>
                 <div class="kpi-trend">
                     <span class="trend-badge up"><i class="bi bi-mortarboard"></i> Curricula</span>
                     <span class="trend-compare">all degrees</span>
@@ -52,7 +52,7 @@
                         <i class="bi bi-patch-check"></i>
                     </span>
                 </div>
-                <div class="kpi-value">{{ \App\Models\Program::active()->count() }}</div>
+                <div class="kpi-value">{{ number_format($stats['active']) }}</div>
                 <div class="kpi-trend">
                     <span class="trend-badge up">Enrolling</span>
                     <span class="trend-compare">for patients/students</span>
@@ -68,7 +68,7 @@
                         <i class="bi bi-diagram-3"></i>
                     </span>
                 </div>
-                <div class="kpi-value">{{ $colleges->count() }}</div>
+                <div class="kpi-value">{{ number_format($stats['colleges']) }}</div>
                 <div class="kpi-trend">
                     <span class="trend-badge up">Departments</span>
                     <span class="trend-compare">mother units</span>
@@ -94,9 +94,9 @@
     </div>
 
     <div class="card mb-3 p-3">
-        <form method="GET" action="{{ route('programs.index') }}" class="row g-2 align-items-center">
+        <div class="row g-2 align-items-center">
             <div class="col-md-6">
-                <select name="college_id" class="form-select" onchange="this.form.submit()">
+                <select id="filter-college-id" name="college_id" class="form-select">
                     <option value="">All Colleges &amp; Departments</option>
                     @foreach ($colleges as $c)
                         <option value="{{ $c->id }}" @selected($collegeFilter == $c->id)>
@@ -105,18 +105,16 @@
                     @endforeach
                 </select>
             </div>
-            @if ($collegeFilter)
-                <div class="col-auto">
-                    <a href="{{ route('programs.index') }}" class="btn btn-outline-secondary">Reset Filter</a>
-                </div>
-            @endif
-        </form>
+            <div class="col-auto">
+                <button type="button" id="btn-reset-programs" class="btn btn-outline-secondary">Reset Filter</button>
+            </div>
+        </div>
     </div>
 
     <div class="card border">
-        <div class="card-body p-0">
+        <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table id="programs-table" class="table table-hover align-middle w-100 mb-0">
                     <thead>
                         <tr>
                             <th>CODE</th>
@@ -129,125 +127,65 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse ($programs as $program)
-                            <tr>
-                                <td>
-                                    <span class="fw-bold text-dark">{{ $program->code }}</span>
-                                </td>
-                                <td>
-                                    <div class="fw-semibold text-dark">{{ $program->name }}</div>
-                                </td>
-                                <td>
-                                    <span class="badge badge-pill badge-soft-blue">
-                                        {{ $program->college->code }}
-                                    </span>
-                                    <small class="text-muted ms-1">{{ $program->college->name }}</small>
-                                </td>
-                                <td>
-                                    <span class="badge badge-pill badge-soft-gray">{{ $program->degree_level }}</span>
-                                </td>
-                                <td>{{ $program->years }} Years</td>
-                                <td>
-                                    <span class="status-badge {{ $program->is_active ? 'completed' : 'pending' }}">
-                                        {{ $program->is_active ? 'active' : 'inactive' }}
-                                    </span>
-                                </td>
-                                <td class="text-end">
-                                    <div class="d-inline-flex gap-1">
-                                        @can('programs.edit')
-                                            <button
-                                                type="button"
-                                                class="btn btn-sm btn-light border p-1"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#edit-program-modal-{{ $program->id }}"
-                                                title="Edit"
-                                            >
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                        @endcan
-                                        @can('programs.delete')
-                                            <form method="POST" action="{{ route('programs.destroy', $program) }}" data-confirm="Are you sure you want to delete this program?" class="d-inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-light border text-danger p-1" title="Delete">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </form>
-                                        @endcan
-                                    </div>
-                                </td>
-                            </tr>
-
-                            <div class="modal fade" id="edit-program-modal-{{ $program->id }}" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <form method="POST" action="{{ route('programs.update', $program) }}">
-                                            @csrf
-                                            @method('PUT')
-                                            <div class="modal-header">
-                                                <h5 class="modal-title fw-bold">Edit Academic Program</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <div class="mb-3">
-                                                    <label class="form-label">College / Department</label>
-                                                    <select name="college_id" class="form-select" required>
-                                                        @foreach ($colleges as $c)
-                                                            <option value="{{ $c->id }}" @selected($program->college_id == $c->id)>
-                                                                {{ $c->code }} &mdash; {{ $c->name }}
-                                                            </option>
-                                                        @endforeach
-                                                    </select>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">Program Code</label>
-                                                    <input type="text" name="code" value="{{ old('code', $program->code) }}" class="form-control" required>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">Program Title</label>
-                                                    <input type="text" name="name" value="{{ old('name', $program->name) }}" class="form-control" required>
-                                                </div>
-                                                <div class="row g-2 mb-3">
-                                                    <div class="col-6">
-                                                        <label class="form-label">Degree Level</label>
-                                                        <select name="degree_level" class="form-select" required>
-                                                            <option value="Undergraduate" @selected($program->degree_level === 'Undergraduate')>Undergraduate</option>
-                                                            <option value="Postgraduate" @selected($program->degree_level === 'Postgraduate')>Postgraduate</option>
-                                                            <option value="Diploma / Certificate" @selected($program->degree_level === 'Diploma / Certificate')>Diploma / Certificate</option>
-                                                        </select>
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <label class="form-label">Years of Study</label>
-                                                        <input type="number" name="years" min="1" max="10" value="{{ old('years', $program->years) }}" class="form-control" required>
-                                                    </div>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input type="checkbox" name="is_active" value="1" id="prog_active_{{ $program->id }}" class="form-check-input" @checked($program->is_active)>
-                                                    <label class="form-check-label" for="prog_active_{{ $program->id }}">Active status</label>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                                                <button type="submit" class="btn btn-primary">Save Changes</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="text-center text-muted py-4">No academic programs registered yet.</td>
-                            </tr>
-                        @endforelse
+                        <x-table-skeleton :cols="7" :rows="8" />
                     </tbody>
                 </table>
             </div>
+        </div>
+    </div>
 
-            @if ($programs->hasPages())
-                <div class="p-3 border-top">
-                    {{ $programs->links() }}
-                </div>
-            @endif
+    <div class="modal fade" id="edit-program-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="edit-program-form" method="POST" action="">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold">Edit Academic Program</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">College / Department</label>
+                            <select name="college_id" id="edit_prog_college_id" class="form-select" required>
+                                @foreach ($colleges as $c)
+                                    <option value="{{ $c->id }}">{{ $c->code }} &mdash; {{ $c->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Program Code</label>
+                            <input type="text" name="code" id="edit_prog_code" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Program Title</label>
+                            <input type="text" name="name" id="edit_prog_name" class="form-control" required>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label">Degree Level</label>
+                                <select name="degree_level" id="edit_prog_level" class="form-select" required>
+                                    <option value="Undergraduate">Undergraduate</option>
+                                    <option value="Postgraduate">Postgraduate</option>
+                                    <option value="Diploma / Certificate">Diploma / Certificate</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Years of Study</label>
+                                <input type="number" name="years" id="edit_prog_years" min="1" max="10" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" name="is_active" value="1" id="edit_prog_active" class="form-check-input">
+                            <label class="form-check-label" for="edit_prog_active">Active status</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -305,5 +243,69 @@
             </div>
         </div>
     </div>
+
+    @include('partials.plugins.datatables')
+
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const $ = window.jQuery;
+                const collegeSelect = document.getElementById('filter-college-id');
+                let dt = null;
+
+                if ($ && $.fn.DataTable) {
+                    dt = $('#programs-table').DataTable({
+                        processing: true,
+                        serverSide: true,
+                        ajax: {
+                            url: '{{ route('programs.index') }}',
+                            data: function (d) {
+                                d.college_id = collegeSelect ? collegeSelect.value : '';
+                            }
+                        },
+                        pageLength: 25,
+                        order: [[0, 'asc']],
+                        columns: [
+                            { data: 'code_col', name: 'code' },
+                            { data: 'name_col', name: 'name' },
+                            { data: 'college_col', name: 'college.code', orderable: false },
+                            { data: 'level_col', name: 'degree_level' },
+                            { data: 'years_col', name: 'years', searchable: false },
+                            { data: 'status_col', name: 'is_active', searchable: false },
+                            { data: 'actions_col', orderable: false, searchable: false, className: 'text-end' }
+                        ]
+                    });
+                }
+
+                if (collegeSelect) {
+                    collegeSelect.addEventListener('change', function () {
+                        if (dt) dt.ajax.reload();
+                    });
+                }
+
+                const resetBtn = document.getElementById('btn-reset-programs');
+                if (resetBtn && collegeSelect) {
+                    resetBtn.addEventListener('click', function () {
+                        collegeSelect.value = '';
+                        if (dt) dt.ajax.reload();
+                    });
+                }
+
+                const editModal = document.getElementById('edit-program-modal');
+                if (editModal) {
+                    editModal.addEventListener('show.bs.modal', function (event) {
+                        const btn = event.relatedTarget;
+                        document.getElementById('edit-program-form').action = btn.getAttribute('data-update-url');
+                        document.getElementById('edit_prog_college_id').value = btn.getAttribute('data-college-id') || '';
+                        document.getElementById('edit_prog_code').value = btn.getAttribute('data-code') || '';
+                        document.getElementById('edit_prog_name').value = btn.getAttribute('data-name') || '';
+                        document.getElementById('edit_prog_level').value = btn.getAttribute('data-level') || 'Undergraduate';
+                        document.getElementById('edit_prog_years').value = btn.getAttribute('data-years') || '4';
+                        document.getElementById('edit_prog_active').checked = btn.getAttribute('data-active') === '1';
+                    });
+                }
+            });
+        </script>
+    @endpush
 </x-layouts.app>
 
