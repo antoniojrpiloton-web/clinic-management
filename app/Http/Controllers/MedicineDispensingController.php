@@ -6,6 +6,7 @@ use App\Models\Clinician;
 use App\Models\InventoryTransaction;
 use App\Models\Medicine;
 use App\Models\MedicineBatch;
+use App\Models\MedicineCategory;
 use App\Models\MedicineDispensing;
 use App\Models\MedicineDispensingItem;
 use App\Models\Patient;
@@ -140,14 +141,20 @@ class MedicineDispensingController extends Controller implements HasMiddleware
             ?? Clinician::first();
 
         $medicines = Medicine::active()
-            ->with(['activeBatches' => fn ($q) => $q->orderBy('expiration_date')])
+            ->with([
+                'category',
+                'activeBatches' => fn ($q) => $q->orderBy('expiration_date'),
+            ])
             ->orderBy('generic_name')
             ->get();
+
+        $categories = MedicineCategory::orderBy('name')->get();
 
         $nextNumber = MedicineDispensing::generateDispensingNumber();
 
         return view('inventory.dispensings.create', compact(
             'medicines',
+            'categories',
             'clinicians',
             'defaultClinician',
             'preselectedPatient',

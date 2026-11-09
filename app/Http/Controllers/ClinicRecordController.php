@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Appointment;
 use App\Models\Clinician;
 use App\Models\ClinicVisit;
 use App\Models\College;
@@ -27,20 +28,10 @@ abstract class ClinicRecordController extends Controller implements HasMiddlewar
 
     abstract protected function detailRelation(): string;
 
-    /**
-     * @return array<string, mixed>
-     */
     abstract protected function detailRules(): array;
 
-    /**
-     * @param  array<string, mixed>  $validated
-     * @return array<string, mixed>
-     */
     abstract protected function detailData(array $validated, Request $request): array;
 
-    /**
-     * @return array<string, mixed>
-     */
     protected function formOptions(): array
     {
         return [];
@@ -94,6 +85,7 @@ abstract class ClinicRecordController extends Controller implements HasMiddlewar
                 'visit_date' => now(),
                 'visit_category' => $this->visitType() === ClinicVisit::TYPE_EMERGENCY ? 'emergency_call' : 'walk_in',
                 'status' => 'completed',
+                'chief_complaint' => $request->query('complaint') ?: null,
                 'clinician_id' => $this->defaultClinician()?->id,
             ]),
             'detail' => $this->newDetail(),
@@ -101,6 +93,7 @@ abstract class ClinicRecordController extends Controller implements HasMiddlewar
             'defaultClinician' => $this->defaultClinician(),
             'meta' => ClinicVisit::TYPES[$this->visitType()],
             'routePrefix' => static::routePrefix(),
+            'appointmentId' => $request->query('appointment_id'),
         ], $this->formOptions()));
     }
 
@@ -111,6 +104,14 @@ abstract class ClinicRecordController extends Controller implements HasMiddlewar
         $visit = DB::transaction(function () use ($validated, $request) {
             $visit = $this->visitService->create($this->visitType(), $validated);
             $visit->{$this->detailRelation()}()->create($this->detailData($validated, $request));
+
+            if ($request->filled('appointment_id')) {
+                Appointment::where('id', $request->input('appointment_id'))->update([
+                    'clinic_visit_id' => $visit->id,
+                    'status' => 'completed',
+                    'completed_at' => now(),
+                ]);
+            }
 
             return $visit;
         });

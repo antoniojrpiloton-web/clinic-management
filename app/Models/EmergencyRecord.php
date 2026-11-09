@@ -10,9 +10,6 @@ class EmergencyRecord extends Model
 {
     use HasFactory;
 
-    /**
-     * @var array<string, array{label: string, badge: string}>
-     */
     public const TRIAGE_LEVELS = [
         'red' => ['label' => 'Red - Immediate / Life-threatening', 'badge' => 'badge-red'],
         'yellow' => ['label' => 'Yellow - Urgent', 'badge' => 'badge-amber'],
@@ -20,9 +17,6 @@ class EmergencyRecord extends Model
         'black' => ['label' => 'Black - Deceased / Expectant', 'badge' => 'badge-gray'],
     ];
 
-    /**
-     * @var list<string>
-     */
     public const NATURES = [
         'Syncope / Loss of Consciousness',
         'Seizure',
@@ -41,9 +35,6 @@ class EmergencyRecord extends Model
         'Other',
     ];
 
-    /**
-     * @var array<string, string>
-     */
     public const CONSCIOUSNESS_LEVELS = [
         'alert' => 'A - Alert',
         'verbal' => 'V - Responds to Voice',
@@ -51,9 +42,6 @@ class EmergencyRecord extends Model
         'unresponsive' => 'U - Unresponsive',
     ];
 
-    /**
-     * @var list<string>
-     */
     public const INTERVENTIONS = [
         'CPR',
         'AED Applied',
@@ -71,9 +59,6 @@ class EmergencyRecord extends Model
         'Monitoring of Vital Signs',
     ];
 
-    /**
-     * @var list<string>
-     */
     public const OUTCOMES = [
         'Stabilized and Discharged',
         'Stabilized and Sent Home',

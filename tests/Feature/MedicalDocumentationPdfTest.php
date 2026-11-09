@@ -3,10 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\Clinician;
+use App\Models\ClinicLogbook;
 use App\Models\ClinicVisit;
 use App\Models\College;
 use App\Models\DentalConsultation;
 use App\Models\DiseaseCategory;
+use App\Models\InventoryTransaction;
+use App\Models\Medicine;
 use App\Models\MedicineDispensing;
 use App\Models\Patient;
 use App\Models\PhysicalExamination;
@@ -220,9 +223,21 @@ class MedicalDocumentationPdfTest extends TestCase
 
         $content = $response->getContent();
         $this->assertStringStartsWith('%PDF-', $content);
-        $this->assertStringContainsString('ORAL HEALTH EXAMINATION CARD', $content);
+        $this->assertStringContainsString('SCHOOL ORAL HEALTH EXAMINATION CARD', $content);
+        $this->assertStringContainsString('College Students & University Personnel', $content);
+        $this->assertStringContainsString('MEDICAL HISTORY', $content);
+        $this->assertStringContainsString('Guided Questions', $content);
+        $this->assertStringContainsString('CONDITION AND TREATMENT NEEDS', $content);
+        $this->assertStringContainsString('ORAL HEALTH CONDITION', $content);
+        $this->assertStringContainsString('DENTAL PROCEDURES', $content);
+        $this->assertStringContainsString('dft Index', $content);
+        $this->assertStringContainsString('DMFMT Index', $content);
+        $this->assertStringContainsString('SYMBOL FOR MOUTH EXAMINATION', $content);
+        $this->assertStringContainsString('SYMBOLS FOR ACCOMPLISHMENT', $content);
+        $this->assertStringContainsString('ARTIFICIAL RESTORATION', $content);
+        $this->assertStringContainsString('Note: Use letter to record ailments and place X if not examined.', $content);
         $this->assertStringContainsString('Lidocaine 2% with 1:100,000 Epinephrine', $content);
-        $this->assertStringContainsString('/Count 1', $content);
+        $this->assertStringContainsString('/Count 2', $content);
     }
 
     public function test_medical_and_dental_records_and_login_records_reports_render_and_export_pdf(): void
@@ -243,13 +258,40 @@ class MedicalDocumentationPdfTest extends TestCase
         $indexResponse = $this->actingAs($admin)->get(route('reports.clinic.index', ['year' => $year]));
         $indexResponse->assertOk();
         $indexResponse->assertSee('Reports & Analytics');
-        $indexResponse->assertSee('MEDICAL AND DENTAL RECORDS');
-        $indexResponse->assertSee('MEDICAL AND DENTAL LOG-IN RECORDS');
-        $indexResponse->assertSee('CRIM Students');
-        $indexResponse->assertSee('BSHM/ TM Students');
-        $indexResponse->assertSee('Forensic Students');
-        $indexResponse->assertSee('TESDA Students');
-        $indexResponse->assertSee('BSMT Students');
+        $indexResponse->assertSee('NVC Clinic Morbidity & Utilization Reports');
+        $indexResponse->assertSee('1. Medical and Dental Service Reports');
+        $indexResponse->assertSee('Scheduled Physical Examination');
+        $indexResponse->assertSee('Total Clinic Visits');
+        $indexResponse->assertSee('2. Patient Classification Reports');
+        $indexResponse->assertSee('Faculty (Teaching Personnel)');
+        $indexResponse->assertSee('Non-Teaching Personnel / Staff');
+        $indexResponse->assertSee('New Registrations');
+
+        $medDentalPage = $this->actingAs($admin)->get(route('reports.clinic.medical-dental', ['year' => $year]));
+        $medDentalPage->assertOk();
+        $medDentalPage->assertSee('MEDICAL AND DENTAL RECORDS');
+        $medDentalPage->assertSee('CRIM Students');
+        $medDentalPage->assertSee('BSHM/ TM Students');
+        $medDentalPage->assertSee('Forensic Students');
+        $medDentalPage->assertSee('TESDA Students');
+        $medDentalPage->assertSee('BSMT Students');
+        $medDentalPage->assertSee('Annual Service Totals & Student / Employee Distribution');
+        $medDentalPage->assertSee('Comparison of Monthly Service Utilization');
+
+        $loginPage = $this->actingAs($admin)->get(route('reports.clinic.login-records', ['year' => $year]));
+        $loginPage->assertOk();
+        $loginPage->assertSee('MEDICAL AND DENTAL LOG-IN RECORDS');
+        $loginPage->assertSee('BSHM Students');
+        $loginPage->assertSee('BSTM Students');
+        $loginPage->assertSee('BSMT Students');
+
+        $commPage = $this->actingAs($admin)->get(route('reports.clinic.communicable', ['year' => $year]));
+        $commPage->assertOk();
+        $commPage->assertSee("COMMUNICABLE DISEASES {$year} DATA");
+
+        $nonCommPage = $this->actingAs($admin)->get(route('reports.clinic.non-communicable', ['year' => $year]));
+        $nonCommPage->assertOk();
+        $nonCommPage->assertSee("NON- COMMUNICABLE DISEASES {$year} DATA");
 
         $medDentalPdf = $this->actingAs($admin)->get(route('reports.clinic.print-medical-dental-records', ['year' => $year]));
         $medDentalPdf->assertOk();
@@ -312,5 +354,152 @@ class MedicalDocumentationPdfTest extends TestCase
         $this->assertStringContainsString('Reproductive \\(Pregnancy, Cyst and Dysmenorrhea\\)', $nonCommContent);
         $this->assertStringContainsString('Cardiovascular', $nonCommContent);
         $this->assertStringContainsString('/Count 1', $nonCommContent);
+    }
+
+    public function test_physical_examination_pdf_renders_two_page_back_to_back_hsd_form_1(): void
+    {
+        $admin = User::role(User::SUPER_ADMIN_ROLE)->first();
+        $exam = $this->getOrCreatePhysicalExam();
+
+        $response = $this->actingAs($admin)->get(route('physical-examinations.print-pe', $exam));
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/pdf');
+
+        $content = $response->getContent();
+        $this->assertStringStartsWith('%PDF-', $content);
+        $this->assertStringContainsString('/Count 2', $content);
+        $this->assertStringContainsString('HSD FORM 1  Full Physical Examination', $content);
+
+        $this->assertStringContainsString('PHYSICAL EXAMINATION', $content);
+        $this->assertStringContainsString('Work/Course:', $content);
+        $this->assertStringContainsString('VITAL SIGNS:', $content);
+        $this->assertStringContainsString('MEDICAL HISTORY', $content);
+        $this->assertStringContainsString('Allergies \\(food, medication, etc.\\), Asthma', $content);
+        $this->assertStringContainsString('HOSPITALIZATIONS', $content);
+        $this->assertStringContainsString('SURGERIES', $content);
+        $this->assertStringContainsString('Restricted by Doctor to participate in Physical', $content);
+        $this->assertStringContainsString('FAMILY HISTORY', $content);
+        $this->assertStringContainsString('HYPERTENSION', $content);
+        $this->assertStringContainsString('LUNG DISEASE', $content);
+        $this->assertStringContainsString('OTHERS, SPECIFY:', $content);
+
+        $this->assertStringContainsString('1.    EYES', $content);
+        $this->assertStringContainsString('2.    EARS, NOSE, THROAT', $content);
+        $this->assertStringContainsString('9.    GENITALIA- HERNIA \\(MALE\\)', $content);
+        $this->assertStringContainsString('10.  MUSKULOSKELETAL: ROM', $content);
+        $this->assertStringContainsString('11.  NEUROMUSCULAR \\(REFLEXES\\)', $content);
+        $this->assertStringContainsString('This is to certify that I have examined the above named on', $content);
+        $this->assertStringContainsString('to Work/ Return to School', $content);
+        $this->assertStringContainsString('Refusal of Medical Treatment', $content);
+        $this->assertStringContainsString('Waiver: I have been advised of the procedures', $content);
+    }
+
+    public function test_public_clinic_logbook_kiosk_and_staff_management_workflow(): void
+    {
+        $patient = Patient::first();
+        $program = Program::where('code', 'BSCS')->first() ?? Program::first();
+
+        $kioskResponse = $this->get(route('logbook.kiosk'));
+        $kioskResponse->assertOk();
+        $kioskResponse->assertSee('Clinic Visitor Logbook');
+
+        $lookupResponse = $this->getJson(route('logbook.lookup', ['id_number' => $patient->patient_number]));
+        $lookupResponse->assertOk()
+            ->assertJsonPath('found', true)
+            ->assertJsonPath('patient_id', $patient->id);
+
+        $storeResponse = $this->post(route('logbook.kiosk.store'), [
+            'visitor_type' => 'student',
+            'id_number' => $patient->patient_number,
+            'full_name' => $patient->full_name,
+            'program_id' => $program?->id,
+            'year_or_position' => '3rd Year',
+            'contact_number' => '09171234567',
+            'purpose' => 'Blood Pressure (BP) Monitoring',
+            'notes' => 'Walk-in BP check before class',
+        ]);
+        $storeResponse->assertRedirect(route('logbook.kiosk'));
+
+        $entry = ClinicLogbook::latest('id')->first();
+        $this->assertNotNull($entry);
+        $this->assertSame($patient->id, $entry->patient_id);
+        $this->assertSame('Blood Pressure (BP) Monitoring', $entry->purpose);
+        $this->assertNull($entry->time_out);
+
+        $timeOutResponse = $this->post(route('logbook.kiosk.time-out', $entry));
+        $timeOutResponse->assertRedirect(route('logbook.kiosk'));
+        $entry->refresh();
+        $this->assertNotNull($entry->time_out);
+
+        $admin = User::first();
+        $staffResponse = $this->actingAs($admin)->get(route('clinic-logbooks.index'));
+        $staffResponse->assertOk();
+        $staffResponse->assertSee('Daily Clinic Logbook');
+        $staffResponse->assertSee($entry->full_name);
+    }
+
+    public function test_global_navbar_search_returns_categorized_results_across_system(): void
+    {
+        $admin = User::first();
+        $patient = Patient::first();
+
+        $quickResponse = $this->actingAs($admin)->getJson(route('global-search'));
+        $quickResponse->assertOk()
+            ->assertJsonStructure(['query', 'category', 'total', 'groups']);
+        $this->assertNotEmpty($quickResponse->json('groups'));
+
+        $patientResponse = $this->actingAs($admin)->getJson(route('global-search', [
+            'q' => $patient->last_name,
+            'category' => 'patients',
+        ]));
+        $patientResponse->assertOk();
+        $this->assertGreaterThanOrEqual(1, $patientResponse->json('total'));
+        $this->assertSame('patients', $patientResponse->json('groups.0.key'));
+
+        $pageResponse = $this->actingAs($admin)->getJson(route('global-search', [
+            'q' => 'Communicable',
+            'category' => 'pages',
+        ]));
+        $pageResponse->assertOk();
+        $this->assertGreaterThanOrEqual(1, $pageResponse->json('total'));
+
+        $medicine = Medicine::first();
+        $txn = InventoryTransaction::first() ?? InventoryTransaction::create([
+            'transaction_number' => 'TXN-2026-00001',
+            'medicine_id' => $medicine?->id,
+            'type' => 'stock_in',
+            'quantity' => 50,
+            'quantity_before' => 0,
+            'quantity_after' => 50,
+            'reference_number' => 'PO-2026-9988',
+            'reason' => 'Initial stock replenishment',
+            'user_id' => $admin->id,
+            'transaction_date' => now(),
+        ]);
+
+        $txnResponse = $this->actingAs($admin)->getJson(route('global-search', [
+            'q' => $txn->transaction_number,
+        ]));
+        $txnResponse->assertOk();
+        $this->assertGreaterThanOrEqual(1, $txnResponse->json('total'));
+        $this->assertSame('smart', $txnResponse->json('groups.0.key'));
+
+        $shorthandResponse = $this->actingAs($admin)->getJson(route('global-search', [
+            'q' => 'pat 1',
+        ]));
+        $shorthandResponse->assertOk();
+        $this->assertGreaterThanOrEqual(1, $shorthandResponse->json('total'));
+
+        $fullNameResponse = $this->actingAs($admin)->getJson(route('global-search', [
+            'q' => "{$patient->first_name} {$patient->last_name}",
+            'category' => 'patients',
+        ]));
+        $fullNameResponse->assertOk();
+        $this->assertGreaterThanOrEqual(1, $fullNameResponse->json('total'));
+
+        $posResponse = $this->actingAs($admin)->get(route('inventory.dispensings.create'));
+        $posResponse->assertOk();
+        $posResponse->assertSee('Pharmacy POS Dispensing Terminal');
+        $posResponse->assertSee('Dispensing Ticket');
     }
 }

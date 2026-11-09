@@ -1,11 +1,4 @@
-/**
- * Generic DataTables initialiser (DataTables 3 vanilla API, no jQuery).
- *
- * Markup is produced by the <x-datatable> Blade component:
- *  - data-url        → server-side processing endpoint (omit for client-side tables)
- *  - data-columns    → JSON column definitions [{data, title, renderType, orderable, className}]
- *  - data-filters    → id of a <form> whose fields are sent with each request
- */
+
 const { escapeHtml } = window.App;
 
 const renderers = {

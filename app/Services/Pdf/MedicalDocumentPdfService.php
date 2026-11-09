@@ -4,6 +4,7 @@ namespace App\Services\Pdf;
 
 use App\Models\Clinician;
 use App\Models\ClinicVisit;
+use App\Models\MedicalProfile;
 use App\Models\MedicineDispensing;
 use App\Models\PhysicalExamination;
 use App\Models\PhysicalExamSchedule;
@@ -640,147 +641,608 @@ class MedicalDocumentPdfService
     public function physicalExamination(PhysicalExamination $exam, array $settings, Clinician|User|null $physician = null): ClinicFpdf
     {
         $patient = $exam->patient;
-        $doc = new ClinicFpdf('P', 'mm', 'A4', $settings, '', 'HSD FORM 1- Physical Examination Form', true, 'two_rooms');
+        $profile = $patient?->medicalProfile;
+
+        $doc = new ClinicFpdf('P', 'mm', 'A4', $settings, '', 'HSD FORM 1  Full Physical Examination', true, 'single_room');
+        $doc->SetMargins(17, 16, 17);
+        $doc->SetAutoPageBreak(true, 16);
         $doc->AliasNbPages();
+
         $doc->AddPage();
 
-        $doc->SetY(44);
-        $doc->SetFont('Arial', 'B', 12);
-        $doc->Cell(0, 5.5, 'PHYSICAL EXAMINATION RECORD', 0, 1, 'C');
+        $x = 17.0;
+        $w = 176.0;
+
+        $doc->SetY(39);
+        $doc->SetFont('Arial', 'B', 10.5);
+        $doc->Cell(0, 5, 'PHYSICAL EXAMINATION', 0, 1, 'C');
+        $doc->Ln(2);
+
+        $workOrCourse = $patient?->type === 'student'
+            ? trim(($patient->program?->code ?: ($patient->college?->code ?: 'Student')).' '.($patient->year_level ?: ''))
+            : ($patient?->position ?: ($patient?->office_department ?: ucfirst((string) ($patient?->type ?? ''))));
+        $dob = $patient?->date_of_birth ? $patient->date_of_birth->format('F d, Y') : '';
+        $age = $patient?->age ? (string) $patient->age : '';
+        $sex = ucfirst((string) ($patient?->gender ?? ''));
+        $address = (string) ($patient?->address ?: $this->defaultAddress($settings));
+        $phone = (string) ($patient?->phone ?? '');
+        $emergName = (string) ($patient?->emergency_contact_name ?? '');
+        $emergPhone = (string) ($patient?->emergency_contact_phone ?? '');
+
+        $doc->SetX($x);
+        $doc->SetFont('Arial', 'B', 8.5);
+        $doc->Cell(13, 5.0, 'Name:', 0, 0, 'L');
+        $doc->drawInlineBlank((string) ($patient?->full_name ?? ''), 163, 'L', true);
+        $doc->Ln(5.2);
+
+        $doc->SetX($x);
+        $doc->SetFont('Arial', 'B', 8.5);
+        $doc->Cell(23, 5.0, 'Work/Course:', 0, 0, 'L');
+        $doc->drawInlineBlank($workOrCourse, 82, 'L', false);
+        $doc->SetX($x + 115);
+        $doc->SetFont('Arial', 'B', 8.5);
+        $doc->Cell(9, 5.0, 'Sex:', 0, 0, 'L');
+        $doc->drawInlineBlank($sex, 52, 'C', false);
+        $doc->Ln(5.2);
+
+        $doc->SetX($x);
+        $doc->SetFont('Arial', 'B', 8.5);
+        $doc->Cell(23, 5.0, 'Date of Birth:', 0, 0, 'L');
+        $doc->drawInlineBlank($dob, 82, 'L', false);
+        $doc->SetX($x + 115);
+        $doc->SetFont('Arial', 'B', 8.5);
+        $doc->Cell(9, 5.0, 'Age:', 0, 0, 'L');
+        $doc->drawInlineBlank($age, 52, 'C', false);
+        $doc->Ln(5.2);
+
+        $doc->SetX($x);
+        $doc->SetFont('Arial', 'B', 8.5);
+        $doc->Cell(16, 5.0, 'Address:', 0, 0, 'L');
+        $doc->drawInlineBlank($address, 89, 'L', false);
+        $doc->SetX($x + 115);
+        $doc->SetFont('Arial', 'B', 8.5);
+        $doc->Cell(27, 5.0, 'Contact Number:', 0, 0, 'L');
+        $doc->drawInlineBlank($phone, 34, 'C', false);
+        $doc->Ln(5.2);
+
+        $doc->SetX($x);
+        $doc->SetFont('Arial', 'B', 8.5);
+        $doc->Cell(0, 4.6, 'In case of Emergency:', 0, 1, 'L');
+
+        $doc->SetX($x);
+        $doc->SetFont('Arial', 'B', 8.5);
+        $doc->Cell(24, 5.0, 'Contact Name:', 0, 0, 'L');
+        $doc->drawInlineBlank($emergName, 81, 'L', false);
+        $doc->SetX($x + 115);
+        $doc->SetFont('Arial', 'B', 8.5);
+        $doc->Cell(27, 5.0, 'Contact Number:', 0, 0, 'L');
+        $doc->drawInlineBlank($emergPhone, 34, 'C', false);
+        $doc->Ln(6.2);
+
+        $doc->SetFont('Arial', 'B', 9);
+        $doc->Cell(0, 4.5, 'VITAL SIGNS:', 0, 1, 'C');
+        $doc->Ln(1);
+
+        $htVal = $exam->height_cm ? number_format((float) $exam->height_cm, 1).' cm' : '';
+        $wtVal = $exam->weight_kg ? number_format((float) $exam->weight_kg, 1).' kg' : '';
+        $htM = $exam->height_cm ? number_format(((float) $exam->height_cm) / 100, 2) : '       ';
+        $wtKg = $exam->weight_kg ? number_format((float) $exam->weight_kg, 1) : '       ';
+        $wtLbs = $exam->weight_kg ? number_format(((float) $exam->weight_kg) * 2.20462, 1) : '       ';
+        $bmiSuffix = $exam->bmi ? " = {$exam->bmi} ({$exam->bmi_category})" : '';
+
+        $tempVal = $exam->temperature ? "{$exam->temperature} C" : '';
+        $prVal = $exam->pulse_rate ? "{$exam->pulse_rate} bpm" : '';
+        $rrVal = $exam->respiratory_rate ? "{$exam->respiratory_rate} cpm" : '';
+        $bpVal = $exam->blood_pressure ? "{$exam->blood_pressure} mmHg" : '';
+
+        $doc->SetX($x);
+        $doc->SetFont('Arial', 'B', 8.5);
+        $doc->Cell(13, 4.8, 'Height:', 0, 0, 'L');
+        $doc->drawInlineBlank($htVal, 68, 'C', false);
+        $doc->SetX($x + 90);
+        $doc->SetFont('Arial', 'B', 8.5);
+        $doc->Cell(22, 4.8, 'Temperature:', 0, 0, 'L');
+        $doc->drawInlineBlank($tempVal, 64, 'C', false);
+        $doc->Ln(5.0);
+
+        $doc->SetX($x);
+        $doc->SetFont('Arial', 'B', 8.5);
+        $doc->Cell(13, 4.8, 'Weight:', 0, 0, 'L');
+        $doc->drawInlineBlank($wtVal, 68, 'C', false);
+        $doc->SetX($x + 90);
+        $doc->SetFont('Arial', 'B', 8.5);
+        $doc->Cell(19, 4.8, 'Pulse Rate:', 0, 0, 'L');
+        $doc->drawInlineBlank($prVal, 67, 'C', false);
+        $doc->Ln(5.0);
+
+        $doc->SetX($x);
+        $doc->SetFont('Arial', 'B', 8.5);
+        $doc->Cell(81, 4.8, $doc->conv("BMI:   Wt ( {$wtKg} kg) / Ht ( {$htM} m)2{$bmiSuffix}"), 0, 0, 'L');
+        $doc->SetX($x + 90);
+        $doc->SetFont('Arial', 'B', 8.5);
+        $doc->Cell(28, 4.8, 'Respiratory Rate:', 0, 0, 'L');
+        $doc->drawInlineBlank($rrVal, 58, 'C', false);
+        $doc->Ln(5.0);
+
+        $doc->SetX($x);
+        $doc->SetFont('Arial', 'B', 8.5);
+        $doc->Cell(81, 4.8, $doc->conv("          Wt ( {$wtLbs} lbs / Ht ( {$htM} m)2"), 0, 0, 'L');
+        $doc->SetX($x + 90);
+        $doc->SetFont('Arial', 'B', 8.5);
+        $doc->Cell(26, 4.8, 'Blood Pressure:', 0, 0, 'L');
+        $doc->drawInlineBlank($bpVal, 60, 'C', false);
+        $doc->Ln(6.0);
+
+        $doc->SetFont('Arial', 'B', 9);
+        $doc->Cell(0, 4.5, 'MEDICAL HISTORY', 0, 1, 'C');
+        $doc->Ln(1);
+
+        $doc->SetLineWidth(0.22);
+        $doc->drawRow([
+            ['w' => 74.0, 'text' => '', 'style' => 'B', 'size' => 8],
+            ['w' => 10.0, 'text' => 'YES', 'style' => 'B', 'size' => 8, 'align' => 'C'],
+            ['w' => 10.0, 'text' => 'NO', 'style' => 'B', 'size' => 8, 'align' => 'C'],
+            ['w' => 82.0, 'text' => 'REMARKS', 'style' => 'B', 'size' => 8, 'align' => 'C'],
+        ], 3.8, 4.8, 0.6);
+
+        $medHistoryRows = $this->buildHsdForm1MedicalHistoryRows($exam, $profile);
+        foreach ($medHistoryRows as $mhRow) {
+            $doc->drawRow([
+                ['w' => 74.0, 'text' => $mhRow['label'], 'style' => 'B', 'size' => 7.8],
+                ['w' => 10.0, 'text' => $mhRow['yes'] ? '/' : '', 'style' => 'B', 'size' => 9, 'align' => 'C'],
+                ['w' => 10.0, 'text' => ! $mhRow['yes'] ? '/' : '', 'style' => 'B', 'size' => 9, 'align' => 'C'],
+                ['w' => 82.0, 'text' => $mhRow['remarks'], 'style' => '', 'size' => 7.8],
+            ], 3.6, $mhRow['min_h'] ?? 5.2, 0.7);
+        }
+
+        $doc->Ln(2.5);
+
+        $doc->SetFont('Arial', 'B', 9);
+        $doc->Cell(0, 4.5, 'FAMILY HISTORY', 0, 1, 'C');
+        $doc->Ln(1);
+
+        $fmh = $this->buildHsdForm1FamilyHistory($profile);
+
+        $doc->drawRow([
+            ['w' => 68.0, 'text' => '', 'style' => 'B', 'size' => 8],
+            ['w' => 10.0, 'text' => 'YES', 'style' => 'B', 'size' => 8, 'align' => 'C'],
+            ['w' => 10.0, 'text' => 'NO', 'style' => 'B', 'size' => 8, 'align' => 'C'],
+            ['w' => 68.0, 'text' => '', 'style' => 'B', 'size' => 8],
+            ['w' => 10.0, 'text' => 'YES', 'style' => 'B', 'size' => 8, 'align' => 'C'],
+            ['w' => 10.0, 'text' => 'NO', 'style' => 'B', 'size' => 8, 'align' => 'C'],
+        ], 3.6, 4.6, 0.5);
+
+        $doc->drawRow([
+            ['w' => 68.0, 'text' => 'HYPERTENSION', 'style' => 'B', 'size' => 8],
+            ['w' => 10.0, 'text' => $fmh['hypertension'] ? '/' : '', 'style' => 'B', 'size' => 9, 'align' => 'C'],
+            ['w' => 10.0, 'text' => ! $fmh['hypertension'] ? '/' : '', 'style' => 'B', 'size' => 9, 'align' => 'C'],
+            ['w' => 68.0, 'text' => 'LUNG DISEASE', 'style' => 'B', 'size' => 8],
+            ['w' => 10.0, 'text' => $fmh['lung_disease'] ? '/' : '', 'style' => 'B', 'size' => 9, 'align' => 'C'],
+            ['w' => 10.0, 'text' => ! $fmh['lung_disease'] ? '/' : '', 'style' => 'B', 'size' => 9, 'align' => 'C'],
+        ], 3.6, 4.8, 0.5);
+
+        $doc->drawRow([
+            ['w' => 68.0, 'text' => 'DIABETES', 'style' => 'B', 'size' => 8],
+            ['w' => 10.0, 'text' => $fmh['diabetes'] ? '/' : '', 'style' => 'B', 'size' => 9, 'align' => 'C'],
+            ['w' => 10.0, 'text' => ! $fmh['diabetes'] ? '/' : '', 'style' => 'B', 'size' => 9, 'align' => 'C'],
+            ['w' => 68.0, 'text' => 'HEART DISEASE', 'style' => 'B', 'size' => 8],
+            ['w' => 10.0, 'text' => $fmh['heart_disease'] ? '/' : '', 'style' => 'B', 'size' => 9, 'align' => 'C'],
+            ['w' => 10.0, 'text' => ! $fmh['heart_disease'] ? '/' : '', 'style' => 'B', 'size' => 9, 'align' => 'C'],
+        ], 3.6, 4.8, 0.5);
+
+        $othersSpecify = 'OTHERS, SPECIFY: '.($fmh['others'] !== '' ? $fmh['others'] : '');
+        $doc->drawRow([
+            ['w' => 176.0, 'text' => $othersSpecify, 'style' => 'B', 'size' => 8],
+        ], 3.8, 8.5, 0.8);
+
+        $doc->toggleHeader(false);
+        $doc->AddPage();
+
+        $doc->SetY(15);
+        $doc->SetFont('Arial', 'B', 10.5);
+        $doc->Cell(0, 5, 'PHYSICAL EXAMINATION', 0, 1, 'C');
         $doc->Ln(1.5);
 
-        $w = 166.0;
-        $doc->SetLineWidth(0.2);
-
-        $doc->SetFillColor(246, 247, 249);
+        $doc->SetLineWidth(0.22);
         $doc->drawRow([
-            ['w' => 55, 'text' => 'PE No: '.$exam->pe_number, 'style' => 'B', 'size' => 8.5, 'fill' => true],
-            ['w' => 61, 'text' => 'Purpose: '.$exam->purpose, 'style' => 'B', 'size' => 8.5, 'align' => 'C', 'fill' => true],
-            ['w' => 50, 'text' => 'Date: '.$exam->exam_date->format('M d, Y'), 'style' => 'B', 'size' => 8.5, 'align' => 'R', 'fill' => true],
-        ], 4.2, 5.5);
-        $doc->Ln(1.5);
+            ['w' => 62.0, 'text' => '', 'style' => 'B', 'size' => 8.5],
+            ['w' => 30.0, 'text' => 'NORMAL', 'style' => 'B', 'size' => 8.5, 'align' => 'C'],
+            ['w' => 84.0, 'text' => 'REMARKS', 'style' => 'B', 'size' => 8.5, 'align' => 'C'],
+        ], 3.8, 4.8, 0.6);
 
-        $doc->drawSectionHeader('I. PATIENT INFORMATION', $w, 5.2);
+        $peSystemsRows = $this->buildHsdForm1PhysicalSystemsRows($exam);
+        foreach ($peSystemsRows as $sysRow) {
+            $this->drawHsdForm1SystemRow(
+                $doc,
+                $sysRow['label'],
+                $sysRow['is_normal'],
+                $sysRow['remarks']
+            );
+        }
 
-        $doc->drawRow([
-            ['w' => 30, 'text' => 'Full Name:', 'style' => 'B', 'size' => 8],
-            ['w' => 70, 'text' => $patient->full_name, 'style' => 'B', 'size' => 8.5],
-            ['w' => 28, 'text' => 'ID / Type:', 'style' => 'B', 'size' => 8],
-            ['w' => 38, 'text' => $patient->primary_identifier.' ('.ucfirst($patient->type).')', 'style' => '', 'size' => 8],
-        ], 4.0, 5.2);
+        $doc->Ln(3.0);
 
-        $doc->drawRow([
-            ['w' => 30, 'text' => 'College / Prog:', 'style' => 'B', 'size' => 8],
-            ['w' => 70, 'text' => ($patient->college?->code ?: '—').' - '.($patient->program?->code ?: '—'), 'style' => '', 'size' => 8],
-            ['w' => 28, 'text' => 'Sex / Age:', 'style' => 'B', 'size' => 8],
-            ['w' => 38, 'text' => ucfirst((string) ($patient->gender ?: '—')).' / '.($patient->age ? "{$patient->age} y/o" : '—'), 'style' => '', 'size' => 8],
-        ], 4.0, 5.2);
+        $notesParts = array_filter([
+            $exam->clinical_findings ? trim($exam->clinical_findings) : null,
+            $exam->medical_recommendations ? trim($exam->medical_recommendations) : null,
+            $exam->chest_xray_findings ? 'CXR: '.trim($exam->chest_xray_findings) : null,
+            $exam->laboratory_notes ? 'Lab: '.trim($exam->laboratory_notes) : null,
+        ]);
+        $notesText = implode(' | ', $notesParts);
 
-        $doc->drawRow([
-            ['w' => 30, 'text' => 'Address & Tel:', 'style' => 'B', 'size' => 8],
-            ['w' => 70, 'text' => ($patient->address ?: $this->defaultAddress($settings)).' | '.($patient->phone ?: '—'), 'style' => '', 'size' => 8],
-            ['w' => 28, 'text' => 'Blood / Civil:', 'style' => 'B', 'size' => 8],
-            ['w' => 38, 'text' => ($patient->blood_type ?: 'O+').' / '.($patient->civil_status ?: 'Single'), 'style' => '', 'size' => 8],
-        ], 4.0, 5.2);
-        $doc->Ln(1.5);
+        $notesStartY = $doc->GetY();
+        $doc->SetX($x);
+        $doc->SetFont('Arial', 'B', 9);
+        $doc->Cell(12, 5.2, 'Notes:', 0, 0, 'L');
+        $doc->SetLineWidth(0.25);
+        $doc->Line($x + 12, $notesStartY + 4.8, $x + $w, $notesStartY + 4.8);
+        for ($ln = 1; $ln <= 3; $ln++) {
+            $ly = $notesStartY + 4.8 + ($ln * 5.2);
+            $doc->Line($x, $ly, $x + $w, $ly);
+        }
 
-        $doc->drawSectionHeader('II. VITAL SIGNS & ANTHROPOMETRIC MEASUREMENTS', $w, 5.2);
+        if ($notesText !== '') {
+            $doc->SetFont('Arial', '', 8.5);
+            $doc->SetXY($x + 13, $notesStartY + 0.5);
+            $doc->MultiCell($w - 14, 5.2, $doc->conv($notesText), 0, 'L');
+        }
 
-        $bp = $exam->blood_pressure ?: '—';
-        $pr = $exam->pulse_rate ? "{$exam->pulse_rate} bpm" : '—';
-        $rr = $exam->respiratory_rate ? "{$exam->respiratory_rate} cpm" : '—';
-        $temp = $exam->temperature ? "{$exam->temperature} C" : '—';
-        $spo2 = $exam->oxygen_saturation ? "{$exam->oxygen_saturation}%" : '—';
+        $doc->SetY($notesStartY + 23.5);
 
-        $doc->drawRow([
-            ['w' => 33.2, 'text' => "BP: {$bp}", 'style' => '', 'size' => 8, 'align' => 'C'],
-            ['w' => 33.2, 'text' => "Pulse: {$pr}", 'style' => '', 'size' => 8, 'align' => 'C'],
-            ['w' => 33.2, 'text' => "Resp: {$rr}", 'style' => '', 'size' => 8, 'align' => 'C'],
-            ['w' => 33.2, 'text' => "Temp: {$temp}", 'style' => '', 'size' => 8, 'align' => 'C'],
-            ['w' => 33.2, 'text' => "SpO2: {$spo2}", 'style' => '', 'size' => 8, 'align' => 'C'],
-        ], 4.0, 5.2);
+        $doc->SetX($x);
+        $doc->SetFont('Arial', 'B', 9);
+        $doc->Cell(85, 5.0, 'This is to certify that I have examined the above named on ', 0, 0, 'L');
+        $doc->drawInlineBlank($exam->exam_date->format('F d, Y'), 88, 'C', true);
+        $doc->SetFont('Arial', 'B', 9);
+        $doc->Cell(3, 5.0, '.', 0, 1, 'L');
+        $doc->Ln(2.0);
 
-        $ht = $exam->height_cm ? "{$exam->height_cm} cm" : '—';
-        $wt = $exam->weight_kg ? "{$exam->weight_kg} kg" : '—';
-        $bmi = $exam->bmi ? "{$exam->bmi} ({$exam->bmi_category})" : '—';
-        $od = $exam->visual_acuity_right ?: '20/20';
-        $os = $exam->visual_acuity_left ?: '20/20';
+        $doc->SetX($x);
+        $doc->SetFont('Arial', 'B', 9);
+        $doc->Cell(0, 4.8, 'He/ she is', 0, 1, 'L');
+        $doc->Ln(1.2);
 
-        $doc->drawRow([
-            ['w' => 33.2, 'text' => "Height: {$ht}", 'style' => '', 'size' => 8, 'align' => 'C'],
-            ['w' => 33.2, 'text' => "Weight: {$wt}", 'style' => '', 'size' => 8, 'align' => 'C'],
-            ['w' => 49.8, 'text' => "BMI: {$bmi}", 'style' => '', 'size' => 8, 'align' => 'C'],
-            ['w' => 49.8, 'text' => "Vision: R {$od} / L {$os}", 'style' => '', 'size' => 8, 'align' => 'C'],
-        ], 4.0, 5.2);
-        $doc->Ln(1.5);
+        $acts = (array) ($exam->fitness_activities ?? []);
+        $defaultFit = ! in_array($exam->fitness_assessment, ['Class D', 'Class E'], true);
 
-        $doc->drawSectionHeader('III. SYSTEMIC PHYSICAL EXAMINATION FINDINGS', $w, 5.2);
-
-        $doc->SetFillColor(248, 249, 250);
-        $doc->drawRow([
-            ['w' => 46, 'text' => 'Anatomical System', 'style' => 'B', 'size' => 8, 'fill' => true],
-            ['w' => 22, 'text' => 'Assessment', 'style' => 'B', 'size' => 8, 'align' => 'C', 'fill' => true],
-            ['w' => 98, 'text' => 'Clinical Remarks & Observations', 'style' => 'B', 'size' => 8, 'fill' => true],
-        ], 4.0, 5.0);
-
-        $systemsList = [
-            'general_appearance' => ['label' => 'General Appearance', 'default' => 'Well-nourished, alert, oriented'],
-            'skin' => ['label' => 'Skin & Integumentary', 'default' => 'No suspicious lesions, jaundice, or cyanosis'],
-            'heent' => ['label' => 'Head, Eyes, Ears, Nose', 'default' => 'Sclera anicteric, pupils equal and reactive'],
-            'dental' => ['label' => 'Mouth, Teeth & Throat', 'default' => 'Good oral hygiene, no tonsillopharyngeal congestion'],
-            'neck' => ['label' => 'Neck & Thyroid', 'default' => 'Supple, no palpable lymphadenopathy or goiter'],
-            'chest_lungs' => ['label' => 'Chest & Lungs', 'default' => 'Clear vesicular breath sounds, no rales or wheezes'],
-            'heart' => ['label' => 'Cardiovascular System', 'default' => 'Normal rate, regular rhythm, no cardiac murmurs'],
-            'abdomen' => ['label' => 'Abdomen', 'default' => 'Soft, non-tender, no organomegaly'],
-            'musculoskeletal' => ['label' => 'Musculoskeletal & Spine', 'default' => 'Full range of motion, no deformities'],
-            'neurological' => ['label' => 'Neurological', 'default' => 'Grossly intact cranial nerves and reflexes'],
+        $clearanceItems = [
+            'physical_activities' => 'to undergo Physical Activities/ Trainings',
+            'on_the_job_training' => 'On-the-Job Training',
+            'work_immersion' => 'Work Immersion',
+            'to_work' => 'to Work/ Return to School',
+            'to_travel' => 'to Travel',
         ];
 
-        foreach ($systemsList as $column => $meta) {
-            $name = $meta['label'];
-            $defaultDesc = $meta['default'];
-            $raw = $exam->{$column} ?? null;
+        foreach ($clearanceItems as $actKey => $actLabel) {
+            $rowY = $doc->GetY();
+            $val = $acts[$actKey] ?? ($defaultFit ? 'fit' : 'unfit');
+            $isFit = $val === 'fit';
+            $isUnfit = $val === 'unfit';
 
-            if ($column === 'general_appearance') {
-                $status = 'normal';
-                $remarks = is_string($raw) && trim($raw) !== '' ? $raw : $defaultDesc;
-            } elseif (is_array($raw)) {
-                $status = (string) ($raw['status'] ?? 'normal');
-                $remarks = ! empty($raw['remarks']) ? (string) $raw['remarks'] : $defaultDesc;
-            } else {
-                $status = 'normal';
-                $remarks = $defaultDesc;
-            }
+            $doc->drawOvalCheckItem($x + 8, $rowY, $isFit, 'Fit');
+            $doc->drawOvalCheckItem($x + 26, $rowY, $isUnfit, 'Unfit');
 
-            $doc->drawRow([
-                ['w' => 46, 'text' => $name, 'style' => 'B', 'size' => 8],
-                ['w' => 22, 'text' => ucfirst($status), 'style' => '', 'size' => 8, 'align' => 'C'],
-                ['w' => 98, 'text' => $remarks, 'style' => '', 'size' => 8],
-            ], 3.8, 4.8, 0.7);
+            $doc->SetXY($x + 45, $rowY);
+            $doc->SetFont('Arial', 'B', 8.5);
+            $doc->Cell(0, 5.0, $doc->conv($actLabel), 0, 1, 'L');
+            $doc->Ln(0.7);
         }
-        $doc->Ln(1.5);
 
-        $doc->drawSectionHeader('IV. DIAGNOSTIC SCREENING & OVERALL FITNESS ASSESSMENT', $w, 5.2);
-        $cxr = $exam->chest_xray_findings ?: 'Chest X-Ray: Normal lung fields.';
-        $lab = $exam->laboratory_notes ?: 'Routine laboratory tests within normal range.';
+        $doc->Ln(2.5);
 
-        $doc->drawRow([
-            ['w' => 36, 'text' => 'Ancillary & Lab:', 'style' => 'B', 'size' => 8],
-            ['w' => 130, 'text' => "{$cxr} | {$lab}", 'style' => '', 'size' => 8],
-        ], 4.0, 5.5);
+        $doc->SetX($x);
+        $doc->SetFont('Arial', 'BI', 9.5);
+        $doc->Cell(0, 4.8, 'Refusal of Medical Treatment', 0, 1, 'L');
+        $doc->Ln(1.0);
 
-        $fitness = $exam->fitness_assessment ?: 'Class A';
-        $doc->drawRow([
-            ['w' => 36, 'text' => "Clearance: {$fitness}", 'style' => 'B', 'size' => 8.5, 'align' => 'C'],
-            ['w' => 130, 'text' => $exam->clinical_findings ?: 'Fit for academic and university activities.', 'style' => '', 'size' => 8.5],
-        ], 4.0, 5.8);
+        $waiverText = 'Waiver: I have been advised of the procedures for seeking medical specialty evaluation/ treatment for my possible medical/ health condition. By signing below, I am choosing to refuse above recommendation and that I am completely responsible for my health condition.';
+        $doc->SetX($x);
+        $doc->SetFont('Arial', 'I', 8.5);
+        $doc->MultiCell($w, 4.0, $doc->conv($waiverText), 0, 'L');
+        $doc->Ln(2.5);
+
+        $doc->SetX($x);
+        $doc->SetFont('Arial', 'BI', 8.8);
+        $doc->Cell(0, 4.8, 'Signature:', 0, 1, 'L');
+        $doc->SetX($x);
+        $doc->Cell(0, 4.8, 'Name:', 0, 1, 'L');
+        $doc->SetX($x);
+        $doc->Cell(0, 4.8, 'Date:', 0, 1, 'L');
 
         $physicianName = $this->resolvePhysicianName($settings, $physician, $exam->examiner_name);
         $license = $this->resolvePhysicianLicense($settings, $physician, $exam->examiner_license_number);
 
-        $doc->drawHsdSignatureBlock($physicianName, 'School Physician', $license, 122, 240);
+        $sigY = max($doc->GetY() + 6.0, 254.0);
+        $sigW = 66.0;
+        $sigX = (210.0 - $sigW) / 2.0;
+
+        $doc->SetLineWidth(0.25);
+        $doc->Line($sigX, $sigY, $sigX + $sigW, $sigY);
+
+        $doc->SetXY($sigX, $sigY + 0.8);
+        $doc->SetFont('Arial', 'B', 9.2);
+        $doc->Cell($sigW, 4.0, $doc->conv(strtoupper($physicianName)), 0, 1, 'C');
+
+        $doc->SetX($sigX);
+        $doc->SetFont('Arial', 'B', 8.5);
+        $doc->Cell($sigW, 3.8, 'School Physician', 0, 1, 'C');
+
+        if ($license !== '') {
+            $doc->SetX($sigX);
+            $doc->SetFont('Arial', 'B', 8.2);
+            $doc->Cell($sigW, 3.6, $doc->conv("License #: {$license}"), 0, 1, 'C');
+        }
 
         return $doc;
+    }
+
+    protected function buildHsdForm1MedicalHistoryRows(PhysicalExamination $exam, ?MedicalProfile $profile): array
+    {
+        $patient = $exam->patient;
+        $pmhList = array_map('strtolower', (array) ($profile?->past_medical_history ?? []));
+        $pmhHaystack = strtolower(implode(' | ', $pmhList).' '.($profile?->past_medical_history_notes ?? '').' '.($profile?->existing_conditions ?? ''));
+
+        $hasKeyword = static function (array $keywords) use ($pmhHaystack): bool {
+            foreach ($keywords as $kw) {
+                if ($kw !== '' && str_contains($pmhHaystack, strtolower($kw))) {
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
+        $allergyParts = array_filter([
+            $profile?->allergies_food ? "Food: {$profile->allergies_food}" : null,
+            $profile?->allergies_drugs ? "Drugs: {$profile->allergies_drugs}" : null,
+            $profile?->allergies_others ? "Others: {$profile->allergies_others}" : null,
+            (! $profile && $patient?->allergies && strtolower((string) $patient->allergies) !== 'none') ? (string) $patient->allergies : null,
+        ]);
+        $hasAllergyOrAsthma = count($allergyParts) > 0 || $hasKeyword(['asthma', 'wheezing', 'allerg']);
+        $allergyRemarks = implode('; ', $allergyParts);
+        if ($hasKeyword(['asthma', 'wheezing']) && ! str_contains(strtolower($allergyRemarks), 'asthma')) {
+            $allergyRemarks = trim($allergyRemarks.($allergyRemarks !== '' ? '; ' : '').'Asthma');
+        }
+
+        $visionHearingRemarks = '';
+        $hasVisionOrHearing = $hasKeyword(['fainting', 'syncope', 'consciousness', 'vision', 'visual', 'ear', 'hearing']);
+        if ($exam->visual_acuity_is_corrected || ($exam->hearing && $exam->hearing !== 'Normal')) {
+            $hasVisionOrHearing = true;
+            $vhParts = [];
+            if ($exam->visual_acuity_right || $exam->visual_acuity_left) {
+                $vhParts[] = "VA: OD {$exam->visual_acuity_right} / OS {$exam->visual_acuity_left}".($exam->visual_acuity_is_corrected ? ' (Corrected)' : '');
+            }
+            if ($exam->hearing && $exam->hearing !== 'Normal') {
+                $vhParts[] = "Hearing: {$exam->hearing}";
+            }
+            $visionHearingRemarks = implode(', ', $vhParts);
+        }
+
+        $hospRaw = $profile?->hospitalization_history;
+        $hospStr = is_array($hospRaw) ? implode('; ', array_filter($hospRaw)) : trim((string) $hospRaw);
+        $hasHosp = $hospStr !== '' && strtolower($hospStr) !== 'none';
+
+        $surgRaw = $profile?->surgical_history;
+        $surgStr = is_array($surgRaw) ? implode('; ', array_filter($surgRaw)) : trim((string) $surgRaw);
+        $hasSurg = $surgStr !== '' && strtolower($surgStr) !== 'none';
+
+        $existingCond = trim((string) ($profile?->existing_conditions ?? ''));
+        $meds = trim((string) ($profile?->current_medications ?? ''));
+        $smoking = strtolower(trim((string) ($profile?->smoking_status ?? '')));
+        $hasOngoing = ($existingCond !== '' && strtolower($existingCond) !== 'none')
+            || $hasKeyword(['anemia', 'bleeding', 'heart', 'diabetes', 'hypertension', 'lung', 'smoking', 'vaping'])
+            || in_array($smoking, ['yes', 'smoker', 'current', 'vaping'], true);
+        $ongoingRemarks = implode(' | ', array_filter([
+            $existingCond !== '' && strtolower($existingCond) !== 'none' ? $existingCond : null,
+            $meds !== '' && strtolower($meds) !== 'none' ? "Meds: {$meds}" : null,
+        ]));
+
+        $acts = (array) ($exam->fitness_activities ?? []);
+        $isRestricted = in_array($exam->fitness_assessment, ['Class C', 'Class D', 'Class E'], true)
+            || ($acts['physical_activities'] ?? 'fit') === 'unfit';
+        $restrictedRemarks = $isRestricted ? (string) ($exam->medical_recommendations ?: $exam->fitness_assessment) : '';
+
+        return [
+            [
+                'label' => 'Allergies (food, medication, etc.), Asthma',
+                'yes' => $hasAllergyOrAsthma,
+                'remarks' => $allergyRemarks,
+            ],
+            [
+                'label' => 'Chest pain, Cough, Difficulty of Breathing',
+                'yes' => $hasKeyword(['chest pain', 'cough', 'breathing', 'dyspnea']),
+                'remarks' => '',
+            ],
+            [
+                'label' => 'Rashes or Skin Problems (measles, chickenpox, eczema)',
+                'yes' => $hasKeyword(['rash', 'skin', 'measles', 'chickenpox', 'varicella', 'eczema', 'dermatitis']),
+                'remarks' => '',
+            ],
+            [
+                'label' => 'Convulsion, Headache, Vertigo, Sensory Motor Dysfunction, Head Injuries',
+                'yes' => $hasKeyword(['convulsion', 'epilepsy', 'seizure', 'headache', 'migraine', 'vertigo', 'head injur']),
+                'remarks' => '',
+            ],
+            [
+                'label' => 'Fainting, Loss of Consciousness, Visual & Hearing Problem',
+                'yes' => $hasVisionOrHearing,
+                'remarks' => $visionHearingRemarks,
+            ],
+            [
+                'label' => 'Dengue, Tuberculosis, Hepatitis, HIV',
+                'yes' => $hasKeyword(['dengue', 'tuberculosis', 'primary complex', 'hepatitis', 'jaundice', 'hiv']),
+                'remarks' => '',
+            ],
+            [
+                'label' => 'Ulcer, Hyperacidity, Gastritis, Bowel Disturbance, Hemorrhoids',
+                'yes' => $hasKeyword(['ulcer', 'hyperacidity', 'gastritis', 'gerd', 'bowel', 'hemorrhoid']),
+                'remarks' => '',
+            ],
+            [
+                'label' => 'UTI, Urethral Discharge, Kidney Disease, STI, Hernia, Undescended Testes, Menstrual Problem',
+                'yes' => $hasKeyword(['uti', 'urinary', 'kidney', 'renal', 'sti', 'hernia', 'testes', 'menstrual', 'dysmenorrhea']),
+                'remarks' => '',
+            ],
+            [
+                'label' => 'Bone injuries, Fractures, Dislocations, Joint condition',
+                'yes' => $hasKeyword(['bone', 'fracture', 'dislocation', 'joint', 'arthritis', 'scoliosis']),
+                'remarks' => '',
+            ],
+            [
+                'label' => 'HOSPITALIZATIONS',
+                'yes' => $hasHosp,
+                'remarks' => $hasHosp ? $hospStr : '',
+                'min_h' => 8.0,
+            ],
+            [
+                'label' => 'SURGERIES',
+                'yes' => $hasSurg,
+                'remarks' => $hasSurg ? $surgStr : '',
+                'min_h' => 8.0,
+            ],
+            [
+                'label' => 'Other ongoing Medical Conditions (Anemia, Bleeding Problem, Heart Ailment, Diabetes, Lung Disease, Smoking/ Vaping).',
+                'yes' => $hasOngoing,
+                'remarks' => $ongoingRemarks,
+            ],
+            [
+                'label' => 'Restricted by Doctor to participate in Physical Activities?',
+                'yes' => $isRestricted,
+                'remarks' => $restrictedRemarks,
+            ],
+        ];
+    }
+
+    protected function buildHsdForm1FamilyHistory(?MedicalProfile $profile): array
+    {
+        $list = (array) ($profile?->family_medical_history ?? []);
+        $notes = trim((string) ($profile?->family_medical_history_notes ?? ''));
+        $haystack = strtolower(implode(' | ', $list).' '.$notes);
+
+        $otherItems = [];
+        foreach ($list as $item) {
+            $low = strtolower((string) $item);
+            if (
+                ! str_contains($low, 'hypertension')
+                && ! str_contains($low, 'diabetes')
+                && ! str_contains($low, 'heart')
+                && ! str_contains($low, 'lung')
+                && ! str_contains($low, 'asthma')
+                && $low !== 'none'
+            ) {
+                $otherItems[] = (string) $item;
+            }
+        }
+        if ($notes !== '') {
+            $otherItems[] = $notes;
+        }
+
+        return [
+            'hypertension' => str_contains($haystack, 'hypertension') || str_contains($haystack, 'high blood'),
+            'lung_disease' => str_contains($haystack, 'lung') || str_contains($haystack, 'asthma') || str_contains($haystack, 'tuberculosis') || str_contains($haystack, 'tb'),
+            'diabetes' => str_contains($haystack, 'diabetes'),
+            'heart_disease' => str_contains($haystack, 'heart') || str_contains($haystack, 'cardio'),
+            'others' => implode(', ', $otherItems),
+        ];
+    }
+
+    protected function buildHsdForm1PhysicalSystemsRows(PhysicalExamination $exam): array
+    {
+        $extract = static function (mixed $raw): array {
+            if (is_array($raw)) {
+                $status = strtolower((string) ($raw['status'] ?? 'normal'));
+                $remarks = trim((string) ($raw['remarks'] ?? ''));
+
+                return [
+                    'is_normal' => $status !== 'abnormal',
+                    'remarks' => $remarks,
+                ];
+            }
+
+            return ['is_normal' => true, 'remarks' => ''];
+        };
+
+        $heent = $extract($exam->heent);
+        $dental = $extract($exam->dental);
+        $neck = $extract($exam->neck);
+        $heart = $extract($exam->heart);
+        $lungs = $extract($exam->chest_lungs);
+        $abdomen = $extract($exam->abdomen);
+        $skin = $extract($exam->skin);
+        $msk = $extract($exam->musculoskeletal);
+        $neuro = $extract($exam->neurological);
+
+        $eyeRemarks = '';
+        if ($exam->visual_acuity_right || $exam->visual_acuity_left) {
+            $eyeRemarks = "OD {$exam->visual_acuity_right} / OS {$exam->visual_acuity_left}".($exam->visual_acuity_is_corrected ? ' (Corrected)' : '');
+        }
+
+        return [
+            ['label' => '1.    EYES', 'is_normal' => $heent['is_normal'], 'remarks' => $eyeRemarks],
+            ['label' => '2.    EARS, NOSE, THROAT', 'is_normal' => $heent['is_normal'], 'remarks' => $heent['remarks']],
+            ['label' => '3.    MOUTH AND TEETH', 'is_normal' => $dental['is_normal'], 'remarks' => $dental['remarks']],
+            ['label' => '4.    NECK', 'is_normal' => $neck['is_normal'], 'remarks' => $neck['remarks']],
+            ['label' => '5.    CARDIOVASCULAR', 'is_normal' => $heart['is_normal'], 'remarks' => $heart['remarks']],
+            ['label' => '6.    CHEST AND LUNGS', 'is_normal' => $lungs['is_normal'], 'remarks' => $lungs['remarks']],
+            ['label' => '7.    ABDOMEN', 'is_normal' => $abdomen['is_normal'], 'remarks' => $abdomen['remarks']],
+            ['label' => '8.    SKIN', 'is_normal' => $skin['is_normal'], 'remarks' => $skin['remarks']],
+            ['label' => '9.    GENITALIA- HERNIA (MALE)', 'is_normal' => true, 'remarks' => ''],
+            ['label' => '10.  MUSKULOSKELETAL: ROM', 'is_normal' => $msk['is_normal'], 'remarks' => $msk['remarks']],
+            ['label' => 'a.    NECK', 'is_normal' => $msk['is_normal'], 'remarks' => ''],
+            ['label' => 'b.    SPINE', 'is_normal' => $msk['is_normal'], 'remarks' => ''],
+            ['label' => 'c.    SHOULDER', 'is_normal' => $msk['is_normal'], 'remarks' => ''],
+            ['label' => 'd.    ARMS/ HANDS', 'is_normal' => $msk['is_normal'], 'remarks' => ''],
+            ['label' => 'e.    HIPS', 'is_normal' => $msk['is_normal'], 'remarks' => ''],
+            ['label' => 'f.    THIGHS', 'is_normal' => $msk['is_normal'], 'remarks' => ''],
+            ['label' => 'g.    KNEES', 'is_normal' => $msk['is_normal'], 'remarks' => ''],
+            ['label' => 'h.    ANKLES', 'is_normal' => $msk['is_normal'], 'remarks' => ''],
+            ['label' => 'i.    FEET', 'is_normal' => $msk['is_normal'], 'remarks' => ''],
+            ['label' => '11.  NEUROMUSCULAR (REFLEXES)', 'is_normal' => $neuro['is_normal'], 'remarks' => $neuro['remarks']],
+        ];
+    }
+
+    protected function drawHsdForm1SystemRow(ClinicFpdf $doc, string $label, bool $isNormal, string $remarks): void
+    {
+        $x = 17.0;
+        $w1 = 62.0;
+        $w2 = 30.0;
+        $w3 = 84.0;
+
+        $doc->SetFont('Arial', '', 7.8);
+        $convRem = $doc->conv($remarks);
+        $lines = $convRem !== '' ? $doc->nbLines($w3 - 2.0, $convRem) : 1;
+        $rowH = max(4.9, ($lines * 3.8) + 1.2);
+
+        $y = $doc->GetY();
+        $doc->Rect($x, $y, $w1, $rowH);
+        $doc->Rect($x + $w1, $y, $w2, $rowH);
+        $doc->Rect($x + $w1 + $w2, $y, $w3, $rowH);
+
+        $doc->SetFont('Arial', 'B', 7.8);
+        $doc->SetXY($x + 1.2, $y + (($rowH - 3.8) / 2));
+        $doc->Cell($w1 - 2.0, 3.8, $doc->conv($label), 0, 0, 'L');
+
+        $doc->SetFont('Arial', 'B', 7.8);
+        $midY = $y + (($rowH - 3.8) / 2);
+        $doc->SetXY($x + $w1, $midY);
+        $doc->Cell(12.0, 3.8, 'YES', 0, 0, 'C');
+        $doc->Cell(6.0, 3.8, '/', 0, 0, 'C');
+        $doc->Cell(12.0, 3.8, 'NO', 0, 0, 'C');
+
+        $ovalCenterY = $y + ($rowH / 2);
+        $ovalCenterX = $isNormal ? ($x + $w1 + 6.0) : ($x + $w1 + 24.0);
+        $doc->SetLineWidth(0.32);
+        $doc->drawOval($ovalCenterX, $ovalCenterY, 4.8, 2.0, 'D');
+        $doc->SetLineWidth(0.22);
+
+        if ($convRem !== '') {
+            $doc->SetFont('Arial', '', 7.8);
+            $textH = $lines * 3.8;
+            $doc->SetXY($x + $w1 + $w2 + 1.2, $y + max(0.6, ($rowH - $textH) / 2));
+            $doc->MultiCell($w3 - 2.4, 3.8, $convRem, 0, 'L');
+        }
+
+        $doc->SetXY($x, $y + $rowH);
     }
 
     public function medicineDispensingSlip(MedicineDispensing $dispensing, array $settings, Clinician|User|null $physician = null): ClinicFpdf
@@ -939,10 +1401,6 @@ class MedicalDocumentPdfService
         return $doc;
     }
 
-    /**
-     * @param  array<string, mixed>  $data
-     * @param  array<string, mixed>  $settings
-     */
     public function clinicMorbidityReport(array $data, array $settings): ClinicFpdf
     {
         $doc = new ClinicFpdf('P', 'mm', 'A4', $settings, '', 'NVC HSD - Morbidity & Clinic Utilization Report', true, 'two_rooms');
@@ -976,20 +1434,79 @@ class MedicalDocumentPdfService
         ], 4.2, 5.5);
         $doc->Ln(2);
 
-        $doc->drawSectionHeader('II. SERVICE ENCOUNTER BREAKDOWN', $w, 5.5);
+        $doc->drawSectionHeader('II. MEDICAL & DENTAL SERVICE REPORTS (BY PATIENT TYPE)', $w, 5.5);
         $doc->SetFillColor(248, 249, 250);
         $doc->drawRow([
-            ['w' => 118, 'text' => 'Service / Consultation Category', 'style' => 'B', 'size' => 8, 'fill' => true],
-            ['w' => 48, 'text' => 'Encounters Recorded', 'style' => 'B', 'size' => 8, 'align' => 'C', 'fill' => true],
-        ], 4.0, 5.2);
+            ['w' => 66, 'text' => 'Service Report Category', 'style' => 'B', 'size' => 7.5, 'fill' => true],
+            ['w' => 20, 'text' => 'Students', 'style' => 'B', 'size' => 7.5, 'align' => 'C', 'fill' => true],
+            ['w' => 20, 'text' => 'Faculty', 'style' => 'B', 'size' => 7.5, 'align' => 'C', 'fill' => true],
+            ['w' => 20, 'text' => 'Non-Teach', 'style' => 'B', 'size' => 7.5, 'align' => 'C', 'fill' => true],
+            ['w' => 20, 'text' => 'Others', 'style' => 'B', 'size' => 7.5, 'align' => 'C', 'fill' => true],
+            ['w' => 20, 'text' => 'Total', 'style' => 'B', 'size' => 7.5, 'align' => 'C', 'fill' => true],
+        ], 3.8, 4.8);
 
-        foreach ($data['service_distribution'] as $serv => $cnt) {
+        $serviceMatrix = $data['service_patient_matrix'] ?? null;
+        if ($serviceMatrix && ! empty($serviceMatrix['rows'])) {
+            foreach ($serviceMatrix['rows'] as $row) {
+                $doc->drawRow([
+                    ['w' => 66, 'text' => (string) $row['service'], 'style' => '', 'size' => 7.5],
+                    ['w' => 20, 'text' => number_format((int) $row['students']), 'style' => '', 'size' => 7.5, 'align' => 'C'],
+                    ['w' => 20, 'text' => number_format((int) $row['faculty']), 'style' => '', 'size' => 7.5, 'align' => 'C'],
+                    ['w' => 20, 'text' => number_format((int) $row['non_teaching']), 'style' => '', 'size' => 7.5, 'align' => 'C'],
+                    ['w' => 20, 'text' => number_format((int) $row['other_personnel']), 'style' => '', 'size' => 7.5, 'align' => 'C'],
+                    ['w' => 20, 'text' => number_format((int) $row['total']), 'style' => 'B', 'size' => 7.5, 'align' => 'C'],
+                ], 3.8, 4.5);
+            }
+            $vTot = $serviceMatrix['visit_totals'] ?? [];
             $doc->drawRow([
-                ['w' => 118, 'text' => (string) $serv, 'style' => '', 'size' => 8],
-                ['w' => 48, 'text' => number_format((int) $cnt), 'style' => 'B', 'size' => 8, 'align' => 'C'],
-            ], 4.0, 4.8);
+                ['w' => 66, 'text' => 'Total Clinic Visits', 'style' => 'B', 'size' => 7.5, 'fill' => true],
+                ['w' => 20, 'text' => number_format((int) ($vTot['students'] ?? 0)), 'style' => 'B', 'size' => 7.5, 'align' => 'C', 'fill' => true],
+                ['w' => 20, 'text' => number_format((int) ($vTot['faculty'] ?? 0)), 'style' => 'B', 'size' => 7.5, 'align' => 'C', 'fill' => true],
+                ['w' => 20, 'text' => number_format((int) ($vTot['non_teaching'] ?? 0)), 'style' => 'B', 'size' => 7.5, 'align' => 'C', 'fill' => true],
+                ['w' => 20, 'text' => number_format((int) ($vTot['other_personnel'] ?? 0)), 'style' => 'B', 'size' => 7.5, 'align' => 'C', 'fill' => true],
+                ['w' => 20, 'text' => number_format((int) ($vTot['total'] ?? 0)), 'style' => 'B', 'size' => 7.5, 'align' => 'C', 'fill' => true],
+            ], 3.8, 4.8);
+        } else {
+            foreach ($data['service_distribution'] as $serv => $cnt) {
+                $doc->drawRow([
+                    ['w' => 118, 'text' => (string) $serv, 'style' => '', 'size' => 8],
+                    ['w' => 48, 'text' => number_format((int) $cnt), 'style' => 'B', 'size' => 8, 'align' => 'C'],
+                ], 4.0, 4.8);
+            }
         }
-        $doc->Ln(2);
+        $doc->Ln(1.5);
+
+        $patientClassReport = $data['patient_classification_report'] ?? null;
+        if ($patientClassReport && ! empty($patientClassReport['rows'])) {
+            $doc->drawSectionHeader('III. PATIENT CLASSIFICATION REPORTS (CENTRALIZED PATIENTS TABLE)', $w, 5.5);
+            $doc->SetFillColor(248, 249, 250);
+            $doc->drawRow([
+                ['w' => 66, 'text' => 'Patient Classification', 'style' => 'B', 'size' => 7.5, 'fill' => true],
+                ['w' => 25, 'text' => 'Registered', 'style' => 'B', 'size' => 7.5, 'align' => 'C', 'fill' => true],
+                ['w' => 25, 'text' => 'Active', 'style' => 'B', 'size' => 7.5, 'align' => 'C', 'fill' => true],
+                ['w' => 25, 'text' => 'Inactive', 'style' => 'B', 'size' => 7.5, 'align' => 'C', 'fill' => true],
+                ['w' => 25, 'text' => 'New Reg.', 'style' => 'B', 'size' => 7.5, 'align' => 'C', 'fill' => true],
+            ], 3.8, 4.8);
+
+            foreach ($patientClassReport['rows'] as $pRow) {
+                $doc->drawRow([
+                    ['w' => 66, 'text' => (string) $pRow['classification'], 'style' => '', 'size' => 7.5],
+                    ['w' => 25, 'text' => number_format((int) $pRow['total']), 'style' => 'B', 'size' => 7.5, 'align' => 'C'],
+                    ['w' => 25, 'text' => number_format((int) $pRow['active']), 'style' => '', 'size' => 7.5, 'align' => 'C'],
+                    ['w' => 25, 'text' => number_format((int) $pRow['inactive']), 'style' => '', 'size' => 7.5, 'align' => 'C'],
+                    ['w' => 25, 'text' => '+'.number_format((int) $pRow['new_registrations']), 'style' => '', 'size' => 7.5, 'align' => 'C'],
+                ], 3.8, 4.5);
+            }
+
+            $doc->drawRow([
+                ['w' => 66, 'text' => 'Total Registered Patients', 'style' => 'B', 'size' => 7.5, 'fill' => true],
+                ['w' => 25, 'text' => number_format((int) $patientClassReport['total_registered']), 'style' => 'B', 'size' => 7.5, 'align' => 'C', 'fill' => true],
+                ['w' => 25, 'text' => number_format((int) $patientClassReport['active_patients']), 'style' => 'B', 'size' => 7.5, 'align' => 'C', 'fill' => true],
+                ['w' => 25, 'text' => number_format((int) $patientClassReport['inactive_patients']), 'style' => 'B', 'size' => 7.5, 'align' => 'C', 'fill' => true],
+                ['w' => 25, 'text' => '+'.number_format((int) $patientClassReport['new_registrations']), 'style' => 'B', 'size' => 7.5, 'align' => 'C', 'fill' => true],
+            ], 3.8, 4.8);
+            $doc->Ln(1.5);
+        }
 
         $doc->drawSectionHeader('III. COMMUNICABLE & INFECTIOUS MORBIDITY (Leading Causes)', $w, 5.5);
         $doc->SetFillColor(248, 249, 250);
@@ -1070,12 +1587,6 @@ class MedicalDocumentPdfService
         return $doc;
     }
 
-    /**
-     * Generate Official Landscape PDF for Report 1: MEDICAL AND DENTAL RECORDS (Annual 12-Month Matrix).
-     *
-     * @param  array<string, mixed>  $matrix
-     * @param  array<string, mixed>  $settings
-     */
     public function medicalAndDentalRecordsReport(array $matrix, array $settings): ClinicFpdf
     {
         $year = (int) ($matrix['year'] ?? now()->year);
@@ -1228,12 +1739,6 @@ class MedicalDocumentPdfService
         return $doc;
     }
 
-    /**
-     * Generate Official Landscape PDF for Report 2: MEDICAL AND DENTAL LOG-IN RECORDS (Annual 12-Month Matrix).
-     *
-     * @param  array<string, mixed>  $loginData
-     * @param  array<string, mixed>  $settings
-     */
     public function medicalAndDentalLoginRecordsReport(array $loginData, array $settings): ClinicFpdf
     {
         $year = (int) ($loginData['year'] ?? now()->year);
@@ -1364,9 +1869,6 @@ class MedicalDocumentPdfService
         return $doc;
     }
 
-    /**
-     * @return array{0: int, 1: int, 2: int}
-     */
     protected function resolveReportGroupRgb(string $colorKey): array
     {
         return match ($colorKey) {
@@ -1379,9 +1881,6 @@ class MedicalDocumentPdfService
         };
     }
 
-    /**
-     * @param  array<string, mixed>  $settings
-     */
     protected function drawAnnualReportSignatories(ClinicFpdf $doc, array $settings, float $x, float $y): void
     {
         $nurse = Clinician::where('type', 'Nurse')->where('is_active', true)->first();
@@ -1420,12 +1919,6 @@ class MedicalDocumentPdfService
         $doc->Cell(75, 3.8, $doc->conv($doctorTitle.' (Lic. No. '.$doctorLicense.')'), 0, 1, 'L');
     }
 
-    /**
-     * Generate Official Portrait PDF for Report 3: COMMUNICABLE DISEASES DATA (Horizontal Bar Chart).
-     *
-     * @param  array<string, mixed>  $chartData
-     * @param  array<string, mixed>  $settings
-     */
     public function communicableDiseasesReport(array $chartData, array $settings): ClinicFpdf
     {
         $year = (int) ($chartData['year'] ?? now()->year);
@@ -1546,12 +2039,6 @@ class MedicalDocumentPdfService
         return $doc;
     }
 
-    /**
-     * Generate Official Portrait PDF for Report 4: NON-COMMUNICABLE DISEASES DATA (Horizontal Bar Chart).
-     *
-     * @param  array<string, mixed>  $chartData
-     * @param  array<string, mixed>  $settings
-     */
     public function nonCommunicableDiseasesReport(array $chartData, array $settings): ClinicFpdf
     {
         $year = (int) ($chartData['year'] ?? now()->year);

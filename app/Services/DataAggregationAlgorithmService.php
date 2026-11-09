@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ClinicLogbook;
 use App\Models\ClinicVisit;
 use App\Models\College;
 use App\Models\DentalConsultation;
@@ -9,17 +10,16 @@ use App\Models\DiseaseCategory;
 use App\Models\MedicalConsultation;
 use App\Models\MedicineDispensing;
 use App\Models\MedicineDispensingItem;
+use App\Models\Patient;
 use App\Models\PhysicalExamination;
 use App\Models\Program;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class DataAggregationAlgorithmService
 {
-    /**
-     * @var list<string>
-     */
     public const COMMUNICABLE_KEYWORDS = [
         'urti',
         'upper respiratory',
@@ -52,9 +52,6 @@ class DataAggregationAlgorithmService
         'herpes',
     ];
 
-    /**
-     * @var list<string>
-     */
     public const NON_COMMUNICABLE_KEYWORDS = [
         'hypertension',
         'elevated bp',
@@ -88,16 +85,6 @@ class DataAggregationAlgorithmService
         'periodontitis',
     ];
 
-    /**
-     * @param  array{
-     *   date_from?: string|null,
-     *   date_to?: string|null,
-     *   academic_year_id?: int|string|null,
-     *   college_id?: int|string|null,
-     *   patient_classification?: string|null
-     * }  $filters
-     * @return array<string, mixed>
-     */
     public function aggregateClinicReport(array $filters = []): array
     {
         $dateFrom = ! empty($filters['date_from']) ? Carbon::parse($filters['date_from'])->startOfDay() : Carbon::now()->startOfYear();
@@ -174,6 +161,8 @@ class DataAggregationAlgorithmService
         $morbidityData['non_communicable_categories'] = $this->aggregateNonCommunicableDiseaseReport($reportYear, $filters);
         $medicalDentalRecords = $this->aggregateMedicalAndDentalRecords($reportYear, $filters);
         $loginRecords = $this->aggregateMedicalAndDentalLoginRecords($reportYear, $filters);
+        $servicePatientMatrix = $this->aggregateServiceByPatientTypeReport($dateFrom, $dateTo, $filters);
+        $patientClassificationReport = $this->aggregatePatientClassificationReport($dateFrom, $dateTo, $filters);
 
         return [
             'year' => $reportYear,
@@ -189,6 +178,8 @@ class DataAggregationAlgorithmService
             ],
             'service_distribution' => $serviceDistribution,
             'classification_rollup' => $classificationRollup,
+            'service_patient_matrix' => $servicePatientMatrix,
+            'patient_classification_report' => $patientClassificationReport,
             'college_rollup' => $collegeRollup,
             'morbidity' => $morbidityData,
             'complaints' => $complaintRollup,
@@ -198,22 +189,239 @@ class DataAggregationAlgorithmService
         ];
     }
 
-    /**
-     * Aggregate Report 1: MEDICAL AND DENTAL RECORDS (Dynamic 12-Month Matrix based on DB Services & Clients).
-     *
-     * @param  array<string, mixed>  $filters
-     * @return array{
-     *   year: int,
-     *   months: array<int, string>,
-     *   groups: list<array{
-     *     group: string,
-     *     color: string,
-     *     rows: list<array{label: string, months: array<int, int>, total: int}>
-     *   }>,
-     *   monthly_totals: array<int, int>,
-     *   grand_total: int
-     * }
-     */
+    public function aggregateServiceByPatientTypeReport(Carbon $dateFrom, Carbon $dateTo, array $filters = []): array
+    {
+        $emptyBucket = [
+            'students' => 0,
+            'faculty' => 0,
+            'non_teaching' => 0,
+            'other_personnel' => 0,
+            'total' => 0,
+        ];
+
+        $matrix = [
+            ClinicVisit::TYPE_MEDICAL => array_merge(['service' => 'Medical Consultation'], $emptyBucket),
+            ClinicVisit::TYPE_DENTAL => array_merge(['service' => 'Dental Consultation'], $emptyBucket),
+            ClinicVisit::TYPE_EMERGENCY => array_merge(['service' => 'Emergency Records'], $emptyBucket),
+            ClinicVisit::TYPE_FIRST_AID => array_merge(['service' => 'First Aid Records'], $emptyBucket),
+            'scheduled_pe' => array_merge(['service' => 'Scheduled Physical Examination'], $emptyBucket),
+        ];
+
+        $visitTotals = $emptyBucket;
+
+        $visitQuery = ClinicVisit::query()
+            ->leftJoin('patients', 'patients.id', '=', 'clinic_visits.patient_id')
+            ->whereBetween('clinic_visits.visit_date', [$dateFrom, $dateTo]);
+
+        if (! empty($filters['academic_year_id'])) {
+            $visitQuery->where('clinic_visits.academic_year_id', $filters['academic_year_id']);
+        }
+        if (! empty($filters['college_id'])) {
+            $visitQuery->where('clinic_visits.college_id', $filters['college_id']);
+        }
+        if (! empty($filters['patient_classification'])) {
+            $visitQuery->where('clinic_visits.patient_classification', $filters['patient_classification']);
+        }
+
+        $visitRows = $visitQuery
+            ->selectRaw("
+                clinic_visits.visit_type,
+                CASE
+                    WHEN clinic_visits.patient_classification = 'student' OR patients.type = 'student' THEN 'students'
+                    WHEN clinic_visits.patient_classification = 'faculty'
+                         OR (patients.type = 'employee' AND (LOWER(COALESCE(patients.category, '')) LIKE '%faculty%' OR LOWER(COALESCE(patients.employment_classification, '')) LIKE '%faculty%'))
+                         THEN 'faculty'
+                    WHEN clinic_visits.patient_classification = 'staff'
+                         OR (patients.type = 'employee' AND (LOWER(COALESCE(patients.category, '')) LIKE '%non-teaching%' OR LOWER(COALESCE(patients.category, '')) LIKE '%staff%' OR LOWER(COALESCE(patients.employment_classification, '')) LIKE '%non-teaching%' OR LOWER(COALESCE(patients.employment_classification, '')) LIKE '%staff%'))
+                         THEN 'non_teaching'
+                    ELSE 'other_personnel'
+                END as resolved_patient_type,
+                COUNT(*) as total
+            ")
+            ->groupBy('clinic_visits.visit_type', 'resolved_patient_type')
+            ->get();
+
+        foreach ($visitRows as $r) {
+            $vType = (string) $r->visit_type;
+            $pBucket = (string) $r->resolved_patient_type;
+            $cnt = (int) $r->total;
+
+            if (! isset($visitTotals[$pBucket])) {
+                $pBucket = 'other_personnel';
+            }
+
+            $visitTotals[$pBucket] += $cnt;
+            $visitTotals['total'] += $cnt;
+
+            if (isset($matrix[$vType])) {
+                $matrix[$vType][$pBucket] += $cnt;
+                $matrix[$vType]['total'] += $cnt;
+            }
+        }
+
+        $peQuery = PhysicalExamination::query()
+            ->join('patients', 'patients.id', '=', 'physical_examinations.patient_id')
+            ->whereBetween('physical_examinations.exam_date', [$dateFrom->toDateString(), $dateTo->toDateString()]);
+
+        if (! empty($filters['academic_year_id'])) {
+            $peQuery->where('physical_examinations.academic_year_id', $filters['academic_year_id']);
+        }
+        if (! empty($filters['college_id'])) {
+            $peQuery->where('patients.college_id', $filters['college_id']);
+        }
+        if (! empty($filters['patient_classification'])) {
+            if ($filters['patient_classification'] === 'student') {
+                $peQuery->where('patients.type', 'student');
+            } elseif ($filters['patient_classification'] === 'faculty') {
+                $peQuery->where('patients.type', 'employee')
+                    ->where(function ($q) {
+                        $q->where('patients.category', 'like', '%Faculty%')
+                            ->orWhere('patients.employment_classification', 'like', '%Faculty%');
+                    });
+            } elseif ($filters['patient_classification'] === 'staff') {
+                $peQuery->where('patients.type', 'employee')
+                    ->where(function ($q) {
+                        $q->where('patients.category', 'like', '%Non-Teaching%')
+                            ->orWhere('patients.category', 'like', '%Staff%')
+                            ->orWhere('patients.employment_classification', 'like', '%Non-Teaching%');
+                    });
+            }
+        }
+
+        $peRows = $peQuery
+            ->selectRaw("
+                CASE
+                    WHEN patients.type = 'student' THEN 'students'
+                    WHEN patients.type = 'employee' AND (LOWER(COALESCE(patients.category, '')) LIKE '%faculty%' OR LOWER(COALESCE(patients.employment_classification, '')) LIKE '%faculty%') THEN 'faculty'
+                    WHEN patients.type = 'employee' AND (LOWER(COALESCE(patients.category, '')) LIKE '%non-teaching%' OR LOWER(COALESCE(patients.category, '')) LIKE '%staff%' OR LOWER(COALESCE(patients.employment_classification, '')) LIKE '%non-teaching%' OR LOWER(COALESCE(patients.employment_classification, '')) LIKE '%staff%') THEN 'non_teaching'
+                    ELSE 'other_personnel'
+                END as resolved_patient_type,
+                COUNT(*) as total
+            ")
+            ->groupBy('resolved_patient_type')
+            ->get();
+
+        foreach ($peRows as $pr) {
+            $pBucket = (string) $pr->resolved_patient_type;
+            $cnt = (int) $pr->total;
+            if (! isset($matrix['scheduled_pe'][$pBucket])) {
+                $pBucket = 'other_personnel';
+            }
+            $matrix['scheduled_pe'][$pBucket] += $cnt;
+            $matrix['scheduled_pe']['total'] += $cnt;
+        }
+
+        $grandTotals = $emptyBucket;
+        foreach ($matrix as $row) {
+            $grandTotals['students'] += $row['students'];
+            $grandTotals['faculty'] += $row['faculty'];
+            $grandTotals['non_teaching'] += $row['non_teaching'];
+            $grandTotals['other_personnel'] += $row['other_personnel'];
+            $grandTotals['total'] += $row['total'];
+        }
+
+        return [
+            'rows' => array_values($matrix),
+            'visit_totals' => $visitTotals,
+            'grand_totals' => $grandTotals,
+        ];
+    }
+
+    public function aggregatePatientClassificationReport(Carbon $dateFrom, Carbon $dateTo, array $filters = []): array
+    {
+        $baseQuery = Patient::query();
+
+        if (! empty($filters['college_id'])) {
+            $baseQuery->where('patients.college_id', $filters['college_id']);
+        }
+        if (! empty($filters['academic_year_id'])) {
+            $baseQuery->where('patients.academic_year_id', $filters['academic_year_id']);
+        }
+
+        $rowsRaw = (clone $baseQuery)
+            ->selectRaw("
+                CASE
+                    WHEN patients.type = 'student' THEN 'students'
+                    WHEN patients.type = 'employee' AND (LOWER(COALESCE(patients.category, '')) LIKE '%faculty%' OR LOWER(COALESCE(patients.employment_classification, '')) LIKE '%faculty%') THEN 'faculty'
+                    WHEN patients.type = 'employee' AND (LOWER(COALESCE(patients.category, '')) LIKE '%non-teaching%' OR LOWER(COALESCE(patients.category, '')) LIKE '%staff%' OR LOWER(COALESCE(patients.employment_classification, '')) LIKE '%non-teaching%' OR LOWER(COALESCE(patients.employment_classification, '')) LIKE '%staff%') THEN 'non_teaching'
+                    ELSE 'other_personnel'
+                END as resolved_group,
+                COUNT(*) as total_count,
+                SUM(CASE WHEN LOWER(COALESCE(patients.status, 'active')) = 'active' THEN 1 ELSE 0 END) as active_count,
+                SUM(CASE WHEN LOWER(COALESCE(patients.status, 'active')) != 'active' THEN 1 ELSE 0 END) as inactive_count
+            ")
+            ->groupBy('resolved_group')
+            ->get()
+            ->keyBy('resolved_group');
+
+        $newRaw = (clone $baseQuery)
+            ->whereBetween('patients.created_at', [$dateFrom, $dateTo])
+            ->selectRaw("
+                CASE
+                    WHEN patients.type = 'student' THEN 'students'
+                    WHEN patients.type = 'employee' AND (LOWER(COALESCE(patients.category, '')) LIKE '%faculty%' OR LOWER(COALESCE(patients.employment_classification, '')) LIKE '%faculty%') THEN 'faculty'
+                    WHEN patients.type = 'employee' AND (LOWER(COALESCE(patients.category, '')) LIKE '%non-teaching%' OR LOWER(COALESCE(patients.category, '')) LIKE '%staff%' OR LOWER(COALESCE(patients.employment_classification, '')) LIKE '%non-teaching%' OR LOWER(COALESCE(patients.employment_classification, '')) LIKE '%staff%') THEN 'non_teaching'
+                    ELSE 'other_personnel'
+                END as resolved_group,
+                COUNT(*) as new_count
+            ")
+            ->groupBy('resolved_group')
+            ->pluck('new_count', 'resolved_group');
+
+        $groupsMeta = [
+            'students' => 'Students',
+            'faculty' => 'Faculty (Teaching Personnel)',
+            'non_teaching' => 'Non-Teaching Personnel / Staff',
+            'other_personnel' => 'Other Personnel',
+        ];
+
+        $totalRegistered = 0;
+        $activePatients = 0;
+        $inactivePatients = 0;
+        $newRegistrations = 0;
+
+        $countsByGroup = [];
+        foreach ($groupsMeta as $key => $label) {
+            $r = $rowsRaw->get($key);
+            $tot = (int) ($r?->total_count ?? 0);
+            $act = (int) ($r?->active_count ?? 0);
+            $inact = (int) ($r?->inactive_count ?? 0);
+            $newCnt = (int) ($newRaw[$key] ?? 0);
+
+            $totalRegistered += $tot;
+            $activePatients += $act;
+            $inactivePatients += $inact;
+            $newRegistrations += $newCnt;
+
+            $countsByGroup[$key] = [
+                'classification' => $label,
+                'total' => $tot,
+                'active' => $act,
+                'inactive' => $inact,
+                'new_registrations' => $newCnt,
+            ];
+        }
+
+        $denom = max(1, $totalRegistered);
+        $formattedRows = [];
+        foreach ($countsByGroup as $item) {
+            $item['percentage'] = $totalRegistered > 0 ? round(($item['total'] / $denom) * 100, 1) : 0.0;
+            $formattedRows[] = $item;
+        }
+
+        return [
+            'total_registered' => $totalRegistered,
+            'total_students' => $countsByGroup['students']['total'],
+            'total_faculty' => $countsByGroup['faculty']['total'],
+            'total_non_teaching' => $countsByGroup['non_teaching']['total'],
+            'total_other_personnel' => $countsByGroup['other_personnel']['total'],
+            'active_patients' => $activePatients,
+            'inactive_patients' => $inactivePatients,
+            'new_registrations' => $newRegistrations,
+            'rows' => $formattedRows,
+        ];
+    }
+
     public function aggregateMedicalAndDentalRecords(int $year, array $filters = []): array
     {
         $months = $this->monthLabels();
@@ -427,12 +635,86 @@ class DataAggregationAlgorithmService
         }
 
         $monthlyTotals = $emptyMonths;
+        $monthlyStudentTotals = $emptyMonths;
+        $monthlyEmployeeTotals = $emptyMonths;
+        $serviceSummaries = [];
+        $totalStudentAll = 0;
+        $totalEmployeeAll = 0;
+
         foreach ($groups as $g) {
+            $grpMonths = $emptyMonths;
+            $grpStudent = 0;
+            $grpEmployee = 0;
+
             foreach ($g['rows'] as $row) {
+                $isEmpRow = strcasecmp(trim((string) $row['label']), 'Employee') === 0;
+                $rowSum = (int) $row['total'];
+                if ($isEmpRow) {
+                    $grpEmployee += $rowSum;
+                    $totalEmployeeAll += $rowSum;
+                } else {
+                    $grpStudent += $rowSum;
+                    $totalStudentAll += $rowSum;
+                }
+
                 for ($m = 1; $m <= 12; $m++) {
-                    $monthlyTotals[$m] += $row['months'][$m];
+                    $val = (int) ($row['months'][$m] ?? 0);
+                    $grpMonths[$m] += $val;
+                    $monthlyTotals[$m] += $val;
+                    if ($isEmpRow) {
+                        $monthlyEmployeeTotals[$m] += $val;
+                    } else {
+                        $monthlyStudentTotals[$m] += $val;
+                    }
                 }
             }
+
+            $grpTotal = $grpStudent + $grpEmployee;
+            $serviceSummaries[] = [
+                'service' => $g['group'],
+                'color' => $g['color'],
+                'months' => $grpMonths,
+                'student_total' => $grpStudent,
+                'employee_total' => $grpEmployee,
+                'annual_total' => $grpTotal,
+                'student_percentage' => $grpTotal > 0 ? round(($grpStudent / $grpTotal) * 100, 1) : 0.0,
+                'employee_percentage' => $grpTotal > 0 ? round(($grpEmployee / $grpTotal) * 100, 1) : 0.0,
+            ];
+        }
+
+        $grandTotal = array_sum($monthlyTotals);
+        $denomGrand = max(1, $grandTotal);
+
+        foreach ($serviceSummaries as &$sItem) {
+            $sItem['share_percentage'] = $grandTotal > 0 ? round(($sItem['annual_total'] / $denomGrand) * 100, 1) : 0.0;
+        }
+        unset($sItem);
+
+        $summaryByGroup = collect($serviceSummaries)->keyBy('service');
+        $monthlyComparison = [];
+        $peakMonthName = 'N/A';
+        $peakMonthTotal = 0;
+
+        for ($m = 1; $m <= 12; $m++) {
+            $mTot = $monthlyTotals[$m];
+            if ($mTot > $peakMonthTotal) {
+                $peakMonthTotal = $mTot;
+                $peakMonthName = $months[$m];
+            }
+
+            $monthlyComparison[$m] = [
+                'month_num' => $m,
+                'month_name' => $months[$m],
+                'medical' => (int) ($summaryByGroup->get('MEDICAL CONSULTATION')['months'][$m] ?? 0),
+                'dental' => (int) ($summaryByGroup->get('DENTAL CONSULTATION')['months'][$m] ?? 0),
+                'emergency' => (int) ($summaryByGroup->get('EMERGENCY')['months'][$m] ?? 0),
+                'first_aid' => (int) ($summaryByGroup->get('FIRST AIDE')['months'][$m] ?? 0),
+                'scheduled_pe' => (int) ($summaryByGroup->get('SCHEDULED PHYSICAL EXAMINATION')['months'][$m] ?? 0),
+                'student_total' => $monthlyStudentTotals[$m],
+                'employee_total' => $monthlyEmployeeTotals[$m],
+                'total' => $mTot,
+                'percentage' => $grandTotal > 0 ? round(($mTot / $denomGrand) * 100, 1) : 0.0,
+            ];
         }
 
         return [
@@ -440,22 +722,22 @@ class DataAggregationAlgorithmService
             'months' => $months,
             'groups' => $groups,
             'monthly_totals' => $monthlyTotals,
-            'grand_total' => array_sum($monthlyTotals),
+            'grand_total' => $grandTotal,
+            'service_summaries' => $serviceSummaries,
+            'monthly_comparison' => $monthlyComparison,
+            'peak_month' => [
+                'name' => $peakMonthName,
+                'total' => $peakMonthTotal,
+            ],
+            'client_distribution' => [
+                'student_total' => $totalStudentAll,
+                'employee_total' => $totalEmployeeAll,
+                'student_percentage' => $grandTotal > 0 ? round(($totalStudentAll / $denomGrand) * 100, 1) : 0.0,
+                'employee_percentage' => $grandTotal > 0 ? round(($totalEmployeeAll / $denomGrand) * 100, 1) : 0.0,
+            ],
         ];
     }
 
-    /**
-     * Aggregate Report 2: MEDICAL AND DENTAL LOG-IN RECORDS (Dynamic 12-Month Matrix from DB Programs & Client Classifications).
-     *
-     * @param  array<string, mixed>  $filters
-     * @return array{
-     *   year: int,
-     *   months: array<int, string>,
-     *   rows: list<array{label: string, months: array<int, int>, total: int}>,
-     *   monthly_totals: array<int, int>,
-     *   grand_total: int
-     * }
-     */
     public function aggregateMedicalAndDentalLoginRecords(int $year, array $filters = []): array
     {
         $months = $this->monthLabels();
@@ -529,6 +811,63 @@ class DataAggregationAlgorithmService
             $categories[$cat][$m] += (int) $r->total;
         }
 
+        if (Schema::hasTable('clinic_logbooks')) {
+            $logbookQuery = ClinicLogbook::query()
+                ->leftJoin('patients', 'patients.id', '=', 'clinic_logbooks.patient_id')
+                ->leftJoin('programs', 'programs.id', '=', 'clinic_logbooks.program_id')
+                ->leftJoin('programs as patient_programs', 'patient_programs.id', '=', 'patients.program_id')
+                ->whereNull('clinic_logbooks.clinic_visit_id')
+                ->whereYear('clinic_logbooks.log_date', $year);
+
+            if (! empty($filters['academic_year_id'])) {
+                $logbookQuery->where('clinic_logbooks.academic_year_id', $filters['academic_year_id']);
+            }
+            if (! empty($filters['college_id'])) {
+                $logbookQuery->where('clinic_logbooks.college_id', $filters['college_id']);
+            }
+            if (! empty($filters['patient_classification'])) {
+                $logbookQuery->where('clinic_logbooks.visitor_type', $filters['patient_classification']);
+            }
+
+            $logbookMonthSql = $this->monthSqlExpression('clinic_logbooks.log_date');
+            $logbookRows = $logbookQuery
+                ->selectRaw("
+                    clinic_logbooks.visitor_type,
+                    COALESCE(patients.type, 'student') as patient_type,
+                    UPPER(COALESCE(programs.code, patient_programs.code, clinic_logbooks.course_or_department, '')) as resolved_program_code,
+                    COALESCE(programs.degree_level, patient_programs.degree_level, '') as resolved_degree_level,
+                    {$logbookMonthSql} as month_num,
+                    COUNT(*) as total
+                ")
+                ->groupBy('clinic_logbooks.visitor_type', 'patient_type', 'resolved_program_code', 'resolved_degree_level', 'month_num')
+                ->get();
+
+            foreach ($logbookRows as $lr) {
+                $m = (int) $lr->month_num;
+                if ($m < 1 || $m > 12) {
+                    continue;
+                }
+                $isEmployee = in_array((string) $lr->visitor_type, ['faculty', 'staff', 'employee'], true)
+                    || (string) $lr->patient_type === 'employee';
+                $pCode = strtoupper(trim((string) $lr->resolved_program_code));
+
+                if ($isEmployee) {
+                    $cat = 'Employee';
+                } elseif (isset($programCodeToLabel[$pCode])) {
+                    $cat = $programCodeToLabel[$pCode];
+                } elseif ($pCode !== '') {
+                    $cat = $this->formatLoginProgramClientLabel($pCode, (string) $lr->resolved_degree_level);
+                } else {
+                    $cat = 'Unassigned Students';
+                }
+
+                if (! isset($categories[$cat])) {
+                    $categories[$cat] = $emptyMonths;
+                }
+                $categories[$cat][$m] += (int) $lr->total;
+            }
+        }
+
         $formattedRows = [];
         $monthlyTotals = $emptyMonths;
         foreach ($categories as $label => $mCounts) {
@@ -559,9 +898,6 @@ class DataAggregationAlgorithmService
             : "MONTH({$column})";
     }
 
-    /**
-     * @return array<int, string>
-     */
     public function monthLabels(): array
     {
         return [
@@ -580,9 +916,6 @@ class DataAggregationAlgorithmService
         ];
     }
 
-    /**
-     * Format dynamic PE client label from a database Program record.
-     */
     protected function formatPeProgramClientLabel(string $programCode, string $degreeLevel = ''): string
     {
         $code = strtoupper(trim($programCode));
@@ -599,9 +932,6 @@ class DataAggregationAlgorithmService
         };
     }
 
-    /**
-     * Format dynamic Log-In client label from a database Program record.
-     */
     protected function formatLoginProgramClientLabel(string $programCode, string $degreeLevel = ''): string
     {
         $code = strtoupper(trim($programCode));
@@ -617,10 +947,6 @@ class DataAggregationAlgorithmService
         };
     }
 
-    /**
-     * @param  array<string, mixed>  $filters
-     * @return Builder<ClinicVisit>
-     */
     protected function buildFilteredVisitQuery(Carbon $dateFrom, Carbon $dateTo, array $filters): Builder
     {
         $visitQuery = ClinicVisit::query()->whereBetween('clinic_visits.visit_date', [$dateFrom, $dateTo]);
@@ -640,17 +966,6 @@ class DataAggregationAlgorithmService
         return $visitQuery;
     }
 
-    /**
-     * @param  array<string, mixed>  $filters
-     * @return array{
-     *   communicable: list<array{name: string, count: int, percentage: float}>,
-     *   non_communicable: list<array{name: string, count: int, percentage: float}>,
-     *   dental: list<array{name: string, count: int, percentage: float}>,
-     *   total_communicable: int,
-     *   total_non_communicable: int,
-     *   total_dental: int
-     * }
-     */
     protected function aggregateMorbidityData(Carbon $dateFrom, Carbon $dateTo, array $filters): array
     {
         $communicableTally = [];
@@ -775,11 +1090,6 @@ class DataAggregationAlgorithmService
         ];
     }
 
-    /**
-     * Load dynamic Communicable Disease categories directly from the `disease_categories` DB table.
-     *
-     * @return list<array{id: int, key: string, label: string, keywords: list<string>}>
-     */
     public function communicableCategoryDefinitions(): array
     {
         $rows = DiseaseCategory::query()
@@ -802,11 +1112,6 @@ class DataAggregationAlgorithmService
         return $defs;
     }
 
-    /**
-     * Load dynamic Non-Communicable Disease categories directly from the `disease_categories` DB table.
-     *
-     * @return list<array{id: int, key: string, label: string, keywords: list<string>}>
-     */
     public function nonCommunicableCategoryDefinitions(): array
     {
         $rows = DiseaseCategory::query()
@@ -829,18 +1134,6 @@ class DataAggregationAlgorithmService
         return $defs;
     }
 
-    /**
-     * Aggregate Report 3: COMMUNICABLE DISEASES DATA (Dynamic DB-Driven Bar Chart Report).
-     *
-     * @param  array<string, mixed>  $filters
-     * @return array{
-     *   year: int,
-     *   title: string,
-     *   items: list<array{key: string, label: string, count: int}>,
-     *   total: int,
-     *   max_scale: int
-     * }
-     */
     public function aggregateCommunicableDiseaseReport(int $year, array $filters = []): array
     {
         $defs = $this->communicableCategoryDefinitions();
@@ -901,18 +1194,6 @@ class DataAggregationAlgorithmService
         ];
     }
 
-    /**
-     * Aggregate Report 4: NON-COMMUNICABLE DISEASES DATA (Dynamic DB-Driven Bar Chart Report).
-     *
-     * @param  array<string, mixed>  $filters
-     * @return array{
-     *   year: int,
-     *   title: string,
-     *   items: list<array{key: string, label: string, count: int}>,
-     *   total: int,
-     *   max_scale: int
-     * }
-     */
     public function aggregateNonCommunicableDiseaseReport(int $year, array $filters = []): array
     {
         $defs = $this->nonCommunicableCategoryDefinitions();
@@ -1006,12 +1287,6 @@ class DataAggregationAlgorithmService
         ];
     }
 
-    /**
-     * Fetch grouped clinical consultation/visit records (with DB `disease_category_id` FK) for a given year.
-     *
-     * @param  array<string, mixed>  $filters
-     * @return list<array{disease_category_id: int|null, diagnosis: string, complaint: string, total: int}>
-     */
     protected function fetchClinicalTextRecordsForYear(int $year, array $filters = []): array
     {
         $visitQuery = ClinicVisit::query()
@@ -1059,10 +1334,6 @@ class DataAggregationAlgorithmService
         return $out;
     }
 
-    /**
-     * @param  Builder<ClinicVisit>  $visitQuery
-     * @return list<array{name: string, count: int, percentage: float}>
-     */
     protected function aggregateChiefComplaints(Builder $visitQuery): array
     {
         $complaintGroups = (clone $visitQuery)
@@ -1096,14 +1367,6 @@ class DataAggregationAlgorithmService
         return $res;
     }
 
-    /**
-     * @param  array<string, mixed>  $filters
-     * @return array{
-     *   total_units: int,
-     *   total_dispensings: int,
-     *   top_medicines: list<array{name: string, quantity: int}>
-     * }
-     */
     protected function aggregateMedicineDispensing(Carbon $dateFrom, Carbon $dateTo, array $filters): array
     {
         $dispQuery = MedicineDispensing::query()->whereBetween('medicine_dispensings.dispensed_date', [$dateFrom, $dateTo]);

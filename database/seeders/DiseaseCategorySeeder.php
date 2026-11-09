@@ -7,13 +7,10 @@ use Illuminate\Database\Seeder;
 
 class DiseaseCategorySeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $categories = [
-            // Communicable Diseases (in exact NVC HSD chart order)
+
             [
                 'code' => 'COMM-TB',
                 'name' => 'Tuberculosis',
@@ -39,7 +36,6 @@ class DiseaseCategorySeeder extends Seeder
                 'is_active' => true,
             ],
 
-            // Non-Communicable Diseases (in exact NVC HSD chart order)
             [
                 'code' => 'NCD-DISABILITY',
                 'name' => 'Illness of Student of Disabiltiy',

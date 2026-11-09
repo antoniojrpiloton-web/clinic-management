@@ -22,9 +22,6 @@ class RoleController extends Controller implements HasMiddleware
 {
     public function __construct(protected AuditLogger $auditLogger) {}
 
-    /**
-     * @return list<Middleware>
-     */
     public static function middleware(): array
     {
         return [
@@ -35,9 +32,6 @@ class RoleController extends Controller implements HasMiddleware
         ];
     }
 
-    /**
-     * List roles.
-     */
     public function index(Request $request): View|JsonResponse
     {
         if ($request->ajax()) {
@@ -99,9 +93,6 @@ class RoleController extends Controller implements HasMiddleware
         return view('roles.index');
     }
 
-    /**
-     * Show the form for creating a new role.
-     */
     public function create(): View
     {
         return view('roles.create', [
@@ -111,9 +102,6 @@ class RoleController extends Controller implements HasMiddleware
         ]);
     }
 
-    /**
-     * Store a newly created role.
-     */
     public function store(RoleRequest $request): RedirectResponse
     {
         $role = DB::transaction(function () use ($request): Role {
@@ -132,9 +120,6 @@ class RoleController extends Controller implements HasMiddleware
         return redirect()->route('roles.index')->with('success', 'Role created successfully.');
     }
 
-    /**
-     * Show the form for editing the role.
-     */
     public function edit(Role $role): View
     {
         return view('roles.edit', [
@@ -144,9 +129,6 @@ class RoleController extends Controller implements HasMiddleware
         ]);
     }
 
-    /**
-     * Update the role and its permissions.
-     */
     public function update(RoleRequest $request, Role $role): RedirectResponse
     {
         if ($role->name === User::SUPER_ADMIN_ROLE) {
@@ -172,9 +154,6 @@ class RoleController extends Controller implements HasMiddleware
         return redirect()->route('roles.index')->with('success', 'Role updated successfully.');
     }
 
-    /**
-     * Delete the role when no users are assigned to it.
-     */
     public function destroy(Role $role): RedirectResponse
     {
         if ($role->name === User::SUPER_ADMIN_ROLE) {
@@ -193,11 +172,6 @@ class RoleController extends Controller implements HasMiddleware
         return redirect()->route('roles.index')->with('success', 'Role deleted successfully.');
     }
 
-    /**
-     * Permissions grouped by their module prefix (e.g. "users" for "users.create").
-     *
-     * @return Collection<string, Collection<int, Permission>>
-     */
     protected function groupedPermissions(): Collection
     {
         return Permission::query()

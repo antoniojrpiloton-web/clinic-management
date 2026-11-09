@@ -25,9 +25,6 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardAnalyticsService
 {
-    /**
-     * @var list<string>
-     */
     public const COMMUNICABLE_KEYWORDS = [
         'urti',
         'upper respiratory',
@@ -60,9 +57,6 @@ class DashboardAnalyticsService
         'herpes',
     ];
 
-    /**
-     * @var list<string>
-     */
     public const NON_COMMUNICABLE_KEYWORDS = [
         'hypertension',
         'elevated bp',
@@ -96,9 +90,6 @@ class DashboardAnalyticsService
         'periodontitis',
     ];
 
-    /**
-     * @return array<string, mixed>
-     */
     public function stats(): array
     {
         $today = Carbon::today();
@@ -206,9 +197,6 @@ class DashboardAnalyticsService
         ];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     public function charts(): array
     {
         return [
@@ -224,9 +212,6 @@ class DashboardAnalyticsService
         ];
     }
 
-    /**
-     * @return array{months: list<string>, total: list<int>, medical: list<int>, dental: list<int>, emergency: list<int>}
-     */
     public function monthlyClinicUtilization(): array
     {
         $months = [];
@@ -266,9 +251,6 @@ class DashboardAnalyticsService
         ];
     }
 
-    /**
-     * @return array{labels: list<string>, data: list<int>, colors: list<string>}
-     */
     public function studentVsEmployeeBreakdown(): array
     {
         $byClass = ClinicVisit::query()
@@ -284,13 +266,10 @@ class DashboardAnalyticsService
         return [
             'labels' => ['Students', 'Faculty', 'Staff', 'Others'],
             'data' => [$students, $faculty, $staff, $others],
-            'colors' => ['#2563eb', '#10b981', '#f59e0b', '#64748b'],
+            'colors' => ['#1b5e3a', '#28666e', '#c27829', '#6e8078'],
         ];
     }
 
-    /**
-     * @return array{labels: list<string>, data: list<int>, colors: list<string>}
-     */
     public function servicesBreakdown(): array
     {
         $byType = ClinicVisit::query()
@@ -307,13 +286,10 @@ class DashboardAnalyticsService
         return [
             'labels' => ['Medical', 'Dental', 'Emergency', 'First Aid', 'General Checkup'],
             'data' => [$medical, $dental, $emergency, $firstAid, $general],
-            'colors' => ['#3b82f6', '#06b6d4', '#ef4444', '#f59e0b', '#8b5cf6'],
+            'colors' => ['#1b5e3a', '#28666e', '#b42318', '#c27829', '#52796f'],
         ];
     }
 
-    /**
-     * @return array{labels: list<string>, data: list<int>}
-     */
     public function topComplaints(int $limit = 7): array
     {
         $complaints = ClinicVisit::query()
@@ -342,15 +318,6 @@ class DashboardAnalyticsService
         ];
     }
 
-    /**
-     * @return array{
-     *   communicable_count: int,
-     *   non_communicable_count: int,
-     *   other_count: int,
-     *   top_communicable: list<array{name: string, count: int}>,
-     *   top_non_communicable: list<array{name: string, count: int}>
-     * }
-     */
     public function diseaseClassification(): array
     {
         $diagnoses = MedicalConsultation::query()
@@ -428,9 +395,6 @@ class DashboardAnalyticsService
         ];
     }
 
-    /**
-     * @return array{labels: list<string>, quantities: list<int>, total_dispensed: int}
-     */
     public function topMedicineUtilization(int $limit = 7): array
     {
         $items = MedicineDispensingItem::query()
@@ -468,9 +432,6 @@ class DashboardAnalyticsService
         ];
     }
 
-    /**
-     * @return array{labels: list<string>, values: list<int>}
-     */
     public function dailyTrend(int $days = 14): array
     {
         $start = Carbon::now()->subDays($days - 1)->startOfDay();
@@ -492,9 +453,6 @@ class DashboardAnalyticsService
         return ['labels' => $labels, 'values' => $values];
     }
 
-    /**
-     * @return array{labels: list<string>, data: list<int>, colors: list<string>}
-     */
     public function peFitnessBreakdown(): array
     {
         $byClass = PhysicalExamination::query()
@@ -511,13 +469,10 @@ class DashboardAnalyticsService
         return [
             'labels' => ['Class A (Fit all)', 'Class B (Correctable defect)', 'Class C (Restricted work)', 'Class D (Defective/Unfit)', 'Class E (Pending/Exempt)'],
             'data' => [$classA, $classB, $classC, $classD, $classE],
-            'colors' => ['#10b981', '#06b6d4', '#f59e0b', '#f97316', '#ef4444'],
+            'colors' => ['#1b5e3a', '#28666e', '#c27829', '#c25e14', '#b42318'],
         ];
     }
 
-    /**
-     * @return array{labels: list<string>, data: list<int>}
-     */
     public function collegeUtilizationBreakdown(): array
     {
         $colleges = College::withCount('clinicVisits')->orderByDesc('clinic_visits_count')->limit(6)->get();
@@ -579,9 +534,6 @@ class DashboardAnalyticsService
         return mb_strimwidth(trim($text), 0, 28, '...');
     }
 
-    /**
-     * @param  list<string>  $keywords
-     */
     protected function labelDisease(string $original, array $keywords): string
     {
         $lower = strtolower($original);

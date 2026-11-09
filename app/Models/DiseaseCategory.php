@@ -52,9 +52,6 @@ class DiseaseCategory extends Model
         return $query->where('classification', self::TYPE_NON_COMMUNICABLE);
     }
 
-    /**
-     * @return list<string>
-     */
     public function keywordList(): array
     {
         if (! is_string($this->keywords) || trim($this->keywords) === '') {

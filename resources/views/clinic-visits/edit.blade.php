@@ -14,7 +14,7 @@
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
             <h1 class="dashboard-heading mb-1">Edit Patient Visit Log: {{ $visit->visit_number }}</h1>
-            <p class="dashboard-subheading mb-0">Update intake information, vital signs, and disposition.</p>
+            <p class="dashboard-subheading mb-0">Update patient visit details, vital signs, and disposition.</p>
         </div>
 
         <div class="d-flex align-items-center gap-2">
@@ -69,13 +69,13 @@
             <div class="card-header bg-white py-3">
                 <div class="d-flex align-items-center gap-2">
                     <i class="bi bi-chat-left-text text-primary fs-5"></i>
-                    <span class="fw-bold text-dark">Chief Complaint &amp; Intake Notes</span>
+                    <span class="fw-bold text-dark">Complaint &amp; Notes</span>
                 </div>
             </div>
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-12">
-                        <label class="form-label required">Chief Complaint / Visit Purpose</label>
+                        <label class="form-label required">Chief Complaint / Reason for Visit</label>
                         <textarea name="chief_complaint" rows="3" class="form-control @error('chief_complaint') is-invalid @enderror" required>{{ old('chief_complaint', $visit->chief_complaint) }}</textarea>
                         @error('chief_complaint')
                             <div class="invalid-feedback">{{ $message }}</div>

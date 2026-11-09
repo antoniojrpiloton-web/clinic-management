@@ -56,6 +56,7 @@ class DatabaseSeeder extends Seeder
             MedicineAndInventorySeeder::class,
             ClinicOperationsSeeder::class,
             SimulationSeeder::class,
+            AppointmentSeeder::class,
         ]);
     }
 }

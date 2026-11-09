@@ -14,17 +14,11 @@ use Illuminate\View\View;
 
 class NewPasswordController extends Controller
 {
-    /**
-     * Show the password reset form.
-     */
     public function create(Request $request, string $token): View
     {
         return view('auth.reset-password', ['token' => $token, 'email' => $request->string('email')]);
     }
 
-    /**
-     * Handle a new password request.
-     */
     public function store(Request $request): RedirectResponse
     {
         $request->validate([

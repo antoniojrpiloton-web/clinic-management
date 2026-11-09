@@ -40,21 +40,24 @@
 
     <div class="card">
         <div class="card-body">
-            <x-datatable
-                id="audit-logs-table"
-                :url="route('audit-logs.index')"
-                filters="audit-logs-filter-form"
-                :page-length="$pageLength"
-                :columns="[
-                    ['data' => 'created_at', 'title' => 'Timestamp', 'orderable' => true],
-                    ['data' => 'user', 'title' => 'User'],
-                    ['data' => 'event', 'title' => 'Event', 'renderType' => 'badge', 'orderable' => true],
-                    ['data' => 'description', 'title' => 'Description'],
-                    ['data' => 'subject', 'title' => 'Subject'],
-                    ['data' => 'ip_address', 'title' => 'IP Address'],
-                    ['data' => 'actions', 'title' => 'Actions', 'renderType' => 'actions', 'className' => 'text-end'],
-                ]"
-            />
+            <div class="table-responsive">
+                <table id="audit-logs-table" class="table table-hover align-middle w-100 mb-0">
+                    <thead>
+                        <tr>
+                            <th>TIMESTAMP</th>
+                            <th>USER</th>
+                            <th>EVENT</th>
+                            <th>DESCRIPTION</th>
+                            <th>SUBJECT</th>
+                            <th>IP ADDRESS</th>
+                            <th class="text-end">ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <x-table-skeleton :cols="7" :rows="8" />
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -62,9 +65,69 @@
 
     @include('partials.plugins.select2')
     @include('partials.plugins.flatpickr')
+    @include('partials.plugins.datatables')
+
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const $ = window.jQuery;
+                if (!$ || !$.fn.DataTable) {
+                    return;
+                }
+
+                const table = $('#audit-logs-table').DataTable({
+                    processing: true,
+                    serverSide: true,
+                    pageLength: {{ $pageLength }},
+                    lengthMenu: [10, 25, 50, 100],
+                    order: [[0, 'desc']],
+                    ajax: {
+                        url: '{{ route('audit-logs.index') }}',
+                        data: function (d) {
+                            d.event = $('#filter-event').val();
+                            d.user_id = $('#filter-user').val();
+                            d.date_from = $('#filter-from').val();
+                            d.date_to = $('#filter-to').val();
+                        }
+                    },
+                    columns: [
+                        { data: 'timestamp_col', name: 'created_at', orderable: true },
+                        { data: 'user_col', name: 'user.name', orderable: false },
+                        { data: 'event_col', name: 'event', orderable: true },
+                        { data: 'description_col', name: 'description', orderable: false },
+                        { data: 'subject_col', name: 'subject_type', orderable: false },
+                        { data: 'ip_address_col', name: 'ip_address', orderable: false },
+                        { data: 'actions_col', orderable: false, searchable: false, className: 'text-end' }
+                    ],
+                    language: {
+                        search: '',
+                        searchPlaceholder: 'Search...',
+                        emptyTable: 'No audit log entries found',
+                        processing: '<div class="spinner-border spinner-border-sm text-success" role="status"></div> Loading…'
+                    }
+                });
+
+                const filterForm = document.getElementById('audit-logs-filter-form');
+                if (filterForm) {
+                    $('#filter-event, #filter-user').on('change', function () {
+                        table.draw();
+                    });
+                    $('#filter-from, #filter-to').on('change', function () {
+                        table.draw();
+                    });
+                    filterForm.addEventListener('reset', function () {
+                        setTimeout(function () {
+                            $('#filter-event').val('').trigger('change.select2');
+                            $('#filter-user').val('').trigger('change.select2');
+                            table.draw();
+                        }, 50);
+                    });
+                }
+            });
+        </script>
+    @endpush
 
     @pushOnce('scripts', 'audit-logs-scripts')
         @vite(['resources/js/pages/audit-logs.js'])
     @endPushOnce
 </x-layouts.app>
-

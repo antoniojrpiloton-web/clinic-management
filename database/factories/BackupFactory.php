@@ -6,16 +6,8 @@ use App\Models\Backup;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends Factory<Backup>
- */
 class BackupFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [
@@ -28,9 +20,6 @@ class BackupFactory extends Factory
         ];
     }
 
-    /**
-     * Indicate that the backup is still pending.
-     */
     public function pending(): static
     {
         return $this->state(fn (array $attributes) => [

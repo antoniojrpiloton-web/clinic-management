@@ -176,5 +176,127 @@
             </div>
         </div>
     </div>
+
+    @php
+        $serviceSummaries = $medDental['service_summaries'] ?? [];
+        $monthlyComparison = $medDental['monthly_comparison'] ?? [];
+        $clientDist = $medDental['client_distribution'] ?? ['student_total' => 0, 'employee_total' => 0, 'student_percentage' => 0, 'employee_percentage' => 0];
+        $peakMonth = $medDental['peak_month'] ?? ['name' => 'N/A', 'total' => 0];
+    @endphp
+
+    <div class="row g-4 mb-4">
+        
+        <div class="col-lg-6">
+            <div class="card h-100 border shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="fw-bold text-dark"><i class="bi bi-pie-chart text-primary me-2"></i>Annual Service Totals &amp; Student / Employee Distribution</span>
+                        <small class="text-muted d-block">Annual breakdown per clinical service category and clientele classification ({{ $medDental['year'] }})</small>
+                    </div>
+                    <span class="badge badge-soft-blue">
+                        Students: {{ $clientDist['student_percentage'] }}% &bull; Employees: {{ $clientDist['employee_percentage'] }}%
+                    </span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Service Category</th>
+                                    <th class="text-end">Students</th>
+                                    <th class="text-end">Employees</th>
+                                    <th class="text-end">Annual Total</th>
+                                    <th class="text-end">Share</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($serviceSummaries as $sRow)
+                                    <tr>
+                                        <td class="fw-semibold text-dark">{{ $sRow['service'] }}</td>
+                                        <td class="text-end">
+                                            {{ number_format($sRow['student_total']) }}
+                                            <small class="text-muted">({{ $sRow['student_percentage'] }}%)</small>
+                                        </td>
+                                        <td class="text-end">
+                                            {{ number_format($sRow['employee_total']) }}
+                                            <small class="text-muted">({{ $sRow['employee_percentage'] }}%)</small>
+                                        </td>
+                                        <td class="text-end fw-bold text-primary">{{ number_format($sRow['annual_total']) }}</td>
+                                        <td class="text-end fw-semibold text-muted">{{ $sRow['share_percentage'] }}%</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                            <tfoot class="table-light fw-bold">
+                                <tr>
+                                    <td>Grand Total ({{ $medDental['year'] }})</td>
+                                    <td class="text-end text-primary">
+                                        {{ number_format($clientDist['student_total']) }} ({{ $clientDist['student_percentage'] }}%)
+                                    </td>
+                                    <td class="text-end text-success">
+                                        {{ number_format($clientDist['employee_total']) }} ({{ $clientDist['employee_percentage'] }}%)
+                                    </td>
+                                    <td class="text-end text-dark">{{ number_format($medDental['grand_total']) }}</td>
+                                    <td class="text-end">100%</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card h-100 border shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="fw-bold text-dark"><i class="bi bi-bar-chart-line text-success me-2"></i>Comparison of Monthly Service Utilization</span>
+                        <small class="text-muted d-block">Monthly Medical, Dental, Emergency, First Aid &amp; PE utilization ({{ $medDental['year'] }})</small>
+                    </div>
+                    <span class="badge badge-soft-green">
+                        Peak Month: {{ $peakMonth['name'] }} ({{ number_format($peakMonth['total']) }})
+                    </span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Month</th>
+                                    <th class="text-end">Med</th>
+                                    <th class="text-end">Dent</th>
+                                    <th class="text-end">Emerg</th>
+                                    <th class="text-end">1st Aid</th>
+                                    <th class="text-end">PE</th>
+                                    <th class="text-end">Total</th>
+                                    <th class="text-end" style="width: 110px;">Utilization</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($monthlyComparison as $mRow)
+                                    <tr>
+                                        <td class="fw-semibold text-dark small">{{ substr($mRow['month_name'], 0, 3) }}</td>
+                                        <td class="text-end small">{{ number_format($mRow['medical']) }}</td>
+                                        <td class="text-end small">{{ number_format($mRow['dental']) }}</td>
+                                        <td class="text-end small">{{ number_format($mRow['emergency']) }}</td>
+                                        <td class="text-end small">{{ number_format($mRow['first_aid']) }}</td>
+                                        <td class="text-end small">{{ number_format($mRow['scheduled_pe']) }}</td>
+                                        <td class="text-end fw-bold small">{{ number_format($mRow['total']) }}</td>
+                                        <td class="text-end">
+                                            <div class="d-flex align-items-center justify-content-end gap-2">
+                                                <div class="progress flex-grow-1" style="height: 5px;">
+                                                    <div class="progress-bar bg-primary" style="width: {{ $mRow['percentage'] }}%"></div>
+                                                </div>
+                                                <span class="small text-muted" style="min-width: 36px; font-size: 0.7rem;">{{ $mRow['percentage'] }}%</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </x-layouts.app>
 

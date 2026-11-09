@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Database\Factories\BackupFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +11,6 @@ use Illuminate\Support\Number;
 #[Fillable(['created_by', 'filename', 'size', 'status', 'type', 'error', 'completed_at'])]
 class Backup extends Model
 {
-    /** @use HasFactory<BackupFactory> */
     use HasFactory;
 
     public const STATUS_PENDING = 'pending';
@@ -21,11 +19,6 @@ class Backup extends Model
 
     public const STATUS_FAILED = 'failed';
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -34,9 +27,6 @@ class Backup extends Model
         ];
     }
 
-    /**
-     * @return BelongsTo<User, $this>
-     */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

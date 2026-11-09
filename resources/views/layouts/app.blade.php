@@ -1,6 +1,6 @@
 @props(['title' => null])
 @php
-    $clinicName = $appSettings['clinic_name'] ?? config('app.name');
+    $systemName = config('app.name', 'ClinicAssist');
     $flashMessages = collect(['success', 'error', 'warning', 'info'])
         ->filter(fn (string $type): bool => session()->has($type))
         ->map(fn (string $type): array => ['type' => $type, 'message' => (string) session($type)])
@@ -12,7 +12,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $title ? "{$title} — {$clinicName}" : $clinicName }}</title>
+    <title>{{ $title ? "{$title} — {$systemName}" : $systemName }}</title>
 
     @php
         $faviconUrl = ! empty($appSettings['logo_compact'])
@@ -32,7 +32,7 @@
 </head>
 <body>
     <div class="app-wrapper">
-        <x-sidebar :clinic-name="$clinicName" />
+        <x-sidebar :clinic-name="$systemName" />
         <div class="sidebar-backdrop" data-toggle="sidebar"></div>
 
         <div class="app-main">
@@ -44,7 +44,7 @@
             </main>
 
             <footer class="app-footer d-flex justify-content-between align-items-center border-top bg-white">
-                <span>&copy; {{ now()->year }} {{ $clinicName }}. All rights reserved.</span>
+                <span>&copy; {{ now()->year }} {{ $systemName }}. All rights reserved.</span>
                 <span>Laravel v{{ Illuminate\Foundation\Application::VERSION }}</span>
             </footer>
         </div>
@@ -62,4 +62,3 @@
     @stack('scripts')
 </body>
 </html>
-

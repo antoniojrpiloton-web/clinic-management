@@ -1,6 +1,4 @@
-/**
- * Role permission matrix helpers (select/deselect all or by module group).
- */
+
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-permission-toggle]').forEach((button) => {
         button.addEventListener('click', () => {

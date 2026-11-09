@@ -8,9 +8,6 @@ use Illuminate\Database\Seeder;
 
 class SettingsSeeder extends Seeder
 {
-    /**
-     * Seed default application settings without overwriting existing values.
-     */
     public function run(): void
     {
         foreach (SettingService::DEFAULTS as $key => $setting) {

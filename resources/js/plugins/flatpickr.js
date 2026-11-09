@@ -1,7 +1,4 @@
-/**
- * Flatpickr initialiser for inputs marked with data-flatpickr.
- * Options: data-enable-time, data-min-date, data-max-date.
- */
+
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('input[data-flatpickr]').forEach((input) => {
         const enableTime = input.hasAttribute('data-enable-time');

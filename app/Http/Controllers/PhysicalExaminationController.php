@@ -426,6 +426,12 @@ class PhysicalExaminationController extends Controller
         if (! empty($validated['current_medications'])) {
             $updates['current_medications'] = $validated['current_medications'];
         }
+        if (! empty($validated['hospitalization_history'])) {
+            $updates['hospitalization_history'] = [$validated['hospitalization_history']];
+        }
+        if (! empty($validated['surgical_history'])) {
+            $updates['surgical_history'] = [$validated['surgical_history']];
+        }
 
         if ($updates) {
             $updates['updated_by'] = auth()->id();

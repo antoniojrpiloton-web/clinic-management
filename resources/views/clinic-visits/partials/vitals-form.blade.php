@@ -4,7 +4,7 @@
     <div class="card-header bg-white py-3">
         <div class="d-flex align-items-center gap-2">
             <i class="bi bi-heart-pulse text-danger fs-5"></i>
-            <span class="fw-bold text-dark">Vital Signs &amp; Triage Assessment</span>
+            <span class="fw-bold text-dark">Vital Signs</span>
         </div>
     </div>
     <div class="card-body">

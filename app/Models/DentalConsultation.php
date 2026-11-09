@@ -10,9 +10,6 @@ class DentalConsultation extends Model
 {
     use HasFactory;
 
-    /**
-     * @var list<string>
-     */
     public const PROCEDURES = [
         'Oral Examination / Consultation',
         'Oral Prophylaxis (Cleaning)',
@@ -26,9 +23,6 @@ class DentalConsultation extends Model
         'Referral to Dentist / Specialist',
     ];
 
-    /**
-     * @var array<string, string>
-     */
     public const TOOTH_CONDITIONS = [
         'C' => 'Caries',
         'M' => 'Missing',
@@ -39,23 +33,14 @@ class DentalConsultation extends Model
         'J' => 'Jacket Crown',
     ];
 
-    /**
-     * @var list<string>
-     */
     public const HYGIENE_STATUSES = ['Good', 'Fair', 'Poor'];
 
-    /**
-     * @var array<string, string>
-     */
     public const TREATMENT_FREQUENCIES = [
         'regular' => 'Regular (every 6 months)',
         'occasional' => 'Occasional',
         'never' => 'Never',
     ];
 
-    /**
-     * @var array<string, string>
-     */
     public const PERIODONTAL_STATUSES = [
         'healthy' => 'Healthy',
         'gingivitis' => 'Gingivitis',
@@ -64,9 +49,6 @@ class DentalConsultation extends Model
         'severe_periodontitis' => 'Severe Periodontitis',
     ];
 
-    /**
-     * @var array<string, string>
-     */
     public const CALCULUS_INDICES = [
         'none' => 'None',
         'light' => 'Light',
@@ -74,9 +56,6 @@ class DentalConsultation extends Model
         'heavy' => 'Heavy',
     ];
 
-    /**
-     * @var array<string, string>
-     */
     public const GINGIVAL_INDICES = [
         'healthy' => 'Healthy',
         'mild' => 'Mild',
@@ -84,18 +63,12 @@ class DentalConsultation extends Model
         'severe' => 'Severe',
     ];
 
-    /**
-     * @var array<string, string>
-     */
     public const PLAQUE_INDICES = [
         'good' => 'Good',
         'fair' => 'Fair',
         'poor' => 'Poor',
     ];
 
-    /**
-     * @var array<string, string>
-     */
     public const PRIORITY_LEVELS = [
         'urgent' => 'Urgent',
         'soon' => 'Soon (within 2 weeks)',
@@ -103,9 +76,6 @@ class DentalConsultation extends Model
         'elective' => 'Elective',
     ];
 
-    /**
-     * @var array<string, string>
-     */
     public const SOFT_TISSUE_STATUSES = [
         'normal' => 'Normal',
         'inflamed' => 'Inflamed',
@@ -204,9 +174,6 @@ class DentalConsultation extends Model
         return (int) $this->dmfs_decayed + (int) $this->dmfs_missing + (int) $this->dmfs_filled;
     }
 
-    /**
-     * @return list<string>
-     */
     public function getOralConditionListAttribute(): array
     {
         $conditions = [
@@ -222,9 +189,6 @@ class DentalConsultation extends Model
         return array_values(array_filter($conditions, fn (string $key): bool => (bool) $this->{$key}, ARRAY_FILTER_USE_KEY));
     }
 
-    /**
-     * @return list<string>
-     */
     public function getSystemicConditionListAttribute(): array
     {
         $conditions = [
@@ -238,9 +202,6 @@ class DentalConsultation extends Model
         return array_values(array_filter($conditions, fn (string $key): bool => (bool) $this->{$key}, ARRAY_FILTER_USE_KEY));
     }
 
-    /**
-     * @return array{upper: list<int>, lower: list<int>}
-     */
     public static function permanentTeeth(): array
     {
         return [
@@ -249,9 +210,6 @@ class DentalConsultation extends Model
         ];
     }
 
-    /**
-     * @return array{upper: list<int>, lower: list<int>}
-     */
     public static function deciduousTeeth(): array
     {
         return [

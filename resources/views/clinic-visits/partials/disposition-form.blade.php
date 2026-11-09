@@ -4,7 +4,7 @@
     <div class="card-header bg-white py-3">
         <div class="d-flex align-items-center gap-2">
             <i class="bi bi-box-arrow-right text-primary fs-5"></i>
-            <span class="fw-bold text-dark">Disposition, Status &amp; Remarks</span>
+            <span class="fw-bold text-dark">Disposition &amp; Remarks</span>
         </div>
     </div>
     <div class="card-body">

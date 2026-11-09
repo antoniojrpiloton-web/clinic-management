@@ -17,9 +17,6 @@ class PermissionController extends Controller implements HasMiddleware
 {
     public function __construct(protected AuditLogger $auditLogger) {}
 
-    /**
-     * @return list<Middleware>
-     */
     public static function middleware(): array
     {
         return [
@@ -30,9 +27,6 @@ class PermissionController extends Controller implements HasMiddleware
         ];
     }
 
-    /**
-     * List permissions.
-     */
     public function index(Request $request): View|JsonResponse
     {
         if ($request->ajax()) {
@@ -77,17 +71,11 @@ class PermissionController extends Controller implements HasMiddleware
         return view('permissions.index');
     }
 
-    /**
-     * Show the form for creating a new permission.
-     */
     public function create(): View
     {
         return view('permissions.create', ['permission' => new Permission]);
     }
 
-    /**
-     * Store a newly created permission.
-     */
     public function store(PermissionRequest $request): RedirectResponse
     {
         $permission = Permission::create(['name' => $request->validated('name'), 'guard_name' => 'web']);
@@ -97,17 +85,11 @@ class PermissionController extends Controller implements HasMiddleware
         return redirect()->route('permissions.index')->with('success', 'Permission created successfully.');
     }
 
-    /**
-     * Show the form for editing the permission.
-     */
     public function edit(Permission $permission): View
     {
         return view('permissions.edit', compact('permission'));
     }
 
-    /**
-     * Update the permission.
-     */
     public function update(PermissionRequest $request, Permission $permission): RedirectResponse
     {
         $oldName = $permission->name;
@@ -121,9 +103,6 @@ class PermissionController extends Controller implements HasMiddleware
         return redirect()->route('permissions.index')->with('success', 'Permission updated successfully.');
     }
 
-    /**
-     * Delete the permission.
-     */
     public function destroy(Permission $permission): RedirectResponse
     {
         $this->auditLogger->log('deleted', "Deleted permission {$permission->name}", $permission, ['name' => $permission->name]);

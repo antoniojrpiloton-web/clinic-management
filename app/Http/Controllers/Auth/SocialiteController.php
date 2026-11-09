@@ -15,17 +15,11 @@ class SocialiteController extends Controller
 {
     public function __construct(protected AuditLogger $auditLogger) {}
 
-    /**
-     * Redirect the user to the Google authentication page.
-     */
     public function redirectToGoogle(): RedirectResponse
     {
         return Socialite::driver('google')->redirect();
     }
 
-    /**
-     * Obtain the user information from Google and authenticate.
-     */
     public function handleGoogleCallback(): RedirectResponse
     {
         try {
@@ -44,7 +38,6 @@ class SocialiteController extends Controller
             ]);
         }
 
-        // Check if user exists by google_id or email
         $user = User::where('google_id', $googleUser->getId())
             ->orWhere('email', $email)
             ->first();
@@ -56,13 +49,12 @@ class SocialiteController extends Controller
                 ]);
             }
 
-            // Update google_id or avatar if missing
             $user->update([
                 'google_id' => $user->google_id ?? $googleUser->getId(),
                 'avatar' => $user->avatar ?? $googleUser->getAvatar(),
             ]);
         } else {
-            // New user registered via Google
+
             $user = User::create([
                 'name' => $googleUser->getName() ?: 'Google User',
                 'email' => $email,
@@ -72,7 +64,6 @@ class SocialiteController extends Controller
                 'is_active' => true,
             ]);
 
-            // Auto-assign Super Admin if the email matches designated super admin accounts
             $superAdminEmails = [
                 'apiloton1@snsu.edu.ph',
                 'alpiloton@adssu.edu.ph',

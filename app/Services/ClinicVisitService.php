@@ -2,18 +2,17 @@
 
 namespace App\Services;
 
+use App\Models\ClinicLogbook;
 use App\Models\ClinicVisit;
 use App\Models\Patient;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Yajra\DataTables\Facades\DataTables;
 
 class ClinicVisitService
 {
-    /**
-     * @var list<string>
-     */
     public const VISIT_FIELDS = [
         'visit_category',
         'visit_date',
@@ -36,9 +35,6 @@ class ClinicVisitService
 
     public function __construct(protected AuditLogger $auditLogger) {}
 
-    /**
-     * @return array<string, mixed>
-     */
     public function visitRules(bool $complaintRequired = true): array
     {
         return [
@@ -63,27 +59,36 @@ class ClinicVisitService
         ];
     }
 
-    /**
-     * @return array{patient_classification: string, classification_label: string, college_id: int|null, program_id: int|null, academic_year_id: int|null, year_level: string|null, office_department: string|null}
-     */
     public function classificationSnapshot(Patient $patient): array
     {
         $patient->loadMissing(['college', 'program']);
 
-        $parts = [ucfirst($patient->type)];
+        $classification = $patient->type;
 
         if ($patient->type === 'student') {
+            $parts = ['Student'];
             $parts[] = $patient->program?->code;
             $parts[] = $patient->year_level;
             $parts[] = $patient->college?->code;
         } else {
+            $isFaculty = stripos((string) $patient->category, 'faculty') !== false
+                || stripos((string) $patient->employment_classification, 'faculty') !== false;
+
+            if ($patient->type === 'employee') {
+                $classification = $isFaculty ? 'faculty' : 'staff';
+                $parts = [$isFaculty ? 'Faculty' : 'Staff'];
+            } else {
+                $classification = $patient->type ?: 'visitor';
+                $parts = [ucfirst($classification)];
+            }
+
             $parts[] = $patient->category;
             $parts[] = $patient->position;
             $parts[] = $patient->office_department;
         }
 
         return [
-            'patient_classification' => $patient->type,
+            'patient_classification' => $classification,
             'classification_label' => implode(' • ', array_filter($parts)),
             'college_id' => $patient->college_id,
             'program_id' => $patient->program_id,
@@ -93,9 +98,6 @@ class ClinicVisitService
         ];
     }
 
-    /**
-     * @param  array<string, mixed>  $validated
-     */
     public function create(string $type, array $validated): ClinicVisit
     {
         $patient = Patient::findOrFail($validated['patient_id']);
@@ -113,12 +115,19 @@ class ClinicVisitService
 
         $this->auditLogger->log('created', "Recorded {$visit->type_label} {$visit->visit_number} for patient {$patient->full_name}", $visit);
 
+        if (Schema::hasTable('clinic_logbooks')) {
+            $visitDay = $visit->visit_date ? $visit->visit_date->toDateString() : now()->toDateString();
+            ClinicLogbook::where('patient_id', $patient->id)
+                ->whereDate('log_date', $visitDay)
+                ->whereNull('clinic_visit_id')
+                ->latest('id')
+                ->first()
+                ?->update(['clinic_visit_id' => $visit->id]);
+        }
+
         return $visit;
     }
 
-    /**
-     * @param  array<string, mixed>  $validated
-     */
     public function update(ClinicVisit $visit, array $validated): ClinicVisit
     {
         $data = $this->extractVisitData($validated);
@@ -144,10 +153,6 @@ class ClinicVisitService
         $this->auditLogger->log('deleted', "Deleted {$label} {$number}", $visit);
     }
 
-    /**
-     * @param  array<string, mixed>  $validated
-     * @return array<string, mixed>
-     */
     public function extractVisitData(array $validated): array
     {
         return collect(self::VISIT_FIELDS)
@@ -156,9 +161,6 @@ class ClinicVisitService
             ->all();
     }
 
-    /**
-     * @return array{total: int, today: int, this_month: int, students: int, employees: int}
-     */
     public function stats(?string $type = null): array
     {
         $todayStart = now()->startOfDay()->toDateTimeString();
@@ -172,7 +174,7 @@ class ClinicVisitService
             ->selectRaw('SUM(CASE WHEN visit_date >= ? AND visit_date <= ? THEN 1 ELSE 0 END) as today', [$todayStart, $todayEnd])
             ->selectRaw('SUM(CASE WHEN visit_date >= ? AND visit_date <= ? THEN 1 ELSE 0 END) as this_month', [$monthStart, $monthEnd])
             ->selectRaw("SUM(CASE WHEN patient_classification = 'student' THEN 1 ELSE 0 END) as students")
-            ->selectRaw("SUM(CASE WHEN patient_classification = 'employee' THEN 1 ELSE 0 END) as employees")
+            ->selectRaw("SUM(CASE WHEN patient_classification IN ('employee', 'faculty', 'staff') THEN 1 ELSE 0 END) as employees")
             ->first();
 
         return [

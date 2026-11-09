@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AcademicYearController;
+use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\NewPasswordController;
@@ -8,6 +9,7 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\ClinicianController;
+use App\Http\Controllers\ClinicLogbookController;
 use App\Http\Controllers\ClinicReportController;
 use App\Http\Controllers\ClinicVisitController;
 use App\Http\Controllers\CollegeController;
@@ -16,7 +18,9 @@ use App\Http\Controllers\DentalConsultationController;
 use App\Http\Controllers\DiseaseCategoryController;
 use App\Http\Controllers\EmergencyRecordController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\FeatureControlController;
 use App\Http\Controllers\FirstAidRecordController;
+use App\Http\Controllers\GlobalSearchController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\MedicalConsultationController;
 use App\Http\Controllers\MedicalProfileController;
@@ -39,6 +43,13 @@ use App\Models\ClinicVisit;
 use App\Models\PhysicalExamScheduleAttendee;
 use Illuminate\Support\Facades\Route;
 
+Route::controller(ClinicLogbookController::class)->prefix('logbook')->name('logbook.')->group(function () {
+    Route::get('/', 'kiosk')->name('kiosk');
+    Route::get('lookup', 'lookupPatient')->name('lookup');
+    Route::post('/', 'kioskStore')->name('kiosk.store');
+    Route::post('{clinicLogbook}/time-out', 'kioskTimeOut')->name('kiosk.time-out');
+});
+
 Route::middleware('guest')->group(function () {
     Route::get('login', [LoginController::class, 'create'])->name('login');
     Route::post('login', [LoginController::class, 'store'])->middleware('throttle:10,1');
@@ -53,11 +64,18 @@ Route::middleware('guest')->group(function () {
     Route::get('auth/google/callback', [SocialiteController::class, 'handleGoogleCallback'])->name('auth.google.callback');
 });
 
-Route::middleware(['auth', 'active'])->group(function () {
+Route::middleware(['auth', 'active', 'feature.enabled'])->group(function () {
     Route::redirect('/', '/dashboard');
     Route::post('logout', [LoginController::class, 'destroy'])->name('logout');
+
+    Route::controller(FeatureControlController::class)->prefix('feature-control')->name('feature-control.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::put('/', 'update')->name('update');
+        Route::post('preset', 'applyPreset')->name('preset');
+    });
     Route::get('dashboard', DashboardController::class)->name('dashboard');
     Route::get('dashboard/metrics', [DashboardController::class, 'metrics'])->name('dashboard.metrics');
+    Route::get('global-search', GlobalSearchController::class)->name('global-search');
 
     Route::controller(ProfileController::class)->prefix('profile')->name('profile.')->group(function () {
         Route::get('/', 'edit')->name('edit');
@@ -92,6 +110,23 @@ Route::middleware(['auth', 'active'])->group(function () {
 
     Route::resource('students', StudentController::class)->except('show');
     Route::resource('employees', EmployeeController::class)->except('show');
+
+    Route::controller(ClinicLogbookController::class)->prefix('clinic-logbooks')->name('clinic-logbooks.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/', 'store')->name('store');
+        Route::post('{clinicLogbook}/time-out', 'timeOut')->name('time-out');
+        Route::delete('{clinicLogbook}', 'destroy')->name('destroy');
+    });
+
+    Route::controller(AppointmentController::class)->prefix('appointments')->name('appointments.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/calendar', 'calendar')->name('calendar');
+        Route::post('/', 'store')->name('store');
+        Route::post('{appointment}/check-in', 'checkIn')->name('check-in');
+        Route::post('{appointment}/start-consultation', 'startConsultation')->name('start-consultation');
+        Route::post('{appointment}/cancel', 'cancel')->name('cancel');
+        Route::delete('{appointment}', 'destroy')->name('destroy');
+    });
 
     Route::controller(MedicalProfileController::class)->prefix('patients/{patient}/medical-profile')->name('medical-profiles.')->group(function () {
         Route::get('/', 'show')->name('show');

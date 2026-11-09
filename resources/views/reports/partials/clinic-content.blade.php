@@ -1,12 +1,3 @@
-@php
-    $activeTab = request('tab', 'all');
-    $showMorbidity = in_array($activeTab, ['all', 'morbidity', ''], true);
-    $showMedDental = in_array($activeTab, ['all', 'medical-dental', ''], true);
-    $showLoginRec = in_array($activeTab, ['all', 'login-records', ''], true);
-    $showCommChart = in_array($activeTab, ['all', 'communicable', ''], true);
-    $showNonCommChart = in_array($activeTab, ['all', 'non-communicable', ''], true);
-@endphp
-
 <div class="row g-3 mb-4">
     <div class="col-sm-6 col-xl-4">
         <div class="kpi-card">
@@ -51,7 +42,292 @@
     </div>
 </div>
 
-@if($showMorbidity)
+@php
+    $serviceMatrix = $reportData['service_patient_matrix'] ?? null;
+    $patientClassReport = $reportData['patient_classification_report'] ?? null;
+@endphp
+
+@if ($serviceMatrix)
+    <div class="card border mb-4">
+        <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <span class="fw-bold text-dark"><i class="bi bi-clipboard2-data text-primary me-2"></i>1. Medical and Dental Service Reports (By Patient Type &amp; Service Type)</span>
+                <small class="text-muted d-block">Cross-tabulation of clinical consultations, emergency/first-aid records, scheduled physical exams, and total clinic visits</small>
+            </div>
+            <span class="badge badge-soft-blue">
+                Total Clinic Visits: {{ number_format($serviceMatrix['visit_totals']['total'] ?? 0) }} &bull; All Services: {{ number_format($serviceMatrix['grand_totals']['total'] ?? 0) }}
+            </span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Service Report Category</th>
+                            <th class="text-end">Students</th>
+                            <th class="text-end">Faculty</th>
+                            <th class="text-end">Non-Teaching</th>
+                            <th class="text-end">Other Personnel</th>
+                            <th class="text-end">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($serviceMatrix['rows'] as $row)
+                            <tr>
+                                <td class="fw-semibold text-dark">{{ $row['service'] }}</td>
+                                <td class="text-end">{{ number_format($row['students']) }}</td>
+                                <td class="text-end">{{ number_format($row['faculty']) }}</td>
+                                <td class="text-end">{{ number_format($row['non_teaching']) }}</td>
+                                <td class="text-end">{{ number_format($row['other_personnel']) }}</td>
+                                <td class="text-end fw-bold text-primary">{{ number_format($row['total']) }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr class="fw-semibold">
+                            <td>Total Clinic Visits (By Patient Type &amp; Service Type)</td>
+                            <td class="text-end">{{ number_format($serviceMatrix['visit_totals']['students'] ?? 0) }}</td>
+                            <td class="text-end">{{ number_format($serviceMatrix['visit_totals']['faculty'] ?? 0) }}</td>
+                            <td class="text-end">{{ number_format($serviceMatrix['visit_totals']['non_teaching'] ?? 0) }}</td>
+                            <td class="text-end">{{ number_format($serviceMatrix['visit_totals']['other_personnel'] ?? 0) }}</td>
+                            <td class="text-end fw-bold text-dark">{{ number_format($serviceMatrix['visit_totals']['total'] ?? 0) }}</td>
+                        </tr>
+                        <tr class="fw-bold">
+                            <td class="text-primary">Grand Total Clinical Services (Including Scheduled PE)</td>
+                            <td class="text-end text-primary">{{ number_format($serviceMatrix['grand_totals']['students'] ?? 0) }}</td>
+                            <td class="text-end text-primary">{{ number_format($serviceMatrix['grand_totals']['faculty'] ?? 0) }}</td>
+                            <td class="text-end text-primary">{{ number_format($serviceMatrix['grand_totals']['non_teaching'] ?? 0) }}</td>
+                            <td class="text-end text-primary">{{ number_format($serviceMatrix['grand_totals']['other_personnel'] ?? 0) }}</td>
+                            <td class="text-end text-primary">{{ number_format($serviceMatrix['grand_totals']['total'] ?? 0) }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+@endif
+
+@if ($patientClassReport)
+    <div class="card border mb-4">
+        <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <span class="fw-bold text-dark"><i class="bi bi-person-vcard text-success me-2"></i>2. Patient Classification Reports (Centralized Patients Registry)</span>
+                <small class="text-muted d-block">Aggregated directly from the centralized <code>patients</code> table across classifications, active status, and new registrations</small>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <span class="badge badge-soft-green">Active: {{ number_format($patientClassReport['active_patients']) }}</span>
+                <span class="badge badge-soft-gray">Inactive: {{ number_format($patientClassReport['inactive_patients']) }}</span>
+                <span class="badge badge-soft-blue">New Registrations: {{ number_format($patientClassReport['new_registrations']) }}</span>
+            </div>
+        </div>
+        <div class="card-body border-bottom bg-light py-3">
+            <div class="row g-3 text-center">
+                <div class="col-6 col-md-4 col-xl-2">
+                    <div class="p-2 rounded bg-white border h-100">
+                        <div class="small text-muted">Total Registered</div>
+                        <div class="fw-bold fs-5 text-dark">{{ number_format($patientClassReport['total_registered']) }}</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-xl-2">
+                    <div class="p-2 rounded bg-white border h-100">
+                        <div class="small text-muted">Total Students</div>
+                        <div class="fw-bold fs-5 text-primary">{{ number_format($patientClassReport['total_students']) }}</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-xl-2">
+                    <div class="p-2 rounded bg-white border h-100">
+                        <div class="small text-muted">Total Faculty</div>
+                        <div class="fw-bold fs-5 text-dark">{{ number_format($patientClassReport['total_faculty']) }}</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-xl-2">
+                    <div class="p-2 rounded bg-white border h-100">
+                        <div class="small text-muted">Non-Teaching</div>
+                        <div class="fw-bold fs-5 text-dark">{{ number_format($patientClassReport['total_non_teaching']) }}</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-xl-2">
+                    <div class="p-2 rounded bg-white border h-100">
+                        <div class="small text-muted">Other Personnel</div>
+                        <div class="fw-bold fs-5 text-dark">{{ number_format($patientClassReport['total_other_personnel']) }}</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-xl-2">
+                    <div class="p-2 rounded bg-white border h-100">
+                        <div class="small text-muted">New Registrations</div>
+                        <div class="fw-bold fs-5 text-success">+{{ number_format($patientClassReport['new_registrations']) }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Patient Classification</th>
+                            <th class="text-end">Total Registered</th>
+                            <th class="text-end">Active Patients</th>
+                            <th class="text-end">Inactive Patients</th>
+                            <th class="text-end">New Registrations</th>
+                            <th class="text-end" style="width: 150px;">Registry Share</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($patientClassReport['rows'] as $pRow)
+                            <tr>
+                                <td class="fw-semibold text-dark">{{ $pRow['classification'] }}</td>
+                                <td class="text-end fw-bold">{{ number_format($pRow['total']) }}</td>
+                                <td class="text-end text-success fw-semibold">{{ number_format($pRow['active']) }}</td>
+                                <td class="text-end text-muted">{{ number_format($pRow['inactive']) }}</td>
+                                <td class="text-end text-primary fw-semibold">+{{ number_format($pRow['new_registrations']) }}</td>
+                                <td class="text-end">
+                                    <div class="d-flex align-items-center justify-content-end gap-2">
+                                        <div class="progress flex-grow-1" style="height: 6px;">
+                                            <div class="progress-bar bg-success" style="width: {{ $pRow['percentage'] }}%"></div>
+                                        </div>
+                                        <span class="small text-muted" style="min-width: 42px;">{{ $pRow['percentage'] }}%</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot class="table-light fw-bold">
+                        <tr>
+                            <td>Total Centralized Patients Registry</td>
+                            <td class="text-end">{{ number_format($patientClassReport['total_registered']) }}</td>
+                            <td class="text-end text-success">{{ number_format($patientClassReport['active_patients']) }}</td>
+                            <td class="text-end text-muted">{{ number_format($patientClassReport['inactive_patients']) }}</td>
+                            <td class="text-end text-primary">+{{ number_format($patientClassReport['new_registrations']) }}</td>
+                            <td class="text-end">100%</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+@endif
+
+@php
+    $medDentalStats = $reportData['medical_dental_records'] ?? null;
+    $annualServiceSummaries = $medDentalStats['service_summaries'] ?? [];
+    $monthlyComparisonRows = $medDentalStats['monthly_comparison'] ?? [];
+    $annualClientDist = $medDentalStats['client_distribution'] ?? ['student_total' => 0, 'employee_total' => 0, 'student_percentage' => 0, 'employee_percentage' => 0];
+    $peakUtilMonth = $medDentalStats['peak_month'] ?? ['name' => 'N/A', 'total' => 0];
+@endphp
+
+@if ($medDentalStats && ! empty($annualServiceSummaries))
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card h-100 border">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="fw-bold text-dark"><i class="bi bi-calendar3 text-primary me-2"></i>Annual Service Totals &amp; Student / Employee Distribution ({{ $medDentalStats['year'] }})</span>
+                        <small class="text-muted d-block">Based on Medical and Dental Records annual forms</small>
+                    </div>
+                    <span class="badge badge-soft-blue">
+                        Students: {{ $annualClientDist['student_percentage'] }}% &bull; Employees: {{ $annualClientDist['employee_percentage'] }}%
+                    </span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Service Category</th>
+                                    <th class="text-end">Students</th>
+                                    <th class="text-end">Employees</th>
+                                    <th class="text-end">Annual Total</th>
+                                    <th class="text-end">Share</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($annualServiceSummaries as $sRow)
+                                    <tr>
+                                        <td class="fw-semibold text-dark">{{ $sRow['service'] }}</td>
+                                        <td class="text-end">
+                                            {{ number_format($sRow['student_total']) }}
+                                            <small class="text-muted">({{ $sRow['student_percentage'] }}%)</small>
+                                        </td>
+                                        <td class="text-end">
+                                            {{ number_format($sRow['employee_total']) }}
+                                            <small class="text-muted">({{ $sRow['employee_percentage'] }}%)</small>
+                                        </td>
+                                        <td class="text-end fw-bold text-primary">{{ number_format($sRow['annual_total']) }}</td>
+                                        <td class="text-end fw-semibold text-muted">{{ $sRow['share_percentage'] }}%</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                            <tfoot class="table-light fw-bold">
+                                <tr>
+                                    <td>Annual Service Grand Total</td>
+                                    <td class="text-end text-primary">{{ number_format($annualClientDist['student_total']) }} ({{ $annualClientDist['student_percentage'] }}%)</td>
+                                    <td class="text-end text-success">{{ number_format($annualClientDist['employee_total']) }} ({{ $annualClientDist['employee_percentage'] }}%)</td>
+                                    <td class="text-end text-dark">{{ number_format($medDentalStats['grand_total']) }}</td>
+                                    <td class="text-end">100%</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card h-100 border">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="fw-bold text-dark"><i class="bi bi-bar-chart-steps text-success me-2"></i>Comparison of Monthly Service Utilization ({{ $medDentalStats['year'] }})</span>
+                        <small class="text-muted d-block">Monthly Medical, Dental, Emergency, First Aid &amp; PE utilization</small>
+                    </div>
+                    <span class="badge badge-soft-green">
+                        Peak: {{ $peakUtilMonth['name'] }} ({{ number_format($peakUtilMonth['total']) }})
+                    </span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Month</th>
+                                    <th class="text-end">Med</th>
+                                    <th class="text-end">Dent</th>
+                                    <th class="text-end">Emerg</th>
+                                    <th class="text-end">1st Aid</th>
+                                    <th class="text-end">PE</th>
+                                    <th class="text-end">Total</th>
+                                    <th class="text-end" style="width: 105px;">Share</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($monthlyComparisonRows as $mRow)
+                                    <tr>
+                                        <td class="fw-semibold text-dark small">{{ substr($mRow['month_name'], 0, 3) }}</td>
+                                        <td class="text-end small">{{ number_format($mRow['medical']) }}</td>
+                                        <td class="text-end small">{{ number_format($mRow['dental']) }}</td>
+                                        <td class="text-end small">{{ number_format($mRow['emergency']) }}</td>
+                                        <td class="text-end small">{{ number_format($mRow['first_aid']) }}</td>
+                                        <td class="text-end small">{{ number_format($mRow['scheduled_pe']) }}</td>
+                                        <td class="text-end fw-bold small">{{ number_format($mRow['total']) }}</td>
+                                        <td class="text-end">
+                                            <div class="d-flex align-items-center justify-content-end gap-2">
+                                                <div class="progress flex-grow-1" style="height: 5px;">
+                                                    <div class="progress-bar bg-primary" style="width: {{ $mRow['percentage'] }}%"></div>
+                                                </div>
+                                                <span class="small text-muted" style="min-width: 34px; font-size: 0.7rem;">{{ $mRow['percentage'] }}%</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+@endif
+
 <div class="row g-4 mb-4">
     <div class="col-lg-6">
         <div class="card h-100 border">
@@ -278,309 +554,3 @@
         </div>
     </div>
 </div>
-@endif
-
-@php
-    $medDental = $reportData['medical_dental_records'] ?? null;
-    $loginRec = $reportData['login_records'] ?? null;
-    $commChart = $reportData['morbidity']['communicable_categories'] ?? null;
-    $nonCommChart = $reportData['morbidity']['non_communicable_categories'] ?? null;
-    $groupBgMap = [
-        'blue' => '#daeef3',
-        'pink' => '#e6b8b7',
-        'peach' => '#fcd5b4',
-        'slate' => '#b8b4c4',
-        'rose' => '#f2dcdb',
-    ];
-    $totalMedDentalRows = 0;
-    if ($medDental) {
-        foreach ($medDental['groups'] as $grp) {
-            $totalMedDentalRows += count($grp['rows']);
-        }
-    }
-@endphp
-
-@if($commChart && $showCommChart)
-    <div class="card border mb-4 shadow-sm" id="section-communicable-diseases">
-        <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <div>
-                <h5 class="fw-bold text-dark mb-0">
-                    <i class="bi bi-virus text-success me-2"></i>{{ $commChart['title'] }}
-                </h5>
-                <small class="text-muted">Official NVC Health Services Department Communicable Diseases Horizontal Bar Chart Report ({{ number_format($commChart['total']) }} Total Cases)</small>
-            </div>
-            <a href="{{ route('reports.clinic.print-communicable-diseases', array_merge(request()->query(), ['year' => $commChart['year']])) }}" target="_blank" class="btn btn-sm px-3 text-white" style="background-color: #6ca410; border-color: #5b8c0d;">
-                <i class="bi bi-file-earmark-pdf me-1"></i> Print Communicable Diseases (PDF)
-            </a>
-        </div>
-        <div class="card-body p-4">
-            <div class="border rounded p-4 bg-white mx-auto" style="max-width: 920px;">
-                <h5 class="fw-bold text-center text-dark mb-4">{{ $commChart['title'] }}</h5>
-                @php
-                    $cMax = max(10, (int) ($commChart['max_scale'] ?? 50));
-                @endphp
-                <div class="d-flex flex-column gap-4 my-3">
-                    @foreach($commChart['items'] as $item)
-                        @php
-                            $cnt = (int) $item['count'];
-                            $pct = $cMax > 0 ? min(100, round(($cnt / $cMax) * 100, 2)) : 0;
-                        @endphp
-                        <div class="row align-items-center g-2">
-                            <div class="col-md-5 text-md-end fw-bold text-dark" style="font-size: 0.82rem;">
-                                {{ $item['label'] }}
-                            </div>
-                            <div class="col-md-7">
-                                <div class="position-relative d-flex align-items-center" style="height: 36px; border-left: 2px solid #cbd5e1; background: repeating-linear-gradient(to right, transparent, transparent calc(10% - 1px), #f1f5f9 calc(10% - 1px), #f1f5f9 10%);">
-                                    @if($cnt > 0)
-                                        <div class="d-flex align-items-center justify-content-end px-2 fw-bold text-white shadow-sm" style="width: {{ max(3.5, $pct) }}%; height: 28px; background: linear-gradient(180deg, #84cc16 0%, #65a30d 100%); border: 1px solid #3f6212; font-size: 0.8rem;">
-                                            {{ $cnt }}
-                                        </div>
-                                    @else
-                                        <span class="ms-2 small text-muted fw-semibold">0</span>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-                <div class="row mt-2">
-                    <div class="col-md-5"></div>
-                    <div class="col-md-7">
-                        <div class="d-flex justify-content-between text-muted fw-bold" style="font-size: 0.75rem;">
-                            @for($i = 0; $i <= 10; $i++)
-                                <span>{{ (int) round(($cMax / 10) * $i) }}</span>
-                            @endfor
-                        </div>
-                    </div>
-                </div>
-                <div class="mt-4 pt-3 border-top d-flex flex-column align-items-center">
-                    <div class="d-flex flex-column gap-1">
-                        @foreach(array_reverse($commChart['items']) as $item)
-                            <div class="d-flex align-items-center gap-2 fw-bold text-dark" style="font-size: 0.82rem;">
-                                <span style="display: inline-block; width: 12px; height: 12px; background-color: #65a30d; border: 1px solid #3f6212;"></span>
-                                <span>{{ $item['label'] }} ({{ $item['count'] }})</span>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-@endif
-
-@if($nonCommChart && $showNonCommChart)
-    <div class="card border mb-4 shadow-sm" id="section-non-communicable-diseases">
-        <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <div>
-                <h5 class="fw-bold text-dark mb-0">
-                    <i class="bi bi-heart-pulse text-primary me-2"></i>{{ $nonCommChart['title'] }}
-                </h5>
-                <small class="text-muted">Official NVC Health Services Department Non-Communicable Diseases Horizontal Bar Chart Report ({{ number_format($nonCommChart['total']) }} Total Cases)</small>
-            </div>
-            <a href="{{ route('reports.clinic.print-non-communicable-diseases', array_merge(request()->query(), ['year' => $nonCommChart['year']])) }}" target="_blank" class="btn btn-sm px-3 text-white" style="background-color: #306cac; border-color: #27588c;">
-                <i class="bi bi-file-earmark-pdf me-1"></i> Print Non-Communicable Diseases (PDF)
-            </a>
-        </div>
-        <div class="card-body p-4">
-            <div class="border rounded p-4 bg-white mx-auto" style="max-width: 960px;">
-                <h5 class="fw-bold text-center text-dark mb-4">{{ $nonCommChart['title'] }}</h5>
-                @php
-                    $ncMax = max(8, (int) ($nonCommChart['max_scale'] ?? 16));
-                @endphp
-                <div class="d-flex flex-column gap-3 my-2">
-                    @foreach($nonCommChart['items'] as $item)
-                        @php
-                            $cnt = (int) $item['count'];
-                            $pct = $ncMax > 0 ? min(100, round(($cnt / $ncMax) * 100, 2)) : 0;
-                        @endphp
-                        <div class="row align-items-center g-2">
-                            <div class="col-md-6 text-md-center fw-bold text-dark" style="font-size: 0.78rem; line-height: 1.25;">
-                                {{ $item['label'] }}
-                            </div>
-                            <div class="col-md-6">
-                                <div class="position-relative d-flex align-items-center" style="height: 28px; border-left: 2px solid #cbd5e1; background: repeating-linear-gradient(to right, transparent, transparent calc(12.5% - 1px), #f1f5f9 calc(12.5% - 1px), #f1f5f9 12.5%);">
-                                    @if($cnt > 0)
-                                        <div class="d-flex align-items-center justify-content-end px-2 fw-bold text-white shadow-sm" style="width: {{ max(4.5, $pct) }}%; height: 22px; background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%); border: 1px solid #1e3a8a; font-size: 0.76rem;">
-                                            {{ $cnt }}
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-                <div class="row mt-2">
-                    <div class="col-md-6"></div>
-                    <div class="col-md-6">
-                        <div class="d-flex justify-content-between text-muted fw-bold" style="font-size: 0.75rem;">
-                            @for($i = 0; $i <= 8; $i++)
-                                <span>{{ (int) round(($ncMax / 8) * $i) }}</span>
-                            @endfor
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-@endif
-
-@if($medDental && $showMedDental)
-    <div class="card border mb-4 shadow-sm" id="section-medical-dental-records">
-        <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <div>
-                <h5 class="fw-bold text-dark mb-0">
-                    <i class="bi bi-table text-success me-2"></i>MEDICAL AND DENTAL RECORDS ({{ $medDental['year'] }})
-                </h5>
-                <small class="text-muted">Official Annual 12-Month Breakdown by Clinical Service Category &amp; Student Department / Classification</small>
-            </div>
-            <a href="{{ route('reports.clinic.print-medical-dental-records', array_merge(request()->query(), ['year' => $medDental['year']])) }}" target="_blank" class="btn btn-sm btn-success px-3">
-                <i class="bi bi-file-earmark-pdf me-1"></i> Print Medical &amp; Dental Records (PDF)
-            </a>
-        </div>
-        <div class="card-body p-3">
-            <div class="table-responsive">
-                <table class="table table-bordered table-sm align-middle mb-0 text-dark" style="font-size: 0.78rem; border-color: #1e293b;">
-                    <thead>
-                        <tr style="background-color: #76923c; color: #000; font-weight: 700; text-align: center;">
-                            <th style="width: 65px; border-color: #1e293b;">YEAR</th>
-                            <th colspan="2" style="min-width: 220px; border-color: #1e293b;">SERVICES</th>
-                            @foreach($medDental['months'] as $mName)
-                                <th style="min-width: 68px; border-color: #1e293b;">{{ $mName }}</th>
-                            @endforeach
-                            <th style="min-width: 82px; border-color: #1e293b;">TOTAL FOR<br>YEAR</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @php $renderedYearCell = false; @endphp
-                        @foreach($medDental['groups'] as $group)
-                            @php
-                                $gRows = $group['rows'];
-                                $gSpan = count($gRows);
-                                $gBg = $groupBgMap[$group['color']] ?? '#e2e8f0';
-                            @endphp
-                            @foreach($gRows as $rIndex => $row)
-                                <tr>
-                                    @if(! $renderedYearCell)
-                                        <td rowspan="{{ $totalMedDentalRows + 1 }}" class="fw-bold align-bottom text-start" style="background-color: #76923c; color: #000; border-color: #1e293b;">
-                                            {{ $medDental['year'] }}.0
-                                        </td>
-                                        @php $renderedYearCell = true; @endphp
-                                    @endif
-
-                                    @if($rIndex === 0)
-                                        <td rowspan="{{ $gSpan }}" class="fw-bold text-center align-middle" style="background-color: {{ $gBg }}; border-color: #1e293b; width: 115px;">
-                                            {{ $group['group'] }}
-                                        </td>
-                                    @endif
-
-                                    <td class="fw-semibold text-center" style="background-color: {{ $gBg }}; border-color: #1e293b; width: 125px;">
-                                        {{ $row['label'] }}
-                                    </td>
-
-                                    @for($m = 1; $m <= 12; $m++)
-                                        <td class="text-end fw-semibold" style="border-color: #1e293b;">
-                                            {{ number_format($row['months'][$m] ?? 0) }}
-                                        </td>
-                                    @endfor
-
-                                    <td class="text-end fw-bold" style="background-color: #f5cc26; border-color: #1e293b;">
-                                        {{ number_format($row['total']) }}
-                                    </td>
-                                </tr>
-                            @endforeach
-                        @endforeach
-
-                        <tr class="fw-bold">
-                            <td colspan="2" class="text-center" style="background-color: #76923c; color: #000; border-color: #1e293b;">
-                                TOTAL FOR THE MONTH
-                            </td>
-                            @for($m = 1; $m <= 12; $m++)
-                                <td class="text-end" style="background-color: #f5cc26; border-color: #1e293b;">
-                                    {{ number_format($medDental['monthly_totals'][$m] ?? 0) }}
-                                </td>
-                            @endfor
-                            <td class="text-end" style="background-color: #946c1e; color: #000; border-color: #1e293b;">
-                                {{ number_format($medDental['grand_total']) }}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-@endif
-
-@if($loginRec && $showLoginRec)
-    <div class="card border mb-4 shadow-sm" id="section-login-records">
-        <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <div>
-                <h5 class="fw-bold text-dark mb-0">
-                    <i class="bi bi-journal-check text-warning me-2"></i>MEDICAL AND DENTAL LOG-IN RECORDS ({{ $loginRec['year'] }})
-                </h5>
-                <small class="text-muted">Official Annual 12-Month Log-In Tally Across All Employee &amp; Student Academic Programs</small>
-            </div>
-            <a href="{{ route('reports.clinic.print-login-records', array_merge(request()->query(), ['year' => $loginRec['year']])) }}" target="_blank" class="btn btn-sm btn-warning text-dark fw-semibold px-3">
-                <i class="bi bi-file-earmark-pdf me-1"></i> Print Log-In Records (PDF)
-            </a>
-        </div>
-        <div class="card-body p-3">
-            <div class="table-responsive">
-                <table class="table table-bordered table-sm align-middle mb-0 text-dark" style="font-size: 0.78rem; border-color: #1e293b;">
-                    <thead>
-                        <tr style="background-color: #76923c; color: #000; font-weight: 700; text-align: center;">
-                            <th style="width: 65px; border-color: #1e293b;">YEAR</th>
-                            <th colspan="2" style="min-width: 220px; border-color: #1e293b;">SERVICES</th>
-                            @foreach($loginRec['months'] as $mName)
-                                <th style="min-width: 68px; border-color: #1e293b;">{{ $mName }}</th>
-                            @endforeach
-                            <th style="min-width: 82px; border-color: #1e293b;">TOTAL FOR<br>YEAR</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @php $loginRowCount = count($loginRec['rows']); @endphp
-                        @foreach($loginRec['rows'] as $rIndex => $row)
-                            <tr>
-                                @if($rIndex === 0)
-                                    <td rowspan="{{ $loginRowCount + 1 }}" class="fw-bold align-bottom text-start" style="background-color: #76923c; color: #000; border-color: #1e293b;">
-                                        {{ $loginRec['year'] }}.0
-                                    </td>
-                                    <td rowspan="{{ $loginRowCount }}" style="background-color: #d9acaa; border-color: #1e293b; width: 95px;"></td>
-                                @endif
-
-                                <td class="fw-semibold text-center" style="background-color: #e6b8b7; border-color: #1e293b; width: 135px;">
-                                    {{ $row['label'] }}
-                                </td>
-
-                                @for($m = 1; $m <= 12; $m++)
-                                    <td class="text-center fw-semibold" style="border-color: #1e293b;">
-                                        {{ number_format($row['months'][$m] ?? 0) }}
-                                    </td>
-                                @endfor
-
-                                <td class="text-center fw-bold" style="background-color: #f5cc26; border-color: #1e293b;">
-                                    {{ number_format($row['total']) }}
-                                </td>
-                            </tr>
-                        @endforeach
-
-                        <tr class="fw-bold">
-                            <td colspan="2" class="text-center" style="background-color: #76923c; color: #000; border-color: #1e293b;">
-                                TOTAL FOR THE MONTH
-                            </td>
-                            @for($m = 1; $m <= 12; $m++)
-                                <td class="text-center" style="background-color: #f5cc26; border-color: #1e293b;">
-                                    {{ number_format($loginRec['monthly_totals'][$m] ?? 0) }}
-                                </td>
-                            @endfor
-                            <td class="text-center" style="background-color: #946c1e; color: #000; border-color: #1e293b;">
-                                {{ number_format($loginRec['grand_total']) }}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-@endif
-
-

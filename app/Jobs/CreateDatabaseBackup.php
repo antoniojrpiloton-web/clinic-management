@@ -17,18 +17,12 @@ class CreateDatabaseBackup implements ShouldQueue
 {
     use Queueable;
 
-    /**
-     * Backups are not retried automatically to avoid duplicate dumps.
-     */
     public int $tries = 1;
 
     public int $timeout = 900;
 
     public function __construct(public Backup $backup) {}
 
-    /**
-     * Execute the job.
-     */
     public function handle(BackupService $backupService): void
     {
         $backupService->run($this->backup);
@@ -36,9 +30,6 @@ class CreateDatabaseBackup implements ShouldQueue
         Notification::send($this->recipients(), new BackupCompleted($this->backup));
     }
 
-    /**
-     * Handle a job failure.
-     */
     public function failed(?Throwable $exception): void
     {
         $this->backup->update([
@@ -50,11 +41,6 @@ class CreateDatabaseBackup implements ShouldQueue
         Notification::send($this->recipients(), new BackupFailed($this->backup));
     }
 
-    /**
-     * Active users allowed to manage backups.
-     *
-     * @return Collection<int, User>
-     */
     protected function recipients(): Collection
     {
         return User::active()->permission('backups.view')->get();

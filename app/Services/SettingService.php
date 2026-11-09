@@ -16,7 +16,7 @@ class SettingService
         'university_address' => ['group' => 'university', 'value' => 'Narciso Street, Surigao City, Surigao del Norte, Philippines'],
         'university_president' => ['group' => 'university', 'value' => 'Dr. Gregorio Z. Gamboa Jr.'],
         'university_website' => ['group' => 'university', 'value' => 'https://snsu.edu.ph'],
-        'clinic_name' => ['group' => 'general', 'value' => 'SNSU University Clinic'],
+        'clinic_name' => ['group' => 'general', 'value' => 'University Health Department'],
         'clinic_head' => ['group' => 'general', 'value' => 'Dr. Maria Elena Santos, MD'],
         'clinic_license_no' => ['group' => 'general', 'value' => 'DOH-R13-CLN-2026-088'],
         'clinic_email' => ['group' => 'general', 'value' => 'clinic@snsu.edu.ph'],
@@ -57,6 +57,19 @@ class SettingService
         'logo_print_variant' => ['group' => 'branding', 'value' => 'seal'],
         'logo_print_size' => ['group' => 'branding', 'value' => 'medium'],
         'logo_print_position' => ['group' => 'branding', 'value' => 'left'],
+        'feature_lock_display_mode' => ['group' => 'features', 'value' => 'badge'],
+        'feature_dashboard' => ['group' => 'features', 'value' => '1'],
+        'feature_patients' => ['group' => 'features', 'value' => '1'],
+        'feature_logbook' => ['group' => 'features', 'value' => '1'],
+        'feature_medical_consultations' => ['group' => 'features', 'value' => '0'],
+        'feature_dental_consultations' => ['group' => 'features', 'value' => '0'],
+        'feature_emergency_first_aid' => ['group' => 'features', 'value' => '0'],
+        'feature_physical_examinations' => ['group' => 'features', 'value' => '0'],
+        'feature_pharmacy_dispensing' => ['group' => 'features', 'value' => '0'],
+        'feature_pharmacy_inventory' => ['group' => 'features', 'value' => '0'],
+        'feature_reports_analytics' => ['group' => 'features', 'value' => '0'],
+        'feature_administration' => ['group' => 'features', 'value' => '0'],
+        'feature_configuration_backups' => ['group' => 'features', 'value' => '0'],
     ];
 
     protected ?array $settings = null;

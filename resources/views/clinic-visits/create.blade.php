@@ -11,8 +11,8 @@
 
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
-            <h1 class="dashboard-heading mb-1">Log Patient Visit (Intake Register)</h1>
-            <p class="dashboard-subheading mb-0">Record student or employee clinic walk-in, routine health service, blood pressure check, or clearance.</p>
+            <h1 class="dashboard-heading mb-1">Log Patient Visit</h1>
+            <p class="dashboard-subheading mb-0">Record student or employee clinic walk-in, health service, or medical checkup.</p>
         </div>
 
         <a href="{{ route('clinic-visits.index') }}" class="btn btn-outline-secondary btn-sm px-3 py-2">
@@ -22,6 +22,26 @@
 
     <form method="POST" action="{{ route('clinic-visits.store') }}" novalidate>
         @csrf
+
+        @if ($appointmentId ?? request('appointment_id'))
+            <input type="hidden" name="appointment_id" value="{{ $appointmentId ?? request('appointment_id') }}">
+            <div class="alert alert-primary py-2 px-3 small d-flex align-items-center mb-3">
+                <i class="bi bi-calendar-check fs-5 me-2"></i>
+                <div>
+                    <strong>Linked Appointment:</strong> Saving this visit will complete the scheduled appointment.
+                </div>
+            </div>
+        @endif
+
+        @if ($logbookId ?? request('logbook_id'))
+            <input type="hidden" name="logbook_id" value="{{ $logbookId ?? request('logbook_id') }}">
+            <div class="alert alert-info py-2 px-3 small d-flex align-items-center mb-3">
+                <i class="bi bi-link-45deg fs-5 me-2"></i>
+                <div>
+                    <strong>Linked Logbook Entry:</strong> Saving this visit will link to the entrance logbook entry and mark it completed.
+                </div>
+            </div>
+        @endif
 
         <div class="card border mb-4">
             <div class="card-header bg-white py-3">
@@ -71,13 +91,13 @@
             <div class="card-header bg-white py-3">
                 <div class="d-flex align-items-center gap-2">
                     <i class="bi bi-chat-left-text text-primary fs-5"></i>
-                    <span class="fw-bold text-dark">Chief Complaint &amp; Intake Notes</span>
+                    <span class="fw-bold text-dark">Complaint &amp; Notes</span>
                 </div>
             </div>
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-12">
-                        <label class="form-label required">Chief Complaint / Visit Purpose</label>
+                        <label class="form-label required">Chief Complaint / Reason for Visit</label>
                         <textarea name="chief_complaint" id="chief_complaint" rows="3" class="form-control @error('chief_complaint') is-invalid @enderror" placeholder="Describe the reason for visit, reported symptoms, or service requested..." required>{{ old('chief_complaint', $visit->chief_complaint) }}</textarea>
                         @error('chief_complaint')
                             <div class="invalid-feedback">{{ $message }}</div>

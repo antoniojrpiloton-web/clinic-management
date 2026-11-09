@@ -158,7 +158,7 @@ class ClinicFpdf extends FPDF
             $this->drawHeaderBranding();
 
             $inst = $this->conv($this->settings['university_name'] ?? 'Surigao del Norte State University');
-            $dept = $this->conv(strtoupper((string) ($this->settings['clinic_name'] ?? 'SNSU UNIVERSITY CLINIC')));
+            $dept = $this->conv(strtoupper((string) ($this->settings['clinic_name'] ?? 'UNIVERSITY HEALTH DEPARTMENT')));
             $addr1 = $this->conv($this->settings['clinic_address'] ?? 'Ground Floor, Student Services Center, SNSU Main Campus');
             $addr2 = $this->conv($this->settings['university_address'] ?? ($this->settings['university_campus'] ?? 'Narciso Street, Surigao City, Surigao del Norte, Philippines'));
 
@@ -179,7 +179,7 @@ class ClinicFpdf extends FPDF
         }
 
         $uni = $this->conv($this->settings['university_name'] ?? 'SURIGAO DEL NORTE STATE UNIVERSITY');
-        $dept = $this->conv($this->settings['clinic_name'] ?? 'HEALTH SERVICES DEPARTMENT / UNIVERSITY CLINIC');
+        $dept = $this->conv($this->settings['clinic_name'] ?? 'University Health Department');
         $addr1 = $this->conv($this->settings['university_campus'] ?? 'Main Campus, Surigao City');
         $addr2 = $this->conv($this->settings['university_address'] ?? 'Narciso Street, Surigao City, Surigao del Norte');
         $contact = $this->conv(($this->settings['clinic_phone'] ?? '+63 (86) 826-0135').' | '.($this->settings['clinic_email'] ?? 'clinic@snsu.edu.ph'));
@@ -448,11 +448,6 @@ class ClinicFpdf extends FPDF
         return false;
     }
 
-    /**
-     * Draw a dynamic-height table row where every cell shares the tallest wrapped height and a complete border.
-     *
-     * @param  list<array{w: float, text: string, align?: string, style?: string, size?: float, fill?: bool, family?: string}>  $cells
-     */
     public function drawRow(array $cells, float $lineHeight = 4.3, float $minHeight = 5.5, float $padY = 1.0): float
     {
         $maxLines = 1;

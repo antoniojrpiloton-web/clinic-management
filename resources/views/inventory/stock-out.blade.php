@@ -1,4 +1,6 @@
 <x-layouts.app title="Deduct Stock (Stock-Out)">
+    @include('partials.plugins.select2')
+
     <div class="breadcrumb-nav">
         <i class="bi bi-house"></i>
         <span>&gt;</span>
@@ -12,7 +14,7 @@
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
             <h1 class="dashboard-heading mb-1">Deduct Medicine Stock (Stock-Out / Adjustment)</h1>
-            <p class="dashboard-subheading mb-0">Record non-dispensing inventory write-offs, damaged stock, expired goods, or count reconciliations.</p>
+            <p class="dashboard-subheading mb-0">Record non-dispensing inventory write-offs, damaged stock, expired goods, or count reconciliations with server-side batch lookup.</p>
         </div>
 
         <div class="d-flex align-items-center gap-2">
@@ -52,17 +54,28 @@
                     <div class="card-body">
                         <div class="row g-3">
                             <div class="col-12">
-                                <label class="form-label required">Select Medicine</label>
-                                <select name="medicine_id" id="medicine_select" class="form-select @error('medicine_id') is-invalid @enderror" required>
-                                    <option value="">-- Choose Medicine --</option>
-                                    @foreach($medicines as $med)
-                                        <option value="{{ $med->id }}" data-unit="{{ $med->unit }}" @selected(old('medicine_id', $preselectedMedicine?->id) == $med->id)>
-                                            {{ $med->display_name }} (Total Available: {{ $med->stock_on_hand }} {{ $med->unit }}s)
+                                <label class="form-label required">Select Medicine (Server-Side Search)</label>
+                                <select
+                                    name="medicine_id"
+                                    id="medicine_select"
+                                    class="form-select @error('medicine_id') is-invalid @enderror"
+                                    data-select2
+                                    data-ajax-url="{{ route('select2.medicines') }}"
+                                    data-placeholder="Search medicine by generic name, brand, or code..."
+                                    required
+                                >
+                                    @php
+                                        $selectedMed = $preselectedMedicine ?? (old('medicine_id') ? \App\Models\Medicine::find(old('medicine_id')) : null);
+                                    @endphp
+                                    @if ($selectedMed)
+                                        <option value="{{ $selectedMed->id }}" selected data-unit="{{ $selectedMed->unit }}">
+                                            {{ $selectedMed->display_name }} (Total Available: {{ $selectedMed->stock_on_hand }} {{ $selectedMed->unit }}s)
                                         </option>
-                                    @endforeach
+                                    @endif
                                 </select>
+                                <div class="form-text small text-muted">Type at least 1-2 characters to search active products.</div>
                                 @error('medicine_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>
 
@@ -81,8 +94,9 @@
                                 <label class="form-label required">Quantity to Deduct</label>
                                 <div class="input-group">
                                     <input type="number" name="quantity" id="deduct_qty" min="1" value="{{ old('quantity', 1) }}" class="form-control @error('quantity') is-invalid @enderror" required>
-                                    <span class="input-group-text bg-light text-muted" id="unit_addon">units</span>
+                                    <span class="input-group-text bg-light text-muted" id="unit_addon">{{ $selectedMed ? $selectedMed->unit.'s' : 'units' }}</span>
                                 </div>
+                                <div class="form-text small" id="qty_max_hint">Enter quantity within available batch stock.</div>
                                 @error('quantity')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
@@ -146,7 +160,7 @@
                         </div>
                         <div class="alert alert-warning border-warning small mt-3 mb-0">
                             <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                            Stock-out cannot be reversed directly; a subsequent Stock-In receipt or audit transaction would be required.
+                            Stock-out deductions directly reduce available inventory balances and cannot be reversed without a counter-entry.
                         </div>
                     </div>
                 </div>
@@ -168,26 +182,26 @@
     @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', function () {
-                const medSelect = document.getElementById('medicine_select');
+                const medSelect = $('#medicine_select');
                 const batchSelect = document.getElementById('batch_select');
                 const qtyInput = document.getElementById('deduct_qty');
                 const unitAddon = document.getElementById('unit_addon');
                 const previewAvail = document.getElementById('preview_available');
                 const previewRem = document.getElementById('preview_remaining');
+                const batchInfo = document.getElementById('batch_info');
                 const preselectedBatchId = "{{ old('batch_id', request()->query('batch_id')) }}";
 
-                function loadBatches() {
-                    const medId = medSelect.value;
-                    const opt = medSelect.options[medSelect.selectedIndex];
-                    if (opt && opt.dataset.unit) {
-                        unitAddon.textContent = opt.dataset.unit + 's';
+                function loadBatches(medId, unitName) {
+                    if (unitName) {
+                        unitAddon.textContent = unitName + 's';
                     }
 
-                    batchSelect.innerHTML = '<option value="">-- Loading batches... --</option>';
+                    batchSelect.innerHTML = '<option value="">-- Loading active batches... --</option>';
                     if (!medId) {
                         batchSelect.innerHTML = '<option value="">-- Select medicine first --</option>';
                         previewAvail.textContent = '0';
                         previewRem.textContent = '0';
+                        batchInfo.textContent = '';
                         return;
                     }
 
@@ -196,13 +210,18 @@
                         .then(data => {
                             batchSelect.innerHTML = '<option value="">-- Choose Batch / Lot --</option>';
                             if (!data.results || data.results.length === 0) {
-                                batchSelect.innerHTML = '<option value="">-- No batches available with remaining stock --</option>';
+                                batchSelect.innerHTML = '<option value="">-- No active unexpired batches with stock --</option>';
+                                previewAvail.textContent = '0';
+                                previewRem.textContent = '0';
+                                batchInfo.textContent = 'No available stock to deduct from.';
                                 return;
                             }
                             data.results.forEach(b => {
                                 const optEl = document.createElement('option');
                                 optEl.value = b.id;
-                                optEl.textContent = `${b.batch_number} (Exp: ${b.expiration_date} | Stock: ${b.quantity_remaining})`;
+                                const bNum = b.batch_number || b.text;
+                                const bExp = b.expiration_date ? `Exp: ${b.expiration_date}` : '';
+                                optEl.textContent = `${bNum} (${bExp} • Available: ${b.quantity_remaining})`;
                                 optEl.dataset.qty = b.quantity_remaining;
                                 if (String(b.id) === String(preselectedBatchId)) {
                                     optEl.selected = true;
@@ -219,22 +238,30 @@
                 function calculatePreview() {
                     const batchOpt = batchSelect.options[batchSelect.selectedIndex];
                     const avail = batchOpt && batchOpt.dataset.qty ? parseInt(batchOpt.dataset.qty, 10) : 0;
+                    qtyInput.max = avail > 0 ? avail : 1;
                     const deduct = parseInt(qtyInput.value, 10) || 0;
-                    previewAvail.textContent = avail;
+                    previewAvail.textContent = avail.toLocaleString();
                     const rem = avail - deduct;
-                    previewRem.textContent = rem >= 0 ? rem : 'Insufficient!';
-                    previewRem.className = rem < 0 ? 'fw-bold text-danger' : 'fw-bold text-success';
+                    previewRem.textContent = rem >= 0 ? rem.toLocaleString() : 'Insufficient stock!';
+                    previewRem.className = rem < 0 ? 'fw-bold text-danger' : 'fw-bold text-primary';
                 }
 
-                medSelect.addEventListener('change', loadBatches);
+                medSelect.on('select2:select', function (e) {
+                    const data = e.params.data;
+                    loadBatches(data.id, data.unit);
+                });
+
+                medSelect.on('select2:clear', function () {
+                    loadBatches(null, null);
+                });
+
                 batchSelect.addEventListener('change', calculatePreview);
                 qtyInput.addEventListener('input', calculatePreview);
 
-                if (medSelect.value) {
-                    loadBatches();
+                if (medSelect.val()) {
+                    loadBatches(medSelect.val(), null);
                 }
             });
         </script>
     @endpush
 </x-layouts.app>
-

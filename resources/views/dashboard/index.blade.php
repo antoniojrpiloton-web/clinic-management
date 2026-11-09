@@ -6,7 +6,7 @@
         }
         .dash-skeleton {
             display: inline-block;
-            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+            background: linear-gradient(90deg, #eff2f0 25%, #e2e8e4 50%, #eff2f0 75%);
             background-size: 200% 100%;
             animation: dashboardShimmer 1.4s infinite linear;
             border-radius: 6px;
@@ -44,8 +44,8 @@
         }
         .db-stat-tile {
             background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
+            border: 1px solid #dce3de;
+            border-radius: 8px;
             padding: 0.75rem 0.9rem;
             transition: transform 0.15s ease, box-shadow 0.15s ease;
             text-decoration: none;
@@ -53,9 +53,68 @@
             height: 100%;
         }
         .db-stat-tile:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(24, 38, 32, 0.05);
+            border-color: #b7c6bd;
+        }
+        .quick-launch-tile {
+            background: #fbfdfc;
+            border: 1px solid #e1e7e3;
+            border-radius: 8px;
+            padding: 0.75rem 0.65rem;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            height: 100%;
+            transition: all 0.15s ease-in-out;
+            color: inherit;
+        }
+        .quick-launch-tile:hover {
+            background: #ffffff;
+            border-color: #1b5e3a;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
-            border-color: #cbd5e1;
+            box-shadow: 0 4px 12px rgba(27, 94, 58, 0.08);
+            color: #1b5e3a;
+        }
+        .quick-launch-tile .ql-icon-box {
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            margin-bottom: 0.45rem;
+            transition: transform 0.15s ease;
+        }
+        .quick-launch-tile:hover .ql-icon-box {
+            transform: scale(1.08);
+        }
+        .ql-icon-box.ql-green { background: #eaf3ee; color: #1b5e3a; }
+        .ql-icon-box.ql-blue { background: #eaf2f7; color: #1f5f8b; }
+        .ql-icon-box.ql-forest { background: #e3ede7; color: #154d2f; }
+        .ql-icon-box.ql-cyan { background: #e6f4f5; color: #1e7077; }
+        .ql-icon-box.ql-teal { background: #e5f5f0; color: #196f53; }
+        .ql-icon-box.ql-amber { background: #fdf5ea; color: #9c6014; }
+        .ql-icon-box.ql-red { background: #fbeeed; color: #ab2721; }
+        .ql-icon-box.ql-purple { background: #f2eef8; color: #5a3d7a; }
+        .ql-icon-box.ql-gray { background: #edf0ee; color: #44544b; }
+        .quick-launch-tile .ql-label {
+            font-weight: 600;
+            font-size: 0.82rem;
+            color: #1a2921;
+            line-height: 1.25;
+            margin-bottom: 0.15rem;
+        }
+        .quick-launch-tile:hover .ql-label {
+            color: #1b5e3a;
+        }
+        .quick-launch-tile .ql-sub {
+            font-size: 0.7rem;
+            color: #63776b;
+            line-height: 1.2;
         }
     </style>
 
@@ -78,8 +137,8 @@
 
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
-            <h1 class="dashboard-heading mb-1">NVC Health Services Executive Dashboard</h1>
-            <p class="dashboard-subheading mb-0">Data aggregation &amp; real-time clinical monitoring across patient registries, consultations, dental cards, and pharmacy inventory.</p>
+            <h1 class="dashboard-heading mb-1">Clinic Dashboard</h1>
+            <p class="dashboard-subheading mb-0">Overview of patient visits, appointments, and medicine inventory.</p>
         </div>
 
         <div class="d-flex flex-wrap gap-2">
@@ -90,8 +149,144 @@
                 <i class="bi bi-capsule me-1"></i> Dispense Medicine
             </a>
             <a href="{{ route('reports.clinic.index') }}" class="btn btn-outline-secondary btn-sm px-3 py-2">
-                <i class="bi bi-file-earmark-bar-graph me-1"></i> Morbidity Reports
+                <i class="bi bi-file-earmark-bar-graph me-1"></i> Clinic Reports
             </a>
+        </div>
+    </div>
+
+    <div class="card mb-4 border-0 shadow-sm" style="background: #ffffff; border: 1px solid #dce3de !important; border-radius: 10px;">
+        <div class="card-body p-3">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 pb-2 border-bottom">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="d-inline-flex align-items-center justify-content-center rounded bg-primary-subtle text-primary" style="width: 28px; height: 28px;">
+                        <i class="bi bi-lightning-charge-fill"></i>
+                    </span>
+                    <span class="fw-bold text-dark" style="font-size: 0.95rem;">Quick Actions</span>
+                </div>
+                <small class="text-muted">Direct access to daily clinical and inventory operations</small>
+            </div>
+
+            <div class="row g-2">
+                <div class="col-6 col-sm-4 col-md-3 col-xl-2">
+                    <a href="{{ route('patients.create') }}" class="quick-launch-tile">
+                        <div class="ql-icon-box ql-green">
+                            <i class="bi bi-person-plus-fill"></i>
+                        </div>
+                        <div class="ql-label">Register Patient</div>
+                        <small class="ql-sub">New Patient Record</small>
+                    </a>
+                </div>
+
+                <div class="col-6 col-sm-4 col-md-3 col-xl-2">
+                    <a href="{{ route('clinic-logbooks.index') }}" class="quick-launch-tile">
+                        <div class="ql-icon-box ql-blue">
+                            <i class="bi bi-journal-text"></i>
+                        </div>
+                        <div class="ql-label">Daily Logbook</div>
+                        <small class="ql-sub">Walk-In &amp; Check-In</small>
+                    </a>
+                </div>
+
+                <div class="col-6 col-sm-4 col-md-3 col-xl-2">
+                    <a href="{{ route('medical-consultations.create') }}" class="quick-launch-tile">
+                        <div class="ql-icon-box ql-forest">
+                            <i class="bi bi-clipboard2-pulse-fill"></i>
+                        </div>
+                        <div class="ql-label">Medical Consult</div>
+                        <small class="ql-sub">Clinical Examination</small>
+                    </a>
+                </div>
+
+                <div class="col-6 col-sm-4 col-md-3 col-xl-2">
+                    <a href="{{ route('dental-consultations.create') }}" class="quick-launch-tile">
+                        <div class="ql-icon-box ql-cyan">
+                            <i class="bi bi-emoji-smile-fill"></i>
+                        </div>
+                        <div class="ql-label">Dental Checkup</div>
+                        <small class="ql-sub">Odontogram &amp; Oral</small>
+                    </a>
+                </div>
+
+                <div class="col-6 col-sm-4 col-md-3 col-xl-2">
+                    <a href="{{ route('physical-examinations.create') }}" class="quick-launch-tile">
+                        <div class="ql-icon-box ql-teal">
+                            <i class="bi bi-file-earmark-medical-fill"></i>
+                        </div>
+                        <div class="ql-label">Physical Exam</div>
+                        <small class="ql-sub">Annual PE Form</small>
+                    </a>
+                </div>
+
+                <div class="col-6 col-sm-4 col-md-3 col-xl-2">
+                    <a href="{{ route('inventory.dispensings.create') }}" class="quick-launch-tile">
+                        <div class="ql-icon-box ql-amber">
+                            <i class="bi bi-capsule"></i>
+                        </div>
+                        <div class="ql-label">Dispense Meds</div>
+                        <small class="ql-sub">Pharmacy Slip</small>
+                    </a>
+                </div>
+
+                <div class="col-6 col-sm-4 col-md-3 col-xl-2">
+                    <a href="{{ route('inventory.stock-in') }}" class="quick-launch-tile">
+                        <div class="ql-icon-box ql-green">
+                            <i class="bi bi-box-arrow-in-down"></i>
+                        </div>
+                        <div class="ql-label">Stock-In Delivery</div>
+                        <small class="ql-sub">Receive Batch</small>
+                    </a>
+                </div>
+
+                <div class="col-6 col-sm-4 col-md-3 col-xl-2">
+                    <a href="{{ route('inventory.stock-out') }}" class="quick-launch-tile">
+                        <div class="ql-icon-box ql-red">
+                            <i class="bi bi-box-arrow-up"></i>
+                        </div>
+                        <div class="ql-label">Stock-Out / Loss</div>
+                        <small class="ql-sub">Disposal &amp; Adjustment</small>
+                    </a>
+                </div>
+
+                <div class="col-6 col-sm-4 col-md-3 col-xl-2">
+                    <a href="{{ route('reports.clinic.index') }}" class="quick-launch-tile">
+                        <div class="ql-icon-box ql-blue">
+                            <i class="bi bi-bar-chart-line-fill"></i>
+                        </div>
+                        <div class="ql-label">Morbidity Report</div>
+                        <small class="ql-sub">Clinical Analytics</small>
+                    </a>
+                </div>
+
+                <div class="col-6 col-sm-4 col-md-3 col-xl-2">
+                    <a href="{{ route('reports.clinic.communicable') }}" class="quick-launch-tile">
+                        <div class="ql-icon-box ql-purple">
+                            <i class="bi bi-shield-virus"></i>
+                        </div>
+                        <div class="ql-label">Communicable</div>
+                        <small class="ql-sub">Disease Registry</small>
+                    </a>
+                </div>
+
+                <div class="col-6 col-sm-4 col-md-3 col-xl-2">
+                    <a href="{{ route('reports.clinic.medical-dental') }}" class="quick-launch-tile">
+                        <div class="ql-icon-box ql-teal">
+                            <i class="bi bi-folder2-open"></i>
+                        </div>
+                        <div class="ql-label">Clinical Records</div>
+                        <small class="ql-sub">Medical &amp; Dental</small>
+                    </a>
+                </div>
+
+                <div class="col-6 col-sm-4 col-md-3 col-xl-2">
+                    <a href="{{ route('audit-logs.index') }}" class="quick-launch-tile">
+                        <div class="ql-icon-box ql-gray">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <div class="ql-label">Audit Logs</div>
+                        <small class="ql-sub">Security Audit Trail</small>
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -119,7 +314,7 @@
         <div class="col-sm-6 col-xl-3">
             <div class="kpi-card">
                 <div class="d-flex justify-content-between align-items-start">
-                    <span class="kpi-label">Clientele Masterlist</span>
+                    <span class="kpi-label">Total Patients</span>
                     <span class="kpi-icon-box green"><i class="bi bi-people"></i></span>
                 </div>
                 <div class="kpi-value" data-kpi="total_patients">

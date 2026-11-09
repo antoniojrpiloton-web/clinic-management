@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\FeatureControlService;
 use App\Services\SettingService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\Paginator;
@@ -17,18 +18,13 @@ use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
         $this->app->singleton(SettingService::class);
+        $this->app->singleton(FeatureControlService::class);
         $this->app->singleton(AuditLogger::class);
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
         Schema::defaultStringLength(191);
@@ -37,6 +33,8 @@ class AppServiceProvider extends ServiceProvider
 
         Blade::component('layouts.app', 'layouts.app');
         Blade::component('layouts.guest', 'layouts.guest');
+        Blade::component('layouts.pos', 'layouts.pos');
+        Blade::component('layouts.calendar', 'layouts.calendar');
 
         Model::preventLazyLoading(! $this->app->isProduction());
 
@@ -46,8 +44,9 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::before(fn (User $user): ?bool => $user->isSuperAdmin() ? true : null);
 
-        View::composer(['layouts.app', 'layouts.guest'], function ($view): void {
+        View::composer(['layouts.app', 'layouts.guest', 'layouts.pos', 'components.sidebar'], function ($view): void {
             $view->with('appSettings', $this->app->make(SettingService::class)->all());
+            $view->with('featureControl', $this->app->make(FeatureControlService::class));
         });
 
         View::composer('components.topbar', function ($view): void {

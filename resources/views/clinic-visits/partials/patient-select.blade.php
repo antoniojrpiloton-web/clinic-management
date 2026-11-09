@@ -8,7 +8,7 @@
     <div class="card-header bg-white py-3">
         <div class="d-flex align-items-center gap-2">
             <i class="bi bi-person-vcard text-primary fs-5"></i>
-            <span class="fw-bold text-dark">Patient &amp; Attending Provider</span>
+            <span class="fw-bold text-dark">Patient &amp; Doctor / Nurse</span>
         </div>
     </div>
     <div class="card-body">
@@ -30,11 +30,11 @@
                 @error('patient_id')
                     <div class="invalid-feedback d-block">{{ $message }}</div>
                 @enderror
-                <small class="text-muted d-block mt-1">Patient classification (Student/Employee, College, Program, Year/Department) will be automatically stamped into this transaction record.</small>
+                <small class="text-muted d-block mt-1">Patient details will be saved with this record.</small>
             </div>
 
             <div class="col-md-5">
-                <label class="form-label">Attending Health Care Provider / Clinician</label>
+                <label class="form-label">Doctor or Nurse</label>
                 <select name="clinician_id" id="clinician_id" class="form-select @error('clinician_id') is-invalid @enderror" data-ajax-url="{{ route('select2.clinicians') }}" data-placeholder="Search doctor or nurse...">
                     @php
                         $cId = old('clinician_id', $visit?->clinician_id ?? $defaultClinician?->id);

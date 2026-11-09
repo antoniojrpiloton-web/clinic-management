@@ -11,11 +11,6 @@ class BackupService
 {
     public const DIRECTORY = 'backups';
 
-    /**
-     * Dump the configured MySQL database to a gzip-compressed file.
-     *
-     * @throws RuntimeException
-     */
     public function run(Backup $backup): Backup
     {
         $connection = config('database.connections.'.config('database.default'));
@@ -84,9 +79,6 @@ class BackupService
         $backup->delete();
     }
 
-    /**
-     * Stream-compress a file with gzip and remove the source.
-     */
     protected function compress(string $source, string $destination): void
     {
         $input = fopen($source, 'rb');

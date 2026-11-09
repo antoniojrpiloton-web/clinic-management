@@ -12,9 +12,6 @@ class LogAuthenticationEvent
 {
     public function __construct(protected AuditLogger $auditLogger) {}
 
-    /**
-     * Record authentication activity in the audit trail.
-     */
     public function handle(Login|Logout|Failed|PasswordReset $event): void
     {
         match (true) {

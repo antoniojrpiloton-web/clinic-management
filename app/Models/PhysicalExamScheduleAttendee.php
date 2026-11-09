@@ -12,9 +12,6 @@ class PhysicalExamScheduleAttendee extends Model
     use HasFactory;
     use HasObfuscatedRouteKey;
 
-    /**
-     * @var array<string, array{label: string, badge: string}>
-     */
     public const STATUSES = [
         'pending' => ['label' => 'Pending', 'badge' => 'badge-amber'],
         'attended' => ['label' => 'Examined', 'badge' => 'badge-green'],

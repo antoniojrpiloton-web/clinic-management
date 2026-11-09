@@ -13,9 +13,6 @@ use Illuminate\Console\Command;
 #[Description('Delete database backups older than the configured retention period')]
 class PruneBackups extends Command
 {
-    /**
-     * Execute the console command.
-     */
     public function handle(SettingService $settings, BackupService $backupService): int
     {
         $days = max(1, (int) $settings->get('backup_retention_days', 30));

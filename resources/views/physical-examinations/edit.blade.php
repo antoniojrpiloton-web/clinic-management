@@ -101,10 +101,90 @@
         </div>
 
         <div class="card mb-4 border">
+            <div class="card-header bg-white d-flex align-items-center gap-2">
+                <i class="bi bi-clock-history text-primary"></i>
+                <span class="fw-bold text-dark">2. Medical, Surgical &amp; Family History</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold text-dark">Past Medical History (Check all that apply)</label>
+                        <div class="row g-2">
+                            @php
+                                $pastConditions = [
+                                    'Asthma / Wheezing',
+                                    'Hypertension',
+                                    'Diabetes Mellitus',
+                                    'Tuberculosis / Primary Complex',
+                                    'Epilepsy / Convulsion',
+                                    'Heart Disease',
+                                    'Kidney / Urinary Problem',
+                                    'Hepatitis / Jaundice',
+                                    'Allergy / Hay Fever',
+                                    'Ear / Vision Problem',
+                                    'Bleeding Disorder',
+                                    'None'
+                                ];
+                                $selectedPast = old('past_medical_history', $patient->medicalProfile?->past_medical_history ?? []);
+                            @endphp
+                            @foreach ($pastConditions as $condition)
+                                <div class="col-sm-6 col-md-3">
+                                    <label class="pe-check-tile" for="pmh_{{ Str::slug($condition) }}">
+                                        <input class="form-check-input" type="checkbox" name="past_medical_history[]" value="{{ $condition }}" id="pmh_{{ Str::slug($condition) }}" @checked(in_array($condition, (array) $selectedPast, true))>
+                                        <span class="pe-tile-text small text-dark">{{ $condition }}</span>
+                                    </label>
+                                </div>
+                            @endforeach
+                        </div>
+                        <input type="text" name="past_medical_history_notes" value="{{ old('past_medical_history_notes', $patient->medicalProfile?->past_medical_history_notes) }}" class="form-control form-control-sm mt-2" placeholder="Details or other illness not listed above...">
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label fw-semibold text-dark">Family Medical History (Hereditary / Familial)</label>
+                        <div class="row g-2">
+                            @php
+                                $familyConditions = ['Hypertension', 'Diabetes Mellitus', 'Asthma', 'Heart Disease', 'Cancer / Malignancy', 'Stroke / CVA', 'Mental Illness', 'Kidney Disease'];
+                                $selectedFamily = old('family_medical_history', $patient->medicalProfile?->family_medical_history ?? []);
+                            @endphp
+                            @foreach ($familyConditions as $fCond)
+                                <div class="col-sm-6 col-md-3">
+                                    <label class="pe-check-tile" for="fmh_{{ Str::slug($fCond) }}">
+                                        <input class="form-check-input" type="checkbox" name="family_medical_history[]" value="{{ $fCond }}" id="fmh_{{ Str::slug($fCond) }}" @checked(in_array($fCond, (array) $selectedFamily, true))>
+                                        <span class="pe-tile-text small text-dark">{{ $fCond }}</span>
+                                    </label>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Known Drug Allergies</label>
+                        <input type="text" name="allergies_drugs" value="{{ old('allergies_drugs', $patient->medicalProfile?->allergies_drugs ?? $patient->allergies) }}" class="form-control" placeholder="e.g. Penicillin, Aspirin, Sulfa drugs, None">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Known Food &amp; Other Allergies</label>
+                        <input type="text" name="allergies_food" value="{{ old('allergies_food', $patient->medicalProfile?->allergies_food) }}" class="form-control" placeholder="e.g. Seafood, Eggs, Dust, Pollen">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Existing Diagnosed Conditions / Maintenance</label>
+                        <input type="text" name="existing_conditions" value="{{ old('existing_conditions', $patient->medicalProfile?->existing_conditions) }}" class="form-control" placeholder="e.g. Bronchial asthma on salbutamol inhaler">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Current Maintenance Medications</label>
+                        <input type="text" name="current_medications" value="{{ old('current_medications', $patient->medicalProfile?->current_medications) }}" class="form-control" placeholder="e.g. Amlodipine 5mg OD, Multivitamins">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4 border">
             <div class="card-header bg-white d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center gap-2">
                     <i class="bi bi-heart-pulse text-danger"></i>
-                    <span class="fw-bold text-dark">2. Vital Signs &amp; Anthropometrics</span>
+                    <span class="fw-bold text-dark">3. Vital Signs &amp; Anthropometrics</span>
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <span class="small text-muted">Computed BMI:</span>
@@ -188,10 +268,10 @@
                     </div>
 
                     <div class="col-md-2 d-flex align-items-end">
-                        <div class="form-check mb-2">
+                        <label class="pe-check-tile" for="visual_acuity_is_corrected">
                             <input class="form-check-input" type="checkbox" name="visual_acuity_is_corrected" value="1" id="visual_acuity_is_corrected" @checked(old('visual_acuity_is_corrected', $exam->visual_acuity_is_corrected))>
-                            <label class="form-check-label small" for="visual_acuity_is_corrected">With corrective lenses</label>
-                        </div>
+                            <span class="pe-tile-text small text-dark">With corrective lenses</span>
+                        </label>
                     </div>
 
                     <div class="col-md-3">
@@ -258,19 +338,19 @@
                                 <tr>
                                     <td class="fw-semibold text-dark">{{ $label }}</td>
                                     <td>
-                                        <div class="d-flex gap-3">
-                                            <div class="form-check">
+                                        <div class="d-flex flex-wrap gap-2">
+                                            <label class="pe-status-pill pill-normal" for="{{ $key }}_norm">
                                                 <input class="form-check-input" type="radio" name="systems[{{ $key }}][status]" value="normal" id="{{ $key }}_norm" @checked(old("systems.{$key}.status", $currentStatus) === 'normal')>
-                                                <label class="form-check-label text-success fw-semibold small" for="{{ $key }}_norm">Normal</label>
-                                            </div>
-                                            <div class="form-check">
+                                                <span>Normal</span>
+                                            </label>
+                                            <label class="pe-status-pill pill-abnormal" for="{{ $key }}_abn">
                                                 <input class="form-check-input" type="radio" name="systems[{{ $key }}][status]" value="abnormal" id="{{ $key }}_abn" @checked(old("systems.{$key}.status", $currentStatus) === 'abnormal')>
-                                                <label class="form-check-label text-danger fw-semibold small" for="{{ $key }}_abn">Abnormal</label>
-                                            </div>
-                                            <div class="form-check">
+                                                <span>Abnormal</span>
+                                            </label>
+                                            <label class="pe-status-pill pill-deferred" for="{{ $key }}_def">
                                                 <input class="form-check-input" type="radio" name="systems[{{ $key }}][status]" value="deferred" id="{{ $key }}_def" @checked(old("systems.{$key}.status", $currentStatus) === 'deferred')>
-                                                <label class="form-check-label text-muted small" for="{{ $key }}_def">Deferred</label>
-                                            </div>
+                                                <span>Deferred</span>
+                                            </label>
                                         </div>
                                     </td>
                                     <td>
@@ -330,49 +410,59 @@
                         <label class="form-label required fw-bold text-dark">Overall Clinical Fitness Classification</label>
                         <div class="row g-3">
                             <div class="col-md-4">
-                                <div class="form-check p-3 border rounded h-100 bg-light">
+                                <label class="pe-fitness-card fitness-success" for="fit_class_a">
                                     <input class="form-check-input" type="radio" name="fitness_assessment" value="Class A" id="fit_class_a" @checked(old('fitness_assessment', $exam->fitness_assessment) === 'Class A') required>
-                                    <label class="form-check-label fw-bold text-success d-block" for="fit_class_a">Class A &mdash; Physically Fit</label>
-                                    <div class="small text-muted mt-1">Fit for all school activities, sports, heavy physical training, work, and immersion.</div>
-                                </div>
+                                    <div>
+                                        <span class="fw-bold text-success d-block">Class A &mdash; Physically Fit</span>
+                                        <div class="small text-muted mt-1">Fit for all school activities, sports, heavy physical training, work, and immersion.</div>
+                                    </div>
+                                </label>
                             </div>
 
                             <div class="col-md-4">
-                                <div class="form-check p-3 border rounded h-100 bg-light">
+                                <label class="pe-fitness-card" for="fit_class_b">
                                     <input class="form-check-input" type="radio" name="fitness_assessment" value="Class B" id="fit_class_b" @checked(old('fitness_assessment', $exam->fitness_assessment) === 'Class B')>
-                                    <label class="form-check-label fw-bold text-info d-block" for="fit_class_b">Class B &mdash; Fit with Minor Defect</label>
-                                    <div class="small text-muted mt-1">Fit to work / study with minor correctable defect.</div>
-                                </div>
+                                    <div>
+                                        <span class="fw-bold text-primary d-block">Class B &mdash; Fit with Minor Defect</span>
+                                        <div class="small text-muted mt-1">Fit to work / study with minor correctable defect.</div>
+                                    </div>
+                                </label>
                             </div>
 
                             <div class="col-md-4">
-                                <div class="form-check p-3 border rounded h-100 bg-light">
+                                <label class="pe-fitness-card fitness-warning" for="fit_class_c">
                                     <input class="form-check-input" type="radio" name="fitness_assessment" value="Class C" id="fit_class_c" @checked(old('fitness_assessment', $exam->fitness_assessment) === 'Class C')>
-                                    <label class="form-check-label fw-bold text-warning d-block" for="fit_class_c">Class C &mdash; Fit with Limitations</label>
-                                    <div class="small text-muted mt-1">Requires medical supervision or limitation from strenuous activities.</div>
-                                </div>
+                                    <div>
+                                        <span class="fw-bold text-warning d-block">Class C &mdash; Fit with Limitations</span>
+                                        <div class="small text-muted mt-1">Requires medical supervision or limitation from strenuous activities.</div>
+                                    </div>
+                                </label>
                             </div>
 
                             <div class="col-md-6">
-                                <div class="form-check p-3 border rounded h-100 bg-light">
+                                <label class="pe-fitness-card fitness-warning" for="fit_class_d">
                                     <input class="form-check-input" type="radio" name="fitness_assessment" value="Class D" id="fit_class_d" @checked(old('fitness_assessment', $exam->fitness_assessment) === 'Class D')>
-                                    <label class="form-check-label fw-bold text-secondary d-block" for="fit_class_d">Class D &mdash; Temporarily Unfit</label>
-                                    <div class="small text-muted mt-1">Pending diagnostic completion, treatment, or recovery.</div>
-                                </div>
+                                    <div>
+                                        <span class="fw-bold text-secondary d-block">Class D &mdash; Temporarily Unfit</span>
+                                        <div class="small text-muted mt-1">Pending diagnostic completion, treatment, or recovery.</div>
+                                    </div>
+                                </label>
                             </div>
 
                             <div class="col-md-6">
-                                <div class="form-check p-3 border rounded h-100 bg-light">
+                                <label class="pe-fitness-card fitness-danger" for="fit_class_e">
                                     <input class="form-check-input" type="radio" name="fitness_assessment" value="Class E" id="fit_class_e" @checked(old('fitness_assessment', $exam->fitness_assessment) === 'Class E')>
-                                    <label class="form-check-label fw-bold text-danger d-block" for="fit_class_e">Class E &mdash; Permanently Unfit</label>
-                                    <div class="small text-muted mt-1">Medical condition precludes physical activity or enrollment duties.</div>
-                                </div>
+                                    <div>
+                                        <span class="fw-bold text-danger d-block">Class E &mdash; Permanently Unfit</span>
+                                        <div class="small text-muted mt-1">Medical condition precludes physical activity or enrollment duties.</div>
+                                    </div>
+                                </label>
                             </div>
                         </div>
                     </div>
 
                     <div class="col-12">
-                        <label class="form-label fw-bold text-dark">Specific Activity Clearances (HSD Form 4)</label>
+                        <label class="form-label fw-bold text-dark">Specific Activity Clearances (HSD Form 1 &amp; 4)</label>
                         <div class="table-responsive">
                             <table class="table table-bordered table-sm align-middle mb-0">
                                 <thead class="table-light">
@@ -388,7 +478,7 @@
                                             'physical_activities' => 'Undergo Physical Activities / Trainings / Sports',
                                             'on_the_job_training' => 'On-the-Job Training (OJT)',
                                             'work_immersion' => 'Work Immersion',
-                                            'to_work' => 'Fit to Work',
+                                            'to_work' => 'Fit to Work / Return to School',
                                             'to_travel' => 'Fit to Travel',
                                             'other_requirements' => 'Other Academic / Institutional Requirements'
                                         ];
@@ -401,12 +491,16 @@
                                         <tr>
                                             <td class="fw-semibold text-dark">{{ $actLabel }}</td>
                                             <td class="text-center">
-                                                <input class="form-check-input" type="radio" name="fitness_activities[{{ $actKey }}]" value="fit" id="{{ $actKey }}_fit" @checked(old("fitness_activities.{$actKey}", $actVal) === 'fit')>
-                                                <label class="form-check-label ms-1 text-success fw-bold small" for="{{ $actKey }}_fit">Fit</label>
+                                                <label class="pe-status-pill pill-normal" for="{{ $actKey }}_fit">
+                                                    <input class="form-check-input" type="radio" name="fitness_activities[{{ $actKey }}]" value="fit" id="{{ $actKey }}_fit" @checked(old("fitness_activities.{$actKey}", $actVal) === 'fit')>
+                                                    <span>Fit</span>
+                                                </label>
                                             </td>
                                             <td class="text-center">
-                                                <input class="form-check-input" type="radio" name="fitness_activities[{{ $actKey }}]" value="unfit" id="{{ $actKey }}_unfit" @checked(old("fitness_activities.{$actKey}", $actVal) === 'unfit')>
-                                                <label class="form-check-label ms-1 text-danger fw-bold small" for="{{ $actKey }}_unfit">Unfit</label>
+                                                <label class="pe-status-pill pill-abnormal" for="{{ $actKey }}_unfit">
+                                                    <input class="form-check-input" type="radio" name="fitness_activities[{{ $actKey }}]" value="unfit" id="{{ $actKey }}_unfit" @checked(old("fitness_activities.{$actKey}", $actVal) === 'unfit')>
+                                                    <span>Unfit</span>
+                                                </label>
                                             </td>
                                         </tr>
                                     @endforeach
@@ -425,6 +519,8 @@
             </button>
         </div>
     </form>
+
+    @include('partials.plugins.select2')
 
     @pushOnce('scripts', 'pe-calculator-script')
         <script>

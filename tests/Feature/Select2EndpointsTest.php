@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\College;
+use App\Models\Patient;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -25,6 +26,36 @@ class Select2EndpointsTest extends TestCase
         $patientsResponse = $this->actingAs($user)->getJson(route('select2.patients', ['q' => '']));
         $patientsResponse->assertOk()
             ->assertJsonStructure(['results', 'pagination' => ['more']]);
+
+        $firstPatient = Patient::first();
+        if ($firstPatient) {
+            $nameSearch = $this->actingAs($user)->getJson(route('select2.patients', ['q' => $firstPatient->last_name]));
+            $nameSearch->assertOk()
+                ->assertJsonStructure(['results', 'pagination' => ['more']]);
+
+            $idSearch = $this->actingAs($user)->getJson(route('select2.patients', ['q' => $firstPatient->school_id_number ?: $firstPatient->patient_number]));
+            $idSearch->assertOk()
+                ->assertJsonStructure(['results', 'pagination' => ['more']]);
+
+            $multiSearch = $this->actingAs($user)->getJson(route('select2.patients', ['q' => "{$firstPatient->first_name} {$firstPatient->last_name}"]));
+            $multiSearch->assertOk()
+                ->assertJsonStructure(['results', 'pagination' => ['more']]);
+        }
+
+        $firstPatient = Patient::first();
+        if ($firstPatient) {
+            $nameSearch = $this->actingAs($user)->getJson(route('select2.patients', ['q' => $firstPatient->last_name]));
+            $nameSearch->assertOk()
+                ->assertJsonStructure(['results', 'pagination' => ['more']]);
+
+            $idSearch = $this->actingAs($user)->getJson(route('select2.patients', ['q' => $firstPatient->school_id_number ?: $firstPatient->patient_number]));
+            $idSearch->assertOk()
+                ->assertJsonStructure(['results', 'pagination' => ['more']]);
+
+            $multiSearch = $this->actingAs($user)->getJson(route('select2.patients', ['q' => "{$firstPatient->first_name} {$firstPatient->last_name}"]));
+            $multiSearch->assertOk()
+                ->assertJsonStructure(['results', 'pagination' => ['more']]);
+        }
 
         $collegesResponse = $this->actingAs($user)->getJson(route('select2.colleges', ['q' => '']));
         $collegesResponse->assertOk()

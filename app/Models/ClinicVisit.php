@@ -26,9 +26,6 @@ class ClinicVisit extends Model
 
     public const TYPE_GENERAL = 'general';
 
-    /**
-     * @var array<string, array{label: string, icon: string, badge: string, route: string|null}>
-     */
     public const TYPES = [
         self::TYPE_MEDICAL => ['label' => 'Medical Consultation', 'icon' => 'bi-clipboard2-pulse', 'badge' => 'badge-blue', 'route' => 'medical-consultations'],
         self::TYPE_DENTAL => ['label' => 'Dental Consultation', 'icon' => 'bi-emoji-smile', 'badge' => 'badge-cyan', 'route' => 'dental-consultations'],
@@ -38,9 +35,6 @@ class ClinicVisit extends Model
         self::TYPE_GENERAL => ['label' => 'General Visit', 'icon' => 'bi-journal-text', 'badge' => 'badge-gray', 'route' => null],
     ];
 
-    /**
-     * @var array<string, string>
-     */
     public const CATEGORIES = [
         'walk_in' => 'Walk-in',
         'scheduled' => 'Scheduled',
@@ -49,9 +43,6 @@ class ClinicVisit extends Model
         'emergency_call' => 'Emergency Call / Response',
     ];
 
-    /**
-     * @var array<string, string>
-     */
     public const DISPOSITIONS = [
         'back_to_class' => 'Sent Back to Class / Work',
         'sent_home' => 'Sent Home',
@@ -62,9 +53,6 @@ class ClinicVisit extends Model
         'refused' => 'Refused Treatment',
     ];
 
-    /**
-     * @var array<string, string>
-     */
     public const STATUSES = [
         'waiting' => 'Waiting',
         'in_progress' => 'In Progress',
@@ -72,9 +60,6 @@ class ClinicVisit extends Model
         'cancelled' => 'Cancelled',
     ];
 
-    /**
-     * @var list<string>
-     */
     public const GENERAL_PURPOSES = [
         'Blood Pressure Monitoring',
         'Medical Certificate Request',
@@ -200,14 +185,17 @@ class ClinicVisit extends Model
         return $query->whereDate('visit_date', now()->toDateString());
     }
 
-    /**
-     * @param  array<string, mixed>  $filters
-     */
     public function scopeFilter(Builder $query, array $filters): Builder
     {
         return $query
             ->when($filters['visit_type'] ?? null, fn (Builder $q, string $type) => $q->where('visit_type', $type))
-            ->when($filters['patient_classification'] ?? null, fn (Builder $q, string $classification) => $q->where('patient_classification', $classification))
+            ->when($filters['patient_classification'] ?? null, function (Builder $q, string $classification) {
+                if ($classification === 'employee') {
+                    $q->whereIn('patient_classification', ['employee', 'faculty', 'staff']);
+                } else {
+                    $q->where('patient_classification', $classification);
+                }
+            })
             ->when($filters['status'] ?? null, fn (Builder $q, string $status) => $q->where('status', $status))
             ->when($filters['disposition'] ?? null, fn (Builder $q, string $disposition) => $q->where('disposition', $disposition))
             ->when($filters['college_id'] ?? null, fn (Builder $q, string $collegeId) => $q->where('college_id', $collegeId))
@@ -268,7 +256,12 @@ class ClinicVisit extends Model
 
     public function getClassificationBadgeAttribute(): string
     {
-        return $this->patient_classification === 'student' ? 'badge-blue' : 'badge-green';
+        return match ($this->patient_classification) {
+            'student' => 'badge-blue',
+            'faculty' => 'badge-purple',
+            'staff' => 'badge-green',
+            default => 'badge-gray',
+        };
     }
 
     public function getBloodPressureAttribute(): ?string

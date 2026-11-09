@@ -13,17 +13,11 @@ use Illuminate\View\View;
 
 class SettingController extends Controller implements HasMiddleware
 {
-    /**
-     * @return list<Middleware>
-     */
     public static function middleware(): array
     {
         return [new Middleware('permission:settings.manage')];
     }
 
-    /**
-     * Show the settings form.
-     */
     public function edit(SettingService $settings): View
     {
         return view('settings.edit', [
@@ -32,9 +26,6 @@ class SettingController extends Controller implements HasMiddleware
         ]);
     }
 
-    /**
-     * Persist application settings.
-     */
     public function update(
         UpdateSettingsRequest $request,
         SettingService $settings,

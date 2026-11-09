@@ -101,9 +101,6 @@ class SeedClinicSimulationCommand extends Command
         return self::SUCCESS;
     }
 
-    /**
-     * @return array<string, int>
-     */
     private function snapshotCounts(): array
     {
         return [
@@ -124,9 +121,6 @@ class SeedClinicSimulationCommand extends Command
         ];
     }
 
-    /**
-     * @return array<string, string>
-     */
     private function tableLabels(): array
     {
         return [

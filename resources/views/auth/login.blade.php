@@ -1,18 +1,18 @@
-<x-layouts.guest title="Sign In" heading="Welcome Back" subheading="Sign in to access the clinic management portal">
+<x-layouts.guest title="Sign In">
     <form method="POST" action="{{ route('login') }}" novalidate>
         @csrf
 
         <div class="mb-3">
             <label for="email" class="form-label required">Email Address</label>
             <div class="input-group">
-                <span class="input-group-text bg-light"><i class="bi bi-envelope"></i></span>
+                <span class="input-group-text bg-light text-muted"><i class="bi bi-envelope"></i></span>
                 <input
                     type="email"
                     id="email"
                     name="email"
                     value="{{ old('email') }}"
                     @class(['form-control', 'is-invalid' => $errors->has('email')])
-                    placeholder="name@clinic.test"
+                    placeholder="name@snsu.edu.ph"
                     required
                     autofocus
                     autocomplete="username"
@@ -29,7 +29,7 @@
                 <a href="{{ route('password.request') }}" class="small text-decoration-none">Forgot password?</a>
             </div>
             <div class="input-group">
-                <span class="input-group-text bg-light"><i class="bi bi-lock"></i></span>
+                <span class="input-group-text bg-light text-muted"><i class="bi bi-lock"></i></span>
                 <input
                     type="password"
                     id="password"
@@ -38,6 +38,14 @@
                     required
                     autocomplete="current-password"
                 >
+                <button
+                    type="button"
+                    class="btn btn-outline-secondary"
+                    onclick="const p = document.getElementById('password'); const i = this.querySelector('i'); if (p.type === 'password') { p.type = 'text'; i.className = 'bi bi-eye-slash'; } else { p.type = 'password'; i.className = 'bi bi-eye'; }"
+                    title="Show / Hide Password"
+                >
+                    <i class="bi bi-eye"></i>
+                </button>
             </div>
             @error('password')
                 <div class="invalid-feedback d-block">{{ $message }}</div>
@@ -67,6 +75,12 @@
             </svg>
             <span>Sign in with Google</span>
         </a>
+
+        <div class="mt-4 pt-3 border-top text-center">
+            <p class="small text-muted mb-2">Student, Employee, or Visitor entering the clinic?</p>
+            <a href="{{ route('logbook.kiosk') }}" class="btn btn-outline-forest w-100 py-2 fw-semibold">
+                <i class="bi bi-journal-check me-1"></i>Open Clinic Visitor Logbook
+            </a>
+        </div>
     </form>
 </x-layouts.guest>
-

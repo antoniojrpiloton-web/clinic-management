@@ -39,28 +39,16 @@
         <div>
             <div class="d-flex align-items-center gap-2">
                 <h1 class="dashboard-heading mb-0">NVC Clinic Morbidity &amp; Utilization Reports</h1>
-                <span class="badge badge-soft-blue"><i class="bi bi-cpu me-1"></i> Data Aggregation Algorithm</span>
+                <span class="badge badge-soft-blue"><i class="bi bi-file-earmark-bar-graph me-1"></i> Clinic Statistics</span>
             </div>
             <p class="dashboard-subheading mb-0 mt-1">
-                Multi-dimensional rollups of clinical encounters, communicable/non-communicable morbidity trends, and pharmaceutical dispensing.
+                Summary of clinic visits, patient illnesses, and medicine dispensing.
             </p>
         </div>
 
         <div class="d-flex flex-wrap gap-2">
-            <a href="{{ route('reports.clinic.print-medical-dental-records', request()->query()) }}" id="btn-export-medical-dental-pdf" target="_blank" class="btn btn-success btn-sm px-3 py-2">
-                <i class="bi bi-file-earmark-spreadsheet me-1"></i> Medical &amp; Dental (PDF)
-            </a>
-            <a href="{{ route('reports.clinic.print-login-records', request()->query()) }}" id="btn-export-login-pdf" target="_blank" class="btn btn-warning text-dark fw-semibold btn-sm px-3 py-2">
-                <i class="bi bi-journal-check me-1"></i> Log-In Records (PDF)
-            </a>
-            <a href="{{ route('reports.clinic.print-communicable-diseases', request()->query()) }}" id="btn-export-communicable-pdf" target="_blank" class="btn btn-sm px-3 py-2 text-white" style="background-color: #6ca410; border-color: #5b8c0d;">
-                <i class="bi bi-bar-chart-steps me-1"></i> Communicable Chart (PDF)
-            </a>
-            <a href="{{ route('reports.clinic.print-non-communicable-diseases', request()->query()) }}" id="btn-export-non-communicable-pdf" target="_blank" class="btn btn-sm px-3 py-2 text-white" style="background-color: #306cac; border-color: #27588c;">
-                <i class="bi bi-bar-chart-fill me-1"></i> Non-Communicable Chart (PDF)
-            </a>
             <a href="{{ route('reports.clinic.print-pdf', request()->query()) }}" id="btn-export-pdf" target="_blank" class="btn btn-primary btn-sm px-3 py-2">
-                <i class="bi bi-file-earmark-pdf me-1"></i> Morbidity Summary (PDF)
+                <i class="bi bi-file-earmark-pdf me-1"></i> Export PDF Report
             </a>
             <button type="button" onclick="window.print()" class="btn btn-outline-secondary btn-sm px-3 py-2">
                 <i class="bi bi-printer me-1"></i> Print View
@@ -68,40 +56,18 @@
         </div>
     </div>
 
-    @php $activeTab = request('tab', 'all'); @endphp
-    <div class="d-flex flex-wrap gap-2 mb-4">
-        <a href="{{ route('reports.clinic.index', array_merge(request()->query(), ['tab' => 'all'])) }}" @class(['btn btn-sm px-3', 'btn-dark' => $activeTab === 'all', 'btn-outline-secondary' => $activeTab !== 'all'])>
-            <i class="bi bi-collection me-1"></i> All Clinic Reports
-        </a>
-        <a href="{{ route('reports.clinic.index', array_merge(request()->query(), ['tab' => 'medical-dental'])) }}" @class(['btn btn-sm px-3', 'btn-success' => $activeTab === 'medical-dental', 'btn-outline-success' => $activeTab !== 'medical-dental'])>
-            <i class="bi bi-table me-1"></i> 1. Medical &amp; Dental Records
-        </a>
-        <a href="{{ route('reports.clinic.index', array_merge(request()->query(), ['tab' => 'login-records'])) }}" @class(['btn btn-sm px-3', 'btn-warning text-dark fw-semibold' => $activeTab === 'login-records', 'btn-outline-secondary' => $activeTab !== 'login-records'])>
-            <i class="bi bi-journal-check me-1"></i> 2. Medical &amp; Dental Log-In
-        </a>
-        <a href="{{ route('reports.clinic.index', array_merge(request()->query(), ['tab' => 'communicable'])) }}" @class(['btn btn-sm px-3', 'btn-success' => $activeTab === 'communicable', 'btn-outline-secondary' => $activeTab !== 'communicable'])>
-            <i class="bi bi-virus me-1"></i> 3. Communicable Diseases
-        </a>
-        <a href="{{ route('reports.clinic.index', array_merge(request()->query(), ['tab' => 'non-communicable'])) }}" @class(['btn btn-sm px-3', 'btn-primary' => $activeTab === 'non-communicable', 'btn-outline-secondary' => $activeTab !== 'non-communicable'])>
-            <i class="bi bi-heart-pulse me-1"></i> 4. Non-Communicable Diseases
-        </a>
-        <a href="{{ route('reports.clinic.index', array_merge(request()->query(), ['tab' => 'morbidity'])) }}" @class(['btn btn-sm px-3', 'btn-info text-white' => $activeTab === 'morbidity', 'btn-outline-secondary' => $activeTab !== 'morbidity'])>
-            <i class="bi bi-activity me-1"></i> 5. Morbidity &amp; Utilization
-        </a>
-    </div>
-
     <div class="card border mb-4">
         <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-            <span class="fw-bold text-dark"><i class="bi bi-funnel me-1"></i> Filter &amp; Aggregation Parameters</span>
+            <span class="fw-bold text-dark"><i class="bi bi-funnel me-1"></i> Report Filters</span>
             <span id="report-loading-badge" class="badge badge-soft-blue d-none">
                 <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true" style="width: 12px; height: 12px;"></span>
-                Aggregating dataset...
+                Loading report...
             </span>
         </div>
         <div class="card-body">
             <form method="GET" action="{{ route('reports.clinic.index') }}" id="clinic-report-filter-form" class="row g-3">
                 <div class="col-md-2">
-                    <label class="form-label small fw-semibold">Report Year (Matrix)</label>
+                    <label class="form-label small fw-semibold">Year</label>
                     <select name="year" id="filter-year" data-default="{{ now()->year }}" class="form-select form-select-sm">
                         @for($y = (int) now()->year + 1; $y >= 2024; $y--)
                             <option value="{{ $y }}" @selected((int) ($filters['year'] ?? now()->year) === $y)>{{ $y }}</option>

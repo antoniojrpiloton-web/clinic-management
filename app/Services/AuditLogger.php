@@ -8,18 +8,8 @@ use Illuminate\Support\Str;
 
 class AuditLogger
 {
-    /**
-     * Attributes that must never be written to the audit trail.
-     *
-     * @var list<string>
-     */
     protected array $hiddenAttributes = ['password', 'remember_token'];
 
-    /**
-     * Record an audit log entry.
-     *
-     * @param  array<string, mixed>  $properties
-     */
     public function log(string $event, string $description, ?Model $subject = null, array $properties = [], ?int $userId = null): AuditLog
     {
         $request = request();
@@ -36,11 +26,6 @@ class AuditLogger
         ]);
     }
 
-    /**
-     * Record the changed attributes of an updated model.
-     *
-     * @param  array<string, mixed>  $original
-     */
     public function logChanges(Model $subject, array $original, string $description): ?AuditLog
     {
         $changes = $subject->getChanges();
@@ -56,12 +41,6 @@ class AuditLogger
         ]);
     }
 
-    /**
-     * Remove sensitive attributes recursively.
-     *
-     * @param  array<string, mixed>  $properties
-     * @return array<string, mixed>
-     */
     protected function sanitize(array $properties): array
     {
         foreach ($properties as $key => $value) {

@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         Chart.defaults.font.family = getComputedStyle(document.body).fontFamily || "'Inter', sans-serif";
-        Chart.defaults.color = '#64748b';
+        Chart.defaults.color = '#5a6b63';
 
         const mountChart = (canvasId, config) => {
             const canvas = document.getElementById(canvasId);
@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         {
                             label: 'Medical Consults',
                             data: mu.medical,
-                            backgroundColor: '#3b82f6',
+                            backgroundColor: '#1b5e3a',
                             borderRadius: 4,
                             barPercentage: 0.7,
                             categoryPercentage: 0.6,
@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         {
                             label: 'Dental Consults',
                             data: mu.dental,
-                            backgroundColor: '#06b6d4',
+                            backgroundColor: '#28666e',
                             borderRadius: 4,
                             barPercentage: 0.7,
                             categoryPercentage: 0.6,
@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         {
                             label: 'Emergency / First Aid',
                             data: mu.emergency,
-                            backgroundColor: '#ef4444',
+                            backgroundColor: '#b86b14',
                             borderRadius: 4,
                             barPercentage: 0.7,
                             categoryPercentage: 0.6,
@@ -102,9 +102,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             },
                         },
                         tooltip: {
-                            backgroundColor: '#0f172a',
+                            backgroundColor: '#182620',
                             titleColor: '#ffffff',
-                            bodyColor: '#e2e8f0',
+                            bodyColor: '#dce3de',
                             padding: 10,
                             cornerRadius: 8,
                         },
@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 precision: 0,
                                 callback: (v) => v.toLocaleString(),
                             },
-                            grid: { color: '#f1f5f9' },
+                            grid: { color: '#eef2ef' },
                             border: { display: false },
                         },
                     },
@@ -159,9 +159,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             },
                         },
                         tooltip: {
-                            backgroundColor: '#0f172a',
+                            backgroundColor: '#182620',
                             titleColor: '#ffffff',
-                            bodyColor: '#e2e8f0',
+                            bodyColor: '#dce3de',
                             padding: 10,
                             cornerRadius: 8,
                         },
@@ -197,7 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             },
                         },
                         tooltip: {
-                            backgroundColor: '#0f172a',
+                            backgroundColor: '#182620',
                             padding: 10,
                             cornerRadius: 8,
                         },
@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     scales: {
                         r: {
                             ticks: { display: false },
-                            grid: { color: '#f1f5f9' },
+                            grid: { color: '#eef2ef' },
                         },
                     },
                 },
@@ -221,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     datasets: [{
                         label: 'Visits',
                         data: tc.data,
-                        backgroundColor: '#8b5cf6',
+                        backgroundColor: '#3b6e52',
                         borderRadius: 4,
                         barPercentage: 0.65,
                     }],
@@ -233,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     plugins: {
                         legend: { display: false },
                         tooltip: {
-                            backgroundColor: '#0f172a',
+                            backgroundColor: '#182620',
                             padding: 10,
                             cornerRadius: 8,
                         },
@@ -242,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         x: {
                             beginAtZero: true,
                             ticks: { precision: 0 },
-                            grid: { color: '#f1f5f9' },
+                            grid: { color: '#eef2ef' },
                             border: { display: false },
                         },
                         y: {
@@ -284,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             },
                         },
                         tooltip: {
-                            backgroundColor: '#0f172a',
+                            backgroundColor: '#182620',
                             padding: 10,
                             cornerRadius: 8,
                         },
@@ -302,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     datasets: [{
                         label: 'Consultations',
                         data: cu.data,
-                        backgroundColor: '#0284c7',
+                        backgroundColor: '#28666e',
                         borderRadius: 4,
                         barPercentage: 0.65,
                     }],
@@ -314,7 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     plugins: {
                         legend: { display: false },
                         tooltip: {
-                            backgroundColor: '#0f172a',
+                            backgroundColor: '#182620',
                             padding: 10,
                             cornerRadius: 8,
                         },
@@ -323,7 +323,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         x: {
                             beginAtZero: true,
                             ticks: { precision: 0 },
-                            grid: { color: '#f1f5f9' },
+                            grid: { color: '#eef2ef' },
                             border: { display: false },
                         },
                         y: {
@@ -345,7 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     datasets: [{
                         label: 'Units Dispensed',
                         data: tm.quantities,
-                        backgroundColor: '#10b981',
+                        backgroundColor: '#1b5e3a',
                         borderRadius: 4,
                         barPercentage: 0.65,
                     }],
@@ -357,7 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     plugins: {
                         legend: { display: false },
                         tooltip: {
-                            backgroundColor: '#0f172a',
+                            backgroundColor: '#182620',
                             padding: 10,
                             cornerRadius: 8,
                         },
@@ -366,7 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         x: {
                             beginAtZero: true,
                             ticks: { precision: 0 },
-                            grid: { color: '#f1f5f9' },
+                            grid: { color: '#eef2ef' },
                             border: { display: false },
                         },
                         y: {

@@ -165,13 +165,41 @@ class Patient extends Model
 
     public function scopeSearch(Builder $query, string $term): Builder
     {
-        return $query->where(function (Builder $q) use ($term) {
+        $term = trim($term);
+        if ($term === '') {
+            return $query;
+        }
+
+        $tokens = preg_split('/[\s,]+/', $term, -1, PREG_SPLIT_NO_EMPTY) ?: [$term];
+
+        return $query->where(function (Builder $q) use ($term, $tokens) {
             $q->where('patient_number', 'like', "%{$term}%")
                 ->orWhere('school_id_number', 'like', "%{$term}%")
                 ->orWhere('first_name', 'like', "%{$term}%")
+                ->orWhere('middle_name', 'like', "%{$term}%")
                 ->orWhere('last_name', 'like', "%{$term}%")
                 ->orWhere('email', 'like', "%{$term}%")
-                ->orWhere('phone', 'like', "%{$term}%");
+                ->orWhere('phone', 'like', "%{$term}%")
+                ->orWhere('office_department', 'like', "%{$term}%")
+                ->orWhere('position', 'like', "%{$term}%")
+                ->orWhereHas('program', function (Builder $pq) use ($term) {
+                    $pq->where('code', 'like', "%{$term}%")
+                        ->orWhere('name', 'like', "%{$term}%");
+                });
+
+            if (count($tokens) > 1) {
+                $q->orWhere(function (Builder $multi) use ($tokens) {
+                    foreach ($tokens as $token) {
+                        $multi->where(function (Builder $part) use ($token) {
+                            $part->where('first_name', 'like', "%{$token}%")
+                                ->orWhere('middle_name', 'like', "%{$token}%")
+                                ->orWhere('last_name', 'like', "%{$token}%")
+                                ->orWhere('patient_number', 'like', "%{$token}%")
+                                ->orWhere('school_id_number', 'like', "%{$token}%");
+                        });
+                    }
+                });
+            }
         });
     }
 

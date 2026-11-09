@@ -23,6 +23,16 @@
     <form method="POST" action="{{ route('dental-consultations.store') }}" novalidate>
         @csrf
 
+        @if ($appointmentId ?? request('appointment_id'))
+            <input type="hidden" name="appointment_id" value="{{ $appointmentId ?? request('appointment_id') }}">
+            <div class="alert alert-primary py-2 px-3 small d-flex align-items-center mb-3">
+                <i class="bi bi-calendar-check fs-5 me-2"></i>
+                <div>
+                    <strong>Fulfilling Doctor Priority Appointment:</strong> Saving this dental consultation will automatically complete the appointment and link it to this visit record.
+                </div>
+            </div>
+        @endif
+
         @include('clinic-visits.partials.patient-select', [
             'preselectedPatient' => $preselectedPatient,
             'defaultClinician' => $defaultClinician,

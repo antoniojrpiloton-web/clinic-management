@@ -37,9 +37,6 @@ class SimulationSeeder extends Seeder
 
     private const CHUNK_SIZE = 250;
 
-    /**
-     * @return array<string, string>
-     */
     public static function availableAreas(): array
     {
         return [
@@ -283,11 +280,6 @@ class SimulationSeeder extends Seeder
         ]);
     }
 
-    /**
-     * @param  Collection<int, College>  $colleges
-     * @param  Collection<int, Program>  $programs
-     * @return Collection<int, Patient>
-     */
     private function seedPatients(
         int $countToAdd,
         AcademicYear $ay,
@@ -395,9 +387,6 @@ class SimulationSeeder extends Seeder
             ->get();
     }
 
-    /**
-     * @param  Collection<int, Patient>  $newPatients
-     */
     private function seedMedicalProfiles(Collection $newPatients, User $adminUser): void
     {
         if ($newPatients->isEmpty()) {
@@ -449,11 +438,6 @@ class SimulationSeeder extends Seeder
         }
     }
 
-    /**
-     * @param  Collection<int, Patient>  $patients
-     * @param  Collection<int, Clinician>  $doctors
-     * @param  Collection<int, Clinician>  $nurses
-     */
     private function seedGeneralClinicVisits(
         int $countToAdd,
         Collection $patients,
@@ -523,10 +507,6 @@ class SimulationSeeder extends Seeder
         }
     }
 
-    /**
-     * @param  Collection<int, Patient>  $newPatients
-     * @param  Collection<int, Clinician>  $doctors
-     */
     private function seedPhysicalExaminations(
         int $countToAdd,
         AcademicYear $ay,
@@ -679,12 +659,6 @@ class SimulationSeeder extends Seeder
         }
     }
 
-    /**
-     * @param  Collection<int, College>  $colleges
-     * @param  Collection<int, Program>  $programs
-     * @param  Collection<int, Clinician>  $doctors
-     * @param  Collection<int, Patient>  $newPatients
-     */
     private function seedPhysicalExamSchedulesAndAttendees(
         int $countToAdd,
         AcademicYear $ay,
@@ -795,10 +769,6 @@ class SimulationSeeder extends Seeder
         }
     }
 
-    /**
-     * @param  Collection<int, Patient>  $newPatients
-     * @param  Collection<int, Clinician>  $doctors
-     */
     private function seedMedicalConsultations(
         int $countToAdd,
         Collection $newPatients,
@@ -1160,10 +1130,6 @@ class SimulationSeeder extends Seeder
         }
     }
 
-    /**
-     * @param  Collection<int, Patient>  $newPatients
-     * @param  Collection<int, Clinician>  $dentists
-     */
     private function seedDentalConsultations(
         int $countToAdd,
         Collection $newPatients,
@@ -1364,11 +1330,6 @@ class SimulationSeeder extends Seeder
         }
     }
 
-    /**
-     * @param  Collection<int, Patient>  $newPatients
-     * @param  Collection<int, Clinician>  $doctors
-     * @param  Collection<int, Clinician>  $nurses
-     */
     private function seedEmergencyRecords(
         int $countToAdd,
         Collection $newPatients,
@@ -1523,10 +1484,6 @@ class SimulationSeeder extends Seeder
         }
     }
 
-    /**
-     * @param  Collection<int, Patient>  $newPatients
-     * @param  Collection<int, Clinician>  $nurses
-     */
     private function seedFirstAidRecords(
         int $countToAdd,
         Collection $newPatients,
@@ -1675,11 +1632,6 @@ class SimulationSeeder extends Seeder
         }
     }
 
-    /**
-     * @param  Collection<int, Patient>  $newPatients
-     * @param  Collection<int, Clinician>  $doctors
-     * @param  Collection<int, Medicine>  $medicinesWithBatches
-     */
     private function seedMedicineDispensingsAndTransactions(
         int $countToAdd,
         Collection $newPatients,
@@ -1821,9 +1773,6 @@ class SimulationSeeder extends Seeder
         }
     }
 
-    /**
-     * @param  Collection<int, Patient>  $newPatients
-     */
     private function seedAuditLogs(int $countToAdd, User $adminUser, Collection $newPatients): void
     {
         if ($countToAdd <= 0) {
@@ -1885,9 +1834,6 @@ class SimulationSeeder extends Seeder
         return Carbon::create($year, $month, $day, 8 + ($seq % 8), ($seq * 11) % 55);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     private function patientSnapshot(Patient $patient): array
     {
         if ($patient->type === 'student') {

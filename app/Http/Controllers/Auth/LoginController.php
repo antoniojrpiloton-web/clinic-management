@@ -11,17 +11,11 @@ use Illuminate\View\View;
 
 class LoginController extends Controller
 {
-    /**
-     * Show the login form.
-     */
     public function create(): View
     {
         return view('auth.login');
     }
 
-    /**
-     * Handle an authentication attempt.
-     */
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
@@ -31,9 +25,6 @@ class LoginController extends Controller
         return redirect()->intended(route('dashboard', absolute: false));
     }
 
-    /**
-     * Log the user out of the application.
-     */
     public function destroy(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();

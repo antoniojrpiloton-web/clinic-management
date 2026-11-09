@@ -187,16 +187,6 @@ class ClinicReportController extends Controller implements HasMiddleware
         ]);
     }
 
-    /**
-     * @return array{
-     *   year: int,
-     *   date_from: string,
-     *   date_to: string,
-     *   academic_year_id: mixed,
-     *   college_id: mixed,
-     *   patient_classification: mixed
-     * }
-     */
     protected function extractFilters(Request $request): array
     {
         $dateTo = (string) $request->query('date_to', now()->format('Y-m-d'));

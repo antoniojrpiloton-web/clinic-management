@@ -24,12 +24,14 @@ class Select2Controller extends Controller
         $perPage = 20;
 
         $query = Patient::query()
-            ->with(['college', 'program'])
-            ->when($type, fn ($q) => $q->where('type', $type))
-            ->when($term, fn ($q) => $q->search($term))
-            ->latest();
+            ->select(['id', 'first_name', 'middle_name', 'last_name', 'suffix', 'type', 'school_id_number', 'patient_number', 'phone', 'email'])
+            ->when($type, fn ($q) => $q->where('type', $type));
 
-        $paginator = $query->paginate($perPage, ['*'], 'page', $page);
+        if ($term === '') {
+            $paginator = (clone $query)->latest('id')->simplePaginate($perPage, ['*'], 'page', $page);
+        } else {
+            $paginator = $this->queryPatientsFast($query, $term, $page, $perPage);
+        }
 
         $results = collect($paginator->items())->map(fn (Patient $p) => [
             'id' => $p->id,
@@ -41,6 +43,64 @@ class Select2Controller extends Controller
             'results' => $results,
             'pagination' => ['more' => $paginator->hasMorePages()],
         ]);
+    }
+
+    protected function queryPatientsFast($query, string $term, int $page, int $perPage)
+    {
+        $clean = trim($term);
+
+        if (preg_match('/^[A-Za-z0-9_-]+$/', $clean) && (str_contains($clean, '-') || is_numeric($clean[0]) || str_starts_with(strtoupper($clean), 'PAT'))) {
+            $idMatches = (clone $query)->where('school_id_number', 'like', "{$clean}%")->orderBy('id', 'desc')->simplePaginate($perPage, ['*'], 'page', $page);
+            if ($idMatches->isNotEmpty()) {
+                return $idMatches;
+            }
+
+            $patMatches = (clone $query)->where('patient_number', 'like', "{$clean}%")->orderBy('id', 'desc')->simplePaginate($perPage, ['*'], 'page', $page);
+            if ($patMatches->isNotEmpty()) {
+                return $patMatches;
+            }
+        }
+
+        $tokens = preg_split('/[\s,]+/', $clean, -1, PREG_SPLIT_NO_EMPTY) ?: [$clean];
+        if (count($tokens) >= 2) {
+            $t1 = $tokens[0];
+            $t2 = $tokens[1];
+            $multiMatches = (clone $query)->where(function ($q) use ($t1, $t2) {
+                $q->where(function ($sub) use ($t1, $t2) {
+                    $sub->where('last_name', 'like', "{$t1}%")
+                        ->where('first_name', 'like', "{$t2}%");
+                })->orWhere(function ($sub) use ($t1, $t2) {
+                    $sub->where('first_name', 'like', "{$t1}%")
+                        ->where('last_name', 'like', "{$t2}%");
+                });
+            })->orderBy('last_name')->orderBy('first_name')->simplePaginate($perPage, ['*'], 'page', $page);
+
+            if ($multiMatches->isNotEmpty()) {
+                return $multiMatches;
+            }
+        }
+
+        $lastMatches = (clone $query)->where('last_name', 'like', "{$clean}%")->orderBy('last_name')->orderBy('first_name')->simplePaginate($perPage, ['*'], 'page', $page);
+        if ($lastMatches->isNotEmpty()) {
+            return $lastMatches;
+        }
+
+        $firstMatches = (clone $query)->where('first_name', 'like', "{$clean}%")->orderBy('first_name')->simplePaginate($perPage, ['*'], 'page', $page);
+        if ($firstMatches->isNotEmpty()) {
+            return $firstMatches;
+        }
+
+        $idPrefixFallback = (clone $query)->where('school_id_number', 'like', "{$clean}%")->orderBy('id', 'desc')->simplePaginate($perPage, ['*'], 'page', $page);
+        if ($idPrefixFallback->isNotEmpty()) {
+            return $idPrefixFallback;
+        }
+
+        return (clone $query)->where(function ($q) use ($clean) {
+            $q->where('last_name', 'like', "%{$clean}%")
+                ->orWhere('first_name', 'like', "%{$clean}%")
+                ->orWhere('school_id_number', 'like', "%{$clean}%")
+                ->orWhere('patient_number', 'like', "%{$clean}%");
+        })->latest('id')->simplePaginate($perPage, ['*'], 'page', $page);
     }
 
     public function colleges(Request $request): JsonResponse
@@ -57,7 +117,7 @@ class Select2Controller extends Controller
             })
             ->orderBy('name');
 
-        $paginator = $query->paginate($perPage, ['*'], 'page', $page);
+        $paginator = $query->simplePaginate($perPage, ['*'], 'page', $page);
 
         $results = collect($paginator->items())->map(fn (College $c) => [
             'id' => $c->id,
@@ -88,7 +148,7 @@ class Select2Controller extends Controller
             })
             ->orderBy('name');
 
-        $paginator = $query->paginate($perPage, ['*'], 'page', $page);
+        $paginator = $query->simplePaginate($perPage, ['*'], 'page', $page);
 
         $results = collect($paginator->items())->map(fn (Program $p) => [
             'id' => $p->id,
@@ -116,7 +176,7 @@ class Select2Controller extends Controller
             })
             ->orderByDesc('start_date');
 
-        $paginator = $query->paginate($perPage, ['*'], 'page', $page);
+        $paginator = $query->simplePaginate($perPage, ['*'], 'page', $page);
 
         $results = collect($paginator->items())->map(fn (AcademicYear $ay) => [
             'id' => $ay->id,
@@ -145,7 +205,7 @@ class Select2Controller extends Controller
             })
             ->orderBy('name');
 
-        $paginator = $query->paginate($perPage, ['*'], 'page', $page);
+        $paginator = $query->simplePaginate($perPage, ['*'], 'page', $page);
 
         $results = collect($paginator->items())->map(fn (User $u) => [
             'id' => $u->id,
@@ -172,7 +232,7 @@ class Select2Controller extends Controller
             ->when($term, fn ($q) => $q->search($term))
             ->orderBy('name');
 
-        $paginator = $query->paginate($perPage, ['*'], 'page', $page);
+        $paginator = $query->simplePaginate($perPage, ['*'], 'page', $page);
 
         $results = collect($paginator->items())->map(fn (Clinician $c) => [
             'id' => $c->id,
@@ -222,7 +282,7 @@ class Select2Controller extends Controller
             ->when($term, fn ($q) => $q->search($term))
             ->orderBy('generic_name');
 
-        $paginator = $query->paginate($perPage, ['*'], 'page', $page);
+        $paginator = $query->simplePaginate($perPage, ['*'], 'page', $page);
 
         $results = collect($paginator->items())->map(fn (Medicine $m) => [
             'id' => $m->id,
@@ -230,6 +290,12 @@ class Select2Controller extends Controller
             'subtext' => "Code: {$m->code} • Form: {$m->dosage_form} • Unit: {$m->unit}",
             'unit' => $m->unit,
             'stock_on_hand' => $m->stock_on_hand,
+            'code' => $m->code,
+            'generic_name' => $m->generic_name,
+            'brand_name' => $m->brand_name,
+            'strength' => $m->strength,
+            'dosage_form' => $m->dosage_form,
+            'reorder_level' => (int) $m->reorder_level,
         ]);
 
         return response()->json([
@@ -255,6 +321,8 @@ class Select2Controller extends Controller
             'id' => $b->id,
             'text' => "Lot: {$b->batch_number} (Exp: {$b->expiration_date->format('M Y')}) — {$b->quantity_remaining} left",
             'subtext' => "Supplier: {$b->supplier} • Received: {$b->received_date->format('M d, Y')}",
+            'batch_number' => $b->batch_number,
+            'expiration_date' => $b->expiration_date->format('M d, Y'),
             'quantity_remaining' => $b->quantity_remaining,
         ]);
 

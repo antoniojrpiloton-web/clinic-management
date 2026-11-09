@@ -7,54 +7,27 @@ use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-/**
- * Lightweight server-side processor for DataTables AJAX requests.
- *
- * Only whitelisted columns can be searched or ordered, and every request
- * is paginated in the database with LIMIT/OFFSET.
- */
 class DataTableResponse
 {
-    /**
-     * @var array<string, string>
-     */
     protected array $orderable = [];
 
-    /**
-     * @var list<string>
-     */
     protected array $searchable = [];
 
     protected ?Closure $filter = null;
 
-    /**
-     * @var array{0: string, 1: string}|null
-     */
     protected ?array $defaultOrder = null;
 
-    /**
-     * @param  Builder  $query  Base query (already scoped and eager-loaded).
-     * @param  Closure(mixed): array<string, mixed>  $transformer
-     */
     public function __construct(
         protected Request $request,
         protected Builder $query,
         protected Closure $transformer,
     ) {}
 
-    /**
-     * @param  Closure(mixed): array<string, mixed>  $transformer
-     */
     public static function make(Request $request, Builder $query, Closure $transformer): static
     {
         return new static($request, $query, $transformer);
     }
 
-    /**
-     * Map DataTables column names to database columns that may be ordered.
-     *
-     * @param  array<string, string>  $columns
-     */
     public function orderable(array $columns): static
     {
         $this->orderable = $columns;
@@ -62,11 +35,6 @@ class DataTableResponse
         return $this;
     }
 
-    /**
-     * Database columns included in the global search.
-     *
-     * @param  list<string>  $columns
-     */
     public function searchable(array $columns): static
     {
         $this->searchable = $columns;
@@ -74,11 +42,6 @@ class DataTableResponse
         return $this;
     }
 
-    /**
-     * Apply additional request-driven filters (e.g. dropdown filters).
-     *
-     * @param  Closure(Builder, Request): void  $filter
-     */
     public function filter(Closure $filter): static
     {
         $this->filter = $filter;
@@ -140,9 +103,6 @@ class DataTableResponse
         }
     }
 
-    /**
-     * Ordering used when the request does not specify a valid column.
-     */
     public function defaultOrder(string $column, string $direction = 'desc'): static
     {
         $this->defaultOrder = [$column, $direction];

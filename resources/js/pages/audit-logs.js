@@ -1,6 +1,4 @@
-/**
- * Audit log details modal: loads the entry fragment with fetch().
- */
+
 document.addEventListener('DOMContentLoaded', () => {
     const modalElement = document.getElementById('audit-log-modal');
 

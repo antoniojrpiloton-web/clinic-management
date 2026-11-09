@@ -9,16 +9,6 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-/*
-|--------------------------------------------------------------------------
-| Scheduled Tasks
-|--------------------------------------------------------------------------
-|
-| Run the scheduler every minute with: php artisan schedule:work
-| (or a Windows Task Scheduler / cron entry calling "php artisan schedule:run").
-|
-*/
-
 Schedule::command('backup:run --type=scheduled')
     ->dailyAt('01:00')
     ->withoutOverlapping(60)

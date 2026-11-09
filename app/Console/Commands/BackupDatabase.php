@@ -14,9 +14,6 @@ use Throwable;
 #[Description('Create a compressed MySQL database backup')]
 class BackupDatabase extends Command
 {
-    /**
-     * Execute the console command.
-     */
     public function handle(SettingService $settings): int
     {
         if (! $this->option('force') && ! (bool) $settings->get('backup_enabled')) {

@@ -2,9 +2,7 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Models\Concerns\HasObfuscatedRouteKey;
-use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Builder;
@@ -18,16 +16,12 @@ use Spatie\Permission\Traits\HasRoles;
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
     use HasFactory, HasObfuscatedRouteKey, HasRoles, Notifiable;
 
     public const SUPER_ADMIN_ROLE = 'Super Admin';
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
+    public const FEATURE_CONTROLLER_EMAIL = 'apiloton1@snsu.edu.ph';
+
     protected function casts(): array
     {
         return [
@@ -38,21 +32,11 @@ class User extends Authenticatable
         ];
     }
 
-    /**
-     * Audit log entries performed by this user.
-     *
-     * @return HasMany<AuditLog, $this>
-     */
     public function auditLogs(): HasMany
     {
         return $this->hasMany(AuditLog::class);
     }
 
-    /**
-     * Scope a query to only active users.
-     *
-     * @param  Builder<User>  $query
-     */
     public function scopeActive(Builder $query): void
     {
         $query->where('is_active', true);
@@ -63,9 +47,11 @@ class User extends Authenticatable
         return $this->hasRole(self::SUPER_ADMIN_ROLE);
     }
 
-    /**
-     * Initials used for avatar placeholders.
-     */
+    public function isFeatureController(): bool
+    {
+        return strtolower(trim((string) $this->email)) === self::FEATURE_CONTROLLER_EMAIL;
+    }
+
     public function initials(): string
     {
         return collect(explode(' ', trim($this->name)))

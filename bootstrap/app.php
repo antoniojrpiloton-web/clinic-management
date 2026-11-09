@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureFeatureIsEnabled;
 use App\Http\Middleware\EnsureUserIsActive;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -21,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => PermissionMiddleware::class,
             'role_or_permission' => RoleOrPermissionMiddleware::class,
             'active' => EnsureUserIsActive::class,
+            'feature.enabled' => EnsureFeatureIsEnabled::class,
         ]);
 
         $middleware->redirectGuestsTo(fn () => route('login'));

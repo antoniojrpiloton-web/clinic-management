@@ -10,9 +10,6 @@ class FirstAidRecord extends Model
 {
     use HasFactory;
 
-    /**
-     * @var list<string>
-     */
     public const INJURY_TYPES = [
         'Abrasion / Scratch',
         'Laceration / Cut',
@@ -31,9 +28,6 @@ class FirstAidRecord extends Model
         'Other',
     ];
 
-    /**
-     * @var list<string>
-     */
     public const FIRST_AID_ACTIONS = [
         'Wound Cleaning',
         'Antiseptic Applied',
