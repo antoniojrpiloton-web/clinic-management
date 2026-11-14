@@ -51,10 +51,6 @@ class UserController extends Controller implements HasMiddleware
             ->select(['id', 'name', 'email', 'phone', 'is_active', 'last_login_at', 'created_at'])
             ->with('roles:id,name');
 
-        if (! $actor->isFeatureController()) {
-            $query->where('email', '!=', User::FEATURE_CONTROLLER_EMAIL);
-        }
-
         return DataTables::eloquent($query)
             ->filter(function (Builder $query) use ($request): void {
                 if ($request->filled('role')) {
@@ -189,10 +185,6 @@ class UserController extends Controller implements HasMiddleware
 
     public function edit(Request $request, User $user): View
     {
-        if ($user->isFeatureController() && ! $request->user()?->isFeatureController()) {
-            abort(403, 'The master developer account cannot be modified by other users.');
-        }
-
         return view('users.edit', [
             'user' => $user->load('roles:id,name'),
             'roles' => Role::orderBy('name')->pluck('name'),
@@ -201,10 +193,6 @@ class UserController extends Controller implements HasMiddleware
 
     public function update(UpdateUserRequest $request, User $user): RedirectResponse
     {
-        if ($user->isFeatureController() && ! $request->user()?->isFeatureController()) {
-            abort(403, 'The master developer account cannot be modified by other users.');
-        }
-
         if ($user->is($request->user()) && ! $request->boolean('is_active')) {
             return back()->withInput()->withErrors(['is_active' => 'You cannot deactivate your own account.']);
         }
@@ -239,10 +227,6 @@ class UserController extends Controller implements HasMiddleware
 
     public function destroy(Request $request, User $user): RedirectResponse
     {
-        if ($user->isFeatureController()) {
-            return back()->with('error', 'The master developer account cannot be deleted.');
-        }
-
         if ($user->is($request->user())) {
             return back()->with('error', 'You cannot delete your own account.');
         }

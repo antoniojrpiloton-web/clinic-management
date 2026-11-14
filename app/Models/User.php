@@ -20,8 +20,6 @@ class User extends Authenticatable
 
     public const SUPER_ADMIN_ROLE = 'Super Admin';
 
-    public const FEATURE_CONTROLLER_EMAIL = 'apiloton1@snsu.edu.ph';
-
     protected function casts(): array
     {
         return [
@@ -45,11 +43,6 @@ class User extends Authenticatable
     public function isSuperAdmin(): bool
     {
         return $this->hasRole(self::SUPER_ADMIN_ROLE);
-    }
-
-    public function isFeatureController(): bool
-    {
-        return strtolower(trim((string) $this->email)) === self::FEATURE_CONTROLLER_EMAIL;
     }
 
     public function initials(): string

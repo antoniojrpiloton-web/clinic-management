@@ -4,7 +4,6 @@ namespace App\Providers;
 
 use App\Models\User;
 use App\Services\AuditLogger;
-use App\Services\FeatureControlService;
 use App\Services\SettingService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\Paginator;
@@ -21,7 +20,6 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(SettingService::class);
-        $this->app->singleton(FeatureControlService::class);
         $this->app->singleton(AuditLogger::class);
     }
 
@@ -46,7 +44,6 @@ class AppServiceProvider extends ServiceProvider
 
         View::composer('*', function ($view): void {
             $view->with('appSettings', $this->app->make(SettingService::class)->all());
-            $view->with('featureControl', $this->app->make(FeatureControlService::class));
         });
 
         View::composer('components.topbar', function ($view): void {

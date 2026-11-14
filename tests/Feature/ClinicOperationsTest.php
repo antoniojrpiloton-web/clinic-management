@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Clinician;
 use App\Models\ClinicVisit;
 use App\Models\Patient;
-use App\Models\PhysicalExamSchedule;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -216,59 +215,13 @@ class ClinicOperationsTest extends TestCase
         $response->assertRedirect(route('first-aid-records.show', $visit));
     }
 
-    public function test_super_admin_can_create_and_manage_physical_exam_schedule(): void
-    {
-        $admin = User::role(User::SUPER_ADMIN_ROLE)->first();
-        $patient = Patient::first();
-
-        $response = $this->actingAs($admin)->post(route('physical-exam-schedules.store'), [
-            'title' => 'College of Arts & Sciences Entrance PE Screening 2026',
-            'purpose' => 'Entrance Examination',
-            'target_classification' => 'student',
-            'scheduled_date' => now()->addDays(5)->format('Y-m-d'),
-            'start_time' => '08:00',
-            'end_time' => '17:00',
-            'venue' => 'Clinic Room 2',
-            'capacity' => 100,
-            'status' => 'scheduled',
-            'auto_populate_attendees' => 0,
-        ]);
-
-        $schedule = PhysicalExamSchedule::latest('id')->first();
-        $this->assertNotNull($schedule);
-        $response->assertRedirect(route('physical-exam-schedules.show', $schedule));
-
-        $addResponse = $this->actingAs($admin)->post(route('physical-exam-schedules.add-attendee', $schedule), [
-            'patient_id' => $patient->id,
-        ]);
-        $addResponse->assertRedirect();
-        $this->assertDatabaseHas('physical_exam_schedule_attendees', [
-            'physical_exam_schedule_id' => $schedule->id,
-            'patient_id' => $patient->id,
-            'status' => 'pending',
-        ]);
-
-        $attendee = $schedule->attendees()->where('patient_id', $patient->id)->first();
-        $statusResponse = $this->actingAs($admin)->post(route('physical-exam-schedules.update-attendee-status', [$schedule, $attendee]), [
-            'status' => 'attended',
-        ]);
-        $statusResponse->assertRedirect();
-        $attendee->refresh();
-        $this->assertEquals('attended', $attendee->status);
-    }
-
     public function test_printable_slips_render_successfully(): void
     {
         $admin = User::role(User::SUPER_ADMIN_ROLE)->first();
         $visit = ClinicVisit::first();
-        $schedule = PhysicalExamSchedule::first();
 
         $slipResponse = $this->actingAs($admin)->get(route('clinic-visits.print', $visit));
         $slipResponse->assertOk();
         $slipResponse->assertSee($visit->visit_number);
-
-        $rosterResponse = $this->actingAs($admin)->get(route('physical-exam-schedules.print-roster', $schedule));
-        $rosterResponse->assertOk();
-        $rosterResponse->assertSee($schedule->schedule_number);
     }
 }

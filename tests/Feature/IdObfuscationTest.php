@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\ClinicVisit;
 use App\Models\Patient;
-use App\Models\PhysicalExamination;
 use App\Models\User;
 use App\Support\IdObfuscator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -98,25 +97,16 @@ class IdObfuscationTest extends TestCase
         $response->assertSee($visit->visit_number);
     }
 
-    public function test_physical_examination_route_uses_obfuscated_token(): void
+    public function test_medical_consultation_route_uses_obfuscated_token(): void
     {
         $admin = User::role(User::SUPER_ADMIN_ROLE)->first();
-        $exam = PhysicalExamination::first();
-        if (! $exam) {
-            $patient = Patient::first();
-            $exam = PhysicalExamination::create([
-                'pe_number' => 'PE-TEST-0001',
-                'patient_id' => $patient->id,
-                'exam_date' => now()->toDateString(),
-                'purpose' => 'Annual Health Examination',
-            ]);
-        }
+        $visit = ClinicVisit::where('visit_type', ClinicVisit::TYPE_MEDICAL)->first() ?? ClinicVisit::first();
 
-        $url = route('physical-examinations.show', $exam);
-        $routeKey = $exam->getRouteKey();
+        $url = route('medical-consultations.show', $visit);
+        $routeKey = $visit->getRouteKey();
 
         $this->assertSame(8, strlen($routeKey));
-        $this->assertStringContainsString("/physical-examinations/{$routeKey}", $url);
+        $this->assertStringContainsString("/medical-consultations/{$routeKey}", $url);
 
         $response = $this->actingAs($admin)->get($url);
         $response->assertOk();
@@ -127,7 +117,7 @@ class IdObfuscationTest extends TestCase
         $admin = User::role(User::SUPER_ADMIN_ROLE)->first();
         $patient = Patient::first();
 
-        $url = route('physical-examinations.create', ['patient_id' => $patient->getRouteKey()]);
+        $url = route('medical-consultations.create', ['patient_id' => $patient->getRouteKey()]);
         $response = $this->actingAs($admin)->get($url);
 
         $response->assertOk();
