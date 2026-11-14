@@ -47,8 +47,8 @@ class ExampleTest extends TestCase
         foreach ($routes as $url) {
             $response = $this->actingAs($admin)->get($url);
             $response->assertOk();
-            $response->assertSee('SPRINT STATUS: ONGOING DEVELOPMENT');
-            $response->assertSee('hindi pa kasama sa kasalukuyang 50% Clinical Consultations release');
+            $response->assertSee('In Development');
+            $response->assertSee('Back to Dashboard');
         }
     }
 }

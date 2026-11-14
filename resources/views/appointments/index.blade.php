@@ -244,7 +244,7 @@
                                     <div class="alert alert-soft-success py-2 px-3 small d-flex align-items-center mb-3">
                                         <i class="bi bi-info-circle-fill text-success fs-5 me-2"></i>
                                         <div>
-                                            <strong>Bagong Pasyente:</strong> Para sa mga walk-in o bagong pasyente na wala pa sa listahan.
+                                            <strong>New Patient:</strong> For walk-in or newly registered patients.
                                         </div>
                                     </div>
                                     <div class="row g-2">

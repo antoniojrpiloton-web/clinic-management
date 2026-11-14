@@ -174,7 +174,7 @@
                             <input type="hidden" name="course_or_department" id="kiosk_course_or_department" value="{{ old('course_or_department') }}">
 
                             <div class="mb-3">
-                                <label class="form-label fw-bold text-dark">5. Purpose of Clinic Visit / Sadya sa Clinic <span class="text-danger">*</span></label>
+                                <label class="form-label fw-bold text-dark">5. Purpose of Clinic Visit <span class="text-danger">*</span></label>
                                 <div class="row g-2">
                                     @foreach ($purposes as $idx => $pLabel)
                                         <div class="col-sm-6">

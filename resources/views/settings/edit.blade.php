@@ -234,7 +234,7 @@
                             <div class="col-lg-6">
                                 <label for="logo" class="form-label fw-bold">Upload Master School / Clinic Logo</label>
                                 <p class="text-muted small mb-3">
-                                    Mag-upload lamang ng <strong>isang (1) high-resolution logo</strong> (PNG, JPG, o WebP). Awtomatikong bubuo ang system ng lahat ng kinakailangang variants: standard sizes (Large, Medium, Small, Favicon), transparent background, official circular seal, grayscale, at watermark.
+                                    Upload a single <strong>high-resolution logo</strong> (PNG, JPG, or WebP). The system will automatically generate all necessary variants: standard sizes (Large, Medium, Small, Favicon), transparent background, circular seal, grayscale, and watermark.
                                 </p>
                                 <input
                                     type="file"
@@ -376,7 +376,7 @@
                                     <i class="bi bi-info-circle text-primary fs-3"></i>
                                     <div>
                                         <div class="fw-semibold">No variants generated yet</div>
-                                        <div class="text-muted small">Mag-upload ng logo sa itaas at i-click ang "Save Configuration". Awtomatikong lilikhain ang Circular Official Seal, Transparent, Monochrome, Watermark, Large (512px), Medium (256px), Small (64px), at Favicon (32px).</div>
+                                        <div class="text-muted small">Upload a logo above and click "Save Configuration". The system will automatically generate Circular Official Seal, Transparent, Monochrome, Watermark, Large (512px), Medium (256px), Small (64px), and Favicon (32px).</div>
                                     </div>
                                 </div>
                             @endif
