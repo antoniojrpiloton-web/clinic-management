@@ -20,6 +20,9 @@ use App\Http\Controllers\FirstAidRecordController;
 use App\Http\Controllers\GlobalSearchController;
 use App\Http\Controllers\MedicalConsultationController;
 use App\Http\Controllers\MedicalProfileController;
+use App\Http\Controllers\MedicineCategoryController;
+use App\Http\Controllers\MedicineController;
+use App\Http\Controllers\MedicineDispensingController;
 use App\Http\Controllers\MilestoneStubController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PatientController;
@@ -160,23 +163,23 @@ Route::middleware(['auth', 'active'])->group(function () {
     });
     Route::resource('physical-exam-schedules', PhysicalExamScheduleController::class);
 
-    Route::controller(MilestoneStubController::class)->group(function () {
-        Route::get('medicine-categories', 'phase3')->name('medicine-categories.index');
-        Route::get('medicines', 'phase3')->name('medicines.index');
-        Route::get('medicines/create', 'phase3')->name('medicines.create');
-        Route::get('{any}/edit', 'phase3')->name('medicines.edit');
-        Route::get('medicines/{any}', 'phase3')->name('medicines.show');
+    Route::resource('medicine-categories', MedicineCategoryController::class)->except(['create', 'edit', 'show']);
+    Route::resource('medicines', MedicineController::class);
 
+    Route::controller(MedicineDispensingController::class)->prefix('inventory/dispensings')->name('inventory.dispensings.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::get('{dispensing}', 'show')->name('show');
+        Route::get('{dispensing}/print', 'printSlip')->name('print');
+    });
+
+    Route::controller(MilestoneStubController::class)->group(function () {
         Route::get('inventory/stock-in', 'phase3')->name('inventory.stock-in');
         Route::get('inventory/stock-out', 'phase3')->name('inventory.stock-out');
         Route::get('inventory/expirations', 'phase3')->name('inventory.expirations');
         Route::get('inventory/transactions', 'phase3')->name('inventory.transactions');
         Route::get('inventory/reports', 'phase3')->name('inventory.reports');
-
-        Route::get('inventory/dispensings', 'phase3')->name('inventory.dispensings.index');
-        Route::get('inventory/dispensings/create', 'phase3')->name('inventory.dispensings.create');
-        Route::get('inventory/dispensings/{any}/print', 'phase3')->name('inventory.dispensings.print');
-        Route::get('inventory/dispensings/{any}', 'phase3')->name('inventory.dispensings.show');
     });
 
     // Milestone 4 Planned: Reports, Statistics & Official Records (Scheduled Phase 4 Release)

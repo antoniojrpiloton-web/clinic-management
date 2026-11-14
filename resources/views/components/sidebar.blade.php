@@ -206,7 +206,7 @@
 
         <div class="nav-heading">PHARMACY &amp; INVENTORY</div>
 
-        {{-- Pharmacy & Dispensing (Under Development) --}}
+        {{-- Pharmacy & Dispensing --}}
         <button
             type="button"
             @class(['nav-dropdown-toggle', 'active' => $dispensingActive])
@@ -218,29 +218,23 @@
                 <i class="bi bi-capsule-pill menu-icon"></i>
                 <span>Pharmacy &amp; Dispensing</span>
             </div>
-            <div class="d-flex align-items-center gap-1 flex-shrink-0 ms-2">
-                <i class="bi bi-lock-fill text-muted" style="font-size: 0.72rem;" title="Under Development"></i>
-                <i class="bi bi-chevron-right menu-chevron"></i>
-            </div>
+            <i class="bi bi-chevron-right menu-chevron"></i>
         </button>
         <div @class(['collapse', 'show' => $dispensingActive]) id="submenu-pharmacy-dispensing">
             <ul class="sidebar-submenu">
                 <li>
-                    <a href="{{ route('inventory.dispensings.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('inventory.dispensings.*')])>
+                    <a href="{{ route('inventory.dispensings.index') }}" @class(['submenu-link', 'active' => request()->routeIs('inventory.dispensings.*')])>
                         <span>Medicine Dispensing</span>
-                        <i class="bi bi-lock-fill text-muted flex-shrink-0 ms-2" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
                 <li>
-                    <a href="{{ route('medicines.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('medicines.*')])>
+                    <a href="{{ route('medicines.index') }}" @class(['submenu-link', 'active' => request()->routeIs('medicines.*')])>
                         <span>Medicine Masterlist</span>
-                        <i class="bi bi-lock-fill text-muted flex-shrink-0 ms-2" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
                 <li>
-                    <a href="{{ route('medicine-categories.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('medicine-categories.*')])>
+                    <a href="{{ route('medicine-categories.index') }}" @class(['submenu-link', 'active' => request()->routeIs('medicine-categories.*')])>
                         <span>Medicine Categories</span>
-                        <i class="bi bi-lock-fill text-muted flex-shrink-0 ms-2" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
             </ul>
