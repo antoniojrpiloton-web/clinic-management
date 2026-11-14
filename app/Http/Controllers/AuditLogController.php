@@ -73,7 +73,14 @@ class AuditLogController extends Controller implements HasMiddleware
                 ->addColumn('actions_col', function (AuditLog $log): string {
                     $url = route('audit-logs.show', $log);
 
-                    return '<button type="button" class="btn btn-sm btn-outline-forest" data-view-url="'.e($url).'" title="View Audit Details"><i class="bi bi-eye me-1"></i>View</button>';
+                    return '<div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle py-1 px-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-gear-fill me-1"></i> Action
+                        </button>
+                        <ul class="dropdown-menu shadow-sm">
+                            <li><button type="button" class="dropdown-item" data-view-url="'.e($url).'"><i class="bi bi-eye me-2"></i>View Details</button></li>
+                        </ul>
+                    </div>';
                 })
                 ->rawColumns(['timestamp_col', 'user_col', 'event_col', 'description_col', 'subject_col', 'ip_address_col', 'actions_col'])
                 ->make(true);

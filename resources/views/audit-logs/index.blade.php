@@ -44,13 +44,13 @@
                 <table id="audit-logs-table" class="table table-hover align-middle w-100 mb-0">
                     <thead>
                         <tr>
+                            <th style="width: 100px;">ACTION</th>
                             <th>TIMESTAMP</th>
                             <th>USER</th>
                             <th>EVENT</th>
                             <th>DESCRIPTION</th>
                             <th>SUBJECT</th>
                             <th>IP ADDRESS</th>
-                            <th class="text-end">ACTIONS</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -78,9 +78,9 @@
                 const table = $('#audit-logs-table').DataTable({
                     processing: true,
                     serverSide: true,
-                    pageLength: {{ $pageLength }},
+                    pageLength: {{ (int) ($appSettings['table_page_length'] ?? $pageLength ?? 25) }},
                     lengthMenu: [10, 25, 50, 100],
-                    order: [[0, 'desc']],
+                    order: [[1, 'desc']],
                     ajax: {
                         url: '{{ route('audit-logs.index') }}',
                         data: function (d) {
@@ -91,13 +91,13 @@
                         }
                     },
                     columns: [
+                        { data: 'actions_col', orderable: false, searchable: false },
                         { data: 'timestamp_col', name: 'created_at', orderable: true },
                         { data: 'user_col', name: 'user.name', orderable: false },
                         { data: 'event_col', name: 'event', orderable: true },
                         { data: 'description_col', name: 'description', orderable: false },
                         { data: 'subject_col', name: 'subject_type', orderable: false },
-                        { data: 'ip_address_col', name: 'ip_address', orderable: false },
-                        { data: 'actions_col', orderable: false, searchable: false, className: 'text-end' }
+                        { data: 'ip_address_col', name: 'ip_address', orderable: false }
                     ],
                     language: {
                         search: '',

@@ -80,13 +80,13 @@
                 <table id="disease-categories-table" class="table table-hover align-middle w-100 mb-0">
                     <thead class="table-light">
                         <tr>
+                            <th style="width: 100px;">ACTION</th>
                             <th>Code</th>
                             <th>Classification</th>
                             <th>Category Name (Chart Label)</th>
                             <th>Auto-Match Keywords</th>
                             <th class="text-center">Linked Cases</th>
                             <th class="text-center">Status</th>
-                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -216,16 +216,17 @@
                         processing: true,
                         serverSide: true,
                         ajax: '{{ route('disease-categories.index') }}',
-                        pageLength: 25,
-                        order: [[1, 'asc']],
+                        pageLength: {{ (int) ($appSettings['table_page_length'] ?? 25) }},
+                        lengthMenu: [10, 25, 50, 100],
+                        order: [[2, 'asc']],
                         columns: [
+                            { data: 'actions_col', name: 'actions', orderable: false, searchable: false },
                             { data: 'code_col', name: 'code' },
                             { data: 'classification_col', name: 'classification' },
                             { data: 'name_col', name: 'name' },
                             { data: 'keywords_col', name: 'keywords', orderable: false },
                             { data: 'count_col', name: 'medical_consultations_count', className: 'text-center', searchable: false, orderable: false },
-                            { data: 'status_col', name: 'is_active', className: 'text-center', searchable: false },
-                            { data: 'actions_col', name: 'actions', orderable: false, searchable: false, className: 'text-end' }
+                            { data: 'status_col', name: 'is_active', className: 'text-center', searchable: false }
                         ]
                     });
                 }

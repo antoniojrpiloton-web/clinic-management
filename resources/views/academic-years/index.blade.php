@@ -96,13 +96,13 @@
                 <table id="academic-years-table" class="table table-hover align-middle w-100 mb-0">
                     <thead>
                         <tr>
+                            <th style="width: 100px;">ACTION</th>
                             <th>CODE</th>
                             <th>ACADEMIC YEAR</th>
                             <th>SEMESTER</th>
                             <th>DURATION</th>
                             <th>CURRENT TERM</th>
                             <th>STATUS</th>
-                            <th class="text-end">ACTIONS</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -239,16 +239,17 @@
                         processing: true,
                         serverSide: true,
                         ajax: '{{ route('academic-years.index') }}',
-                        pageLength: 25,
-                        order: [[3, 'desc']],
+                        pageLength: {{ (int) ($appSettings['table_page_length'] ?? 25) }},
+                        lengthMenu: [10, 25, 50, 100],
+                        order: [[4, 'desc']],
                         columns: [
+                            { data: 'actions_col', orderable: false, searchable: false },
                             { data: 'code_col', name: 'code' },
                             { data: 'name_col', name: 'name' },
                             { data: 'semester_col', name: 'semester' },
                             { data: 'duration_col', name: 'start_date', searchable: false },
                             { data: 'current_col', name: 'is_current', searchable: false },
-                            { data: 'status_col', name: 'status' },
-                            { data: 'actions_col', orderable: false, searchable: false, className: 'text-end' }
+                            { data: 'status_col', name: 'status' }
                         ]
                     });
                 }

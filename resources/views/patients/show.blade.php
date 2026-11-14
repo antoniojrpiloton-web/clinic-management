@@ -76,7 +76,7 @@
                         </div>
                         <div class="col-sm-6">
                             <span class="text-muted small text-uppercase fw-semibold d-block">Date of Birth</span>
-                            <span class="fw-semibold text-dark">{{ $patient->date_of_birth->format('F d, Y') }} ({{ $patient->age }} y/o)</span>
+                            <span class="fw-semibold text-dark">{{ $patient->date_of_birth->format($appSettings['date_format'] ?? 'F d, Y') }} ({{ $patient->age }} y/o)</span>
                         </div>
                         <div class="col-sm-6">
                             <span class="text-muted small text-uppercase fw-semibold d-block">Civil Status</span>
@@ -269,7 +269,7 @@
                                                 </div>
                                             </td>
                                             <td class="fw-bold text-dark">{{ $pe->pe_number }}</td>
-                                            <td>{{ $pe->exam_date->format('M d, Y') }}</td>
+                                            <td>{{ $pe->exam_date->format($appSettings['date_format'] ?? 'M d, Y') }}</td>
                                             <td>{{ $pe->purpose }}</td>
                                             <td>{{ $pe->blood_pressure ?: '—' }}</td>
                                             <td>

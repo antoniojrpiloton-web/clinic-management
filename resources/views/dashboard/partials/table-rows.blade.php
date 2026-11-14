@@ -1,3 +1,6 @@
+@php
+    $dateFormat = $appSettings['date_format'] ?? 'M d, Y';
+@endphp
 @if($part === 'alerts')
     @if(($stats['low_stock_count'] ?? 0) > 0 || ($stats['expiring_count'] ?? 0) > 0 || ($stats['expired_count'] ?? 0) > 0)
         <div class="alert alert-warning border-warning border-opacity-25 d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 py-2 shadow-xs">
@@ -89,7 +92,7 @@
             <td>
                 <span class="badge {{ $visit->type_badge }}">{{ $visit->type_label }}</span>
             </td>
-            <td class="small">{{ $visit->visit_date->format('M d, h:i A') }}</td>
+            <td class="small">{{ $visit->visit_date->format($dateFormat.' h:i A') }}</td>
             <td>
                 <span class="badge badge-soft-gray">{{ $visit->disposition_label }}</span>
             </td>
@@ -111,7 +114,7 @@
                 <div class="fw-semibold text-dark">{{ $pe->patient?->full_name ?? '—' }}</div>
                 <small class="text-muted">{{ $pe->patient?->primary_identifier }}</small>
             </td>
-            <td class="small">{{ $pe->exam_date->format('M d, Y') }}</td>
+            <td class="small">{{ $pe->exam_date->format($dateFormat) }}</td>
             <td>
                 <span class="badge {{ $pe->fitness_badge_class }}">{{ $pe->fitness_assessment ?: 'Class A' }}</span>
             </td>
@@ -137,7 +140,7 @@
                 <small class="text-muted">{{ ucfirst($sched->target_classification) }}</small>
             </td>
             <td>
-                <div class="small fw-medium">{{ $sched->scheduled_date->format('M d, Y') }}</div>
+                <div class="small fw-medium">{{ $sched->scheduled_date->format($dateFormat) }}</div>
                 <small class="text-muted">{{ $sched->venue ?: 'Main Clinic' }}</small>
             </td>
             <td class="small">
@@ -172,7 +175,7 @@
                     <small class="text-muted">+{{ $disp->items->count() - 2 }} more</small>
                 @endif
             </td>
-            <td class="small">{{ $disp->dispensed_date?->format('M d, Y') ?? '—' }}</td>
+            <td class="small">{{ $disp->dispensed_date?->format($dateFormat) ?? '—' }}</td>
         </tr>
     @empty
         <tr>
@@ -207,7 +210,7 @@
                     <span class="badge badge-soft-gray">Outpatient Rx</span>
                 @endif
             </td>
-            <td class="small text-muted">{{ $mc->visit?->visit_date?->format('M d, Y') ?? '—' }}</td>
+            <td class="small text-muted">{{ $mc->visit?->visit_date?->format($dateFormat) ?? '—' }}</td>
         </tr>
     @empty
         <tr>
@@ -235,7 +238,7 @@
                 <span class="badge badge-soft-blue">DMFT: {{ $dc->dmft_total }}</span>
                 <span class="badge badge-soft-gray">D:{{ (int) $dc->dmft_decayed }} M:{{ (int) $dc->dmft_missing }} F:{{ (int) $dc->dmft_filled }}</span>
             </td>
-            <td class="small text-muted">{{ $dc->visit?->visit_date?->format('M d, Y') ?? '—' }}</td>
+            <td class="small text-muted">{{ $dc->visit?->visit_date?->format($dateFormat) ?? '—' }}</td>
         </tr>
     @empty
         <tr>
@@ -289,7 +292,7 @@
             </td>
             <td class="fw-medium text-dark">{{ $fa->injury_type }} ({{ $fa->body_part ?: 'General' }})</td>
             <td class="small text-muted">{{ \Illuminate\Support\Str::limit($fa->supplies_used, 38) }}</td>
-            <td class="small text-muted">{{ $fa->visit?->visit_date?->format('M d, Y') ?? '—' }}</td>
+            <td class="small text-muted">{{ $fa->visit?->visit_date?->format($dateFormat) ?? '—' }}</td>
         </tr>
     @empty
         <tr>

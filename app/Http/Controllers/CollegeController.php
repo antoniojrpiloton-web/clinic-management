@@ -58,7 +58,7 @@ class CollegeController extends Controller implements HasMiddleware
                     return "<span class=\"status-badge {$cls}\">{$lbl}</span>";
                 })
                 ->addColumn('actions_col', function (College $c) use ($canEdit, $canDelete): string {
-                    $html = '<div class="d-inline-flex gap-1">';
+                    $items = '';
 
                     if ($canEdit) {
                         $updateUrl = route('colleges.update', $c);
@@ -68,20 +68,31 @@ class CollegeController extends Controller implements HasMiddleware
                         $desc = e($c->description);
                         $active = $c->is_active ? '1' : '0';
 
-                        $html .= "<button type=\"button\" class=\"btn btn-sm btn-light border p-1\" data-bs-toggle=\"modal\" data-bs-target=\"#edit-college-modal\" data-update-url=\"{$updateUrl}\" data-code=\"{$code}\" data-name=\"{$name}\" data-dean=\"{$dean}\" data-description=\"{$desc}\" data-active=\"{$active}\" title=\"Edit\"><i class=\"bi bi-pencil\"></i></button>";
+                        $items .= "<li><button type=\"button\" class=\"dropdown-item\" data-bs-toggle=\"modal\" data-bs-target=\"#edit-college-modal\" data-update-url=\"{$updateUrl}\" data-code=\"{$code}\" data-name=\"{$name}\" data-dean=\"{$dean}\" data-description=\"{$desc}\" data-active=\"{$active}\"><i class=\"bi bi-pencil me-2\"></i>Edit College</button></li>";
                     }
 
                     if ($canDelete) {
                         $deleteUrl = route('colleges.destroy', $c);
-                        $csrf = csrf_field();
-                        $method = method_field('DELETE');
+                        $csrfToken = csrf_token();
 
-                        $html .= "<form method=\"POST\" action=\"{$deleteUrl}\" data-confirm=\"Are you sure you want to delete this college?\" class=\"d-inline\">{$csrf}{$method}<button type=\"submit\" class=\"btn btn-sm btn-light border text-danger p-1\" title=\"Delete\"><i class=\"bi bi-trash\"></i></button></form>";
+                        if ($canEdit) {
+                            $items .= '<li><hr class="dropdown-divider"></li>';
+                        }
+                        $items .= "<li><form method=\"POST\" action=\"{$deleteUrl}\" data-confirm=\"Are you sure you want to delete this college?\"><input type=\"hidden\" name=\"_token\" value=\"{$csrfToken}\"><input type=\"hidden\" name=\"_method\" value=\"DELETE\"><button type=\"submit\" class=\"dropdown-item text-danger\"><i class=\"bi bi-trash me-2\"></i>Delete College</button></form></li>";
                     }
 
-                    $html .= '</div>';
+                    if (empty($items)) {
+                        return '';
+                    }
 
-                    return $html;
+                    return "<div class=\"dropdown\">
+                        <button class=\"btn btn-sm btn-outline-secondary dropdown-toggle py-1 px-2\" type=\"button\" data-bs-toggle=\"dropdown\" aria-expanded=\"false\">
+                            <i class=\"bi bi-gear-fill me-1\"></i> Action
+                        </button>
+                        <ul class=\"dropdown-menu shadow-sm\">
+                            {$items}
+                        </ul>
+                    </div>";
                 })
                 ->orderColumn('code_col', 'code $1')
                 ->orderColumn('name_col', 'name $1')

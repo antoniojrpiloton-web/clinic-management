@@ -41,7 +41,7 @@
                 <div class="kpi-value">{{ number_format($stats['total_today']) }}</div>
                 <div class="kpi-trend">
                     <span class="trend-badge up"><i class="bi bi-calendar-check"></i> Today</span>
-                    <span class="trend-compare">{{ now()->format('M d, Y') }}</span>
+                    <span class="trend-compare">{{ now()->format($appSettings['date_format'] ?? 'M d, Y') }}</span>
                 </div>
             </div>
         </div>
@@ -104,49 +104,52 @@
             <span class="fw-bold text-dark"><i class="bi bi-funnel me-1"></i> Filter Appointments</span>
         </div>
         <div class="card-body">
-            <form method="GET" action="{{ route('appointments.index') }}" class="row g-3 align-items-end">
+            <form id="appointments-filter-form" class="row g-3 align-items-end">
                 <div class="col-md-3">
                     <label class="form-label small fw-semibold text-muted">Date</label>
                     <div class="input-group">
-                        <input type="date" name="date" value="{{ $currentDate !== 'all' ? $currentDate : '' }}" class="form-control">
-                        <a href="{{ route('appointments.index', ['date' => now()->toDateString()]) }}" class="btn btn-outline-secondary btn-sm" title="Today">Today</a>
-                        <a href="{{ route('appointments.index', ['date' => 'all']) }}" class="btn btn-outline-secondary btn-sm" title="All Dates">All</a>
+                        <input type="date" name="date" id="filter-date" value="{{ $currentDate !== 'all' ? $currentDate : '' }}" class="form-control">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-date-today" title="Today">Today</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-date-all" title="All Dates">All</button>
                     </div>
                 </div>
 
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label small fw-semibold text-muted">Doctor</label>
-                    <select name="clinician_id" class="form-select">
+                    <select name="clinician_id" id="filter-clinician" class="form-select">
                         <option value="">All Doctors</option>
                         @foreach ($clinicians as $cl)
-                            <option value="{{ $cl->id }}" @selected(request('clinician_id') == $cl->id)>{{ $cl->name }} ({{ $cl->type }})</option>
+                            <option value="{{ $cl->id }}">{{ $cl->name }} ({{ $cl->type }})</option>
                         @endforeach
                     </select>
                 </div>
 
                 <div class="col-md-2">
                     <label class="form-label small fw-semibold text-muted">Service</label>
-                    <select name="service_type" class="form-select">
+                    <select name="service_type" id="filter-service-type" class="form-select">
                         <option value="">All Services</option>
                         @foreach ($serviceTypes as $sKey => $sLabel)
-                            <option value="{{ $sKey }}" @selected(request('service_type') === $sKey)>{{ $sLabel }}</option>
+                            <option value="{{ $sKey }}">{{ $sLabel }}</option>
                         @endforeach
                     </select>
                 </div>
 
                 <div class="col-md-2">
                     <label class="form-label small fw-semibold text-muted">Status</label>
-                    <select name="status" class="form-select">
+                    <select name="status" id="filter-status" class="form-select">
                         <option value="">All Statuses</option>
                         @foreach ($statuses as $stKey => $stLabel)
-                            <option value="{{ $stKey }}" @selected(request('status') === $stKey)>{{ $stLabel }}</option>
+                            <option value="{{ $stKey }}">{{ $stLabel }}</option>
                         @endforeach
                     </select>
                 </div>
 
-                <div class="col-md-2 d-flex gap-1">
-                    <button type="submit" class="btn btn-primary w-100" title="Apply Filter"><i class="bi bi-funnel"></i> Filter</button>
-                    <a href="{{ route('appointments.index') }}" class="btn btn-outline-secondary" title="Reset"><i class="bi bi-arrow-clockwise"></i></a>
+                <div class="col-md-3 d-flex gap-1">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                        <input type="text" id="filter-search" class="form-control border-start-0" placeholder="Search patient, ref #...">
+                    </div>
+                    <button type="reset" class="btn btn-outline-secondary" title="Reset"><i class="bi bi-arrow-clockwise"></i></button>
                 </div>
             </form>
         </div>
@@ -156,146 +159,54 @@
         <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
             <div>
                 <span class="fw-bold text-dark"><i class="bi bi-list-check me-1"></i> Appointments List</span>
-                <span class="text-muted small ms-2">{{ $currentDate !== 'all' ? \Carbon\Carbon::parse($currentDate)->format('F d, Y') : 'All Dates' }}</span>
             </div>
             <div class="d-flex align-items-center gap-2">
                 <a href="{{ route('appointments.calendar') }}" class="btn btn-sm btn-outline-primary">
                     <i class="bi bi-calendar3 me-1"></i> Calendar View
                 </a>
-                <span class="badge badge-soft-gray">{{ $appointments->total() }} appointments</span>
             </div>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0 w-100">
+                <table id="appointments-table" class="table table-hover align-middle mb-0 w-100">
                     <thead>
                         <tr>
+                            <th style="width: 100px;">ACTION</th>
                             <th>TIME / REF #</th>
                             <th>PRIORITY</th>
                             <th>PATIENT</th>
                             <th>DOCTOR</th>
                             <th>REASON</th>
                             <th>STATUS</th>
-                            <th class="text-end" style="min-width: 190px;">ACTIONS</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse ($appointments as $app)
-                            <tr @class(['table-warning-subtle' => $app->priority_level === 'urgent' && $app->status === 'checked_in'])>
-                                <td>
-                                    <div class="fw-bold text-dark"><i class="bi bi-clock me-1 text-primary"></i>{{ $app->appointment_time }}</div>
-                                    <div class="fw-mono small text-muted">{{ $app->appointment_number }} &bull; {{ $app->appointment_date ? $app->appointment_date->format('M d, Y') : '—' }}</div>
-                                </td>
-                                <td>
-                                    <span class="badge {{ $app->priority_badge_class }}">
-                                        @if ($app->priority_level === 'urgent')
-                                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                                        @endif
-                                        {{ ucfirst($app->priority_level) }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="fw-semibold text-dark">{{ $app->patient?->full_name }}</div>
-                                    <div class="small text-muted">
-                                        {{ $app->patient?->primary_identifier }} &bull;
-                                        <span class="badge badge-soft-blue">
-                                            {{ $app->patient?->type === 'employee' ? ($app->patient?->category === 'Faculty' ? 'Faculty' : 'Staff') : ($app->patient?->type === 'visitor' ? 'Visitor' : 'Student') }}
-                                        </span>
-                                        @if ($app->patient?->program)
-                                            &bull; {{ $app->patient->program->code }}
-                                        @endif
-                                    </div>
-                                </td>
-                                <td>
-                                    @if ($app->clinician)
-                                        <div class="fw-medium text-dark">{{ $app->clinician->name }}</div>
-                                        <div class="small text-muted">{{ $app->clinician->title }} ({{ $app->clinician->type }})</div>
-                                    @else
-                                        <span class="text-muted italic">Any Available Doctor</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    <div class="fw-semibold text-dark">{{ $app->reason }}</div>
-                                    <span class="badge badge-soft-blue" style="font-size: 0.7rem;">{{ $serviceTypes[$app->service_type] ?? ucfirst($app->service_type) }}</span>
-                                    @if ($app->notes)
-                                        <div class="small text-muted mt-1">{{ Str::limit($app->notes, 60) }}</div>
-                                    @endif
-                                </td>
-                                <td>
-                                    <span class="badge {{ $app->status_badge_class }}">
-                                        {{ $statuses[$app->status] ?? ucfirst($app->status) }}
-                                    </span>
-                                    @if ($app->clinicVisit)
-                                        <div class="mt-1">
-                                            <a href="{{ route('clinic-visits.show', $app->clinicVisit) }}" class="badge badge-soft-purple text-decoration-none">
-                                                <i class="bi bi-link-45deg"></i> {{ $app->clinicVisit->visit_number }}
-                                            </a>
-                                        </div>
-                                    @endif
-                                </td>
-                                <td class="text-end">
-                                    <div class="d-flex justify-content-end gap-1">
-                                        @if ($app->status === 'scheduled')
-                                            <form method="POST" action="{{ route('appointments.check-in', $app) }}">
-                                                @csrf
-                                                <button type="submit" class="btn btn-sm btn-info text-dark fw-semibold py-1 px-2" title="Mark Patient Arrived &amp; Waiting">
-                                                    <i class="bi bi-check2-circle"></i> Check In
-                                                </button>
-                                            </form>
-                                        @endif
-
-                                        @if ($app->status === 'checked_in' || $app->status === 'scheduled')
-                                            <form method="POST" action="{{ route('appointments.start-consultation', $app) }}">
-                                                @csrf
-                                                <button type="submit" class="btn btn-sm btn-primary py-1 px-2 fw-semibold" title="Doctor Call: Start Consultation">
-                                                    <i class="bi bi-clipboard2-pulse me-1"></i> Start
-                                                </button>
-                                            </form>
-
-                                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" data-bs-toggle="modal" data-bs-target="#cancelModal{{ $app->id }}" title="Cancel Appointment">
-                                                <i class="bi bi-x-circle"></i>
-                                            </button>
-
-                                            <div class="modal fade" id="cancelModal{{ $app->id }}" tabindex="-1" aria-hidden="true">
-                                                <div class="modal-dialog modal-sm">
-                                                    <form method="POST" action="{{ route('appointments.cancel', $app) }}" class="modal-content text-start">
-                                                        @csrf
-                                                        <div class="modal-header">
-                                                            <h6 class="modal-title fw-bold">Cancel Appointment</h6>
-                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                        </div>
-                                                        <div class="modal-body">
-                                                            <label class="form-label small fw-semibold">Cancellation Reason</label>
-                                                            <textarea name="cancellation_reason" class="form-control form-control-sm" rows="3" placeholder="Reason for patient cancellation..." required></textarea>
-                                                        </div>
-                                                        <div class="modal-footer">
-                                                            <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">Close</button>
-                                                            <button type="submit" class="btn btn-danger btn-sm">Confirm Cancel</button>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="text-center text-muted py-5">
-                                    <i class="bi bi-calendar-check fs-1 d-block mb-2 text-secondary"></i>
-                                    No doctor appointments found for this filter.
-                                </td>
-                            </tr>
-                        @endforelse
+                        <x-table-skeleton :cols="7" :rows="8" />
                     </tbody>
                 </table>
             </div>
         </div>
-        @if ($appointments->hasPages())
-            <div class="card-footer bg-white">
-                {{ $appointments->links() }}
-            </div>
-        @endif
+    </div>
+
+    <div class="modal fade" id="cancelAppointmentModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-sm">
+            <form method="POST" action="" id="cancelAppointmentForm" class="modal-content text-start">
+                @csrf
+                <div class="modal-header">
+                    <h6 class="modal-title fw-bold">Cancel Appointment</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="small text-muted mb-2">Cancel appointment <strong id="cancelAppointmentRef"></strong>?</p>
+                    <label class="form-label small fw-semibold">Cancellation Reason</label>
+                    <textarea name="cancellation_reason" class="form-control form-control-sm" rows="3" placeholder="Reason for patient cancellation..." required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-danger btn-sm">Confirm Cancel</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <div class="modal fade" id="bookAppointmentModal" tabindex="-1" aria-hidden="true">
@@ -461,10 +372,88 @@
         </div>
     </div>
 
+    @include('partials.plugins.datatables')
+
     @push('scripts')
         @include('partials.plugins.select2')
         <script>
             document.addEventListener('DOMContentLoaded', function () {
+                const appointmentsTable = $('#appointments-table').DataTable({
+                    processing: true,
+                    serverSide: true,
+                    pageLength: {{ (int) ($appSettings['table_page_length'] ?? 25) }},
+                    lengthMenu: [10, 25, 50, 100],
+                    order: [[1, 'asc']],
+                    dom: "<'row p-3 align-items-center'<'col-sm-6'l><'col-sm-6'f>>" +
+                         "<'row'<'col-sm-12'tr>>" +
+                         "<'row p-3 align-items-center'<'col-sm-5'i><'col-sm-7'p>>",
+                    ajax: {
+                        url: "{{ route('appointments.index') }}",
+                        data: function (d) {
+                            d.date = $('#filter-date').val();
+                            d.clinician_id = $('#filter-clinician').val();
+                            d.service_type = $('#filter-service-type').val();
+                            d.status = $('#filter-status').val();
+                            d.custom_search = $('#filter-search').val();
+                        }
+                    },
+                    columns: [
+                        { data: 'actions', name: 'actions', orderable: false, searchable: false },
+                        { data: 'time_ref_col', name: 'appointment_time' },
+                        { data: 'priority_col', name: 'priority_level' },
+                        { data: 'patient_col', name: 'patient_id', orderable: false },
+                        { data: 'doctor_col', name: 'clinician_id', orderable: false },
+                        { data: 'reason_col', name: 'reason' },
+                        { data: 'status_col', name: 'status' }
+                    ],
+                    language: {
+                        search: "",
+                        searchPlaceholder: "Quick filter...",
+                        emptyTable: "No appointments found.",
+                        processing: '<div class="spinner-border spinner-border-sm text-primary me-1"></div> Loading appointments...'
+                    }
+                });
+
+                let appSearchTimer;
+                $('#filter-search').on('input', function () {
+                    clearTimeout(appSearchTimer);
+                    appSearchTimer = setTimeout(() => appointmentsTable.draw(), 300);
+                });
+
+                $('#appointments-filter-form').on('submit', function (e) {
+                    e.preventDefault();
+                    appointmentsTable.draw();
+                });
+
+                $('#appointments-filter-form').on('reset', function () {
+                    setTimeout(() => {
+                        $('#filter-date').val('');
+                        appointmentsTable.draw();
+                    }, 50);
+                });
+
+                $('#filter-date, #filter-clinician, #filter-service-type, #filter-status').on('change', function () {
+                    appointmentsTable.draw();
+                });
+
+                $('#btn-date-today').on('click', function () {
+                    $('#filter-date').val('{{ now()->toDateString() }}');
+                    appointmentsTable.draw();
+                });
+
+                $('#btn-date-all').on('click', function () {
+                    $('#filter-date').val('all');
+                    appointmentsTable.draw();
+                });
+
+                $(document).on('click', '.btn-open-cancel-modal', function () {
+                    const action = $(this).data('action');
+                    const ref = $(this).data('ref');
+                    $('#cancelAppointmentForm').attr('action', action);
+                    $('#cancelAppointmentRef').text(ref);
+                    $('#cancelAppointmentModal').modal('show');
+                });
+
                 const modeExisting = document.getElementById('modeExisting');
                 const modeNew = document.getElementById('modeNew');
                 const existingSection = document.getElementById('existingPatientSection');

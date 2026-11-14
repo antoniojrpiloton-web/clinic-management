@@ -13,16 +13,16 @@
         <div>
             <div class="d-flex align-items-center gap-2">
                 <h1 class="dashboard-heading mb-0">Medical &amp; Dental Records ({{ $medDental['year'] }})</h1>
-                <span class="badge badge-soft-green"><i class="bi bi-table me-1"></i> Official 12-Month Matrix</span>
+                <span class="badge badge-soft-green"><i class="bi bi-table me-1"></i> 12-Month Summary</span>
             </div>
             <p class="dashboard-subheading mb-0 mt-1">
-                Dynamic annual monthly tally of clinical services rendered across Employee and Student Academic Programs.
+                Monthly tally of clinic services rendered for students and employees.
             </p>
         </div>
 
         <div class="d-flex flex-wrap gap-2">
             <a href="{{ route('reports.clinic.print-medical-dental-records', request()->query()) }}" target="_blank" class="btn btn-success btn-sm px-3 py-2">
-                <i class="bi bi-file-earmark-pdf me-1"></i> Export Official PDF (Landscape)
+                <i class="bi bi-file-earmark-pdf me-1"></i> Export PDF
             </a>
             <button type="button" onclick="window.print()" class="btn btn-outline-secondary btn-sm px-3 py-2">
                 <i class="bi bi-printer me-1"></i> Print View
@@ -32,8 +32,8 @@
 
     <div class="card border mb-4">
         <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-            <span class="fw-bold text-dark"><i class="bi bi-funnel me-1"></i> Filter Report Parameters</span>
-            <span class="badge badge-soft-blue">Grand Total: {{ number_format($medDental['grand_total']) }} Services</span>
+            <span class="fw-bold text-dark"><i class="bi bi-funnel me-1"></i> Filters</span>
+            <span class="badge badge-soft-blue">Total: {{ number_format($medDental['grand_total']) }} Services</span>
         </div>
         <div class="card-body">
             <form method="GET" action="{{ route('reports.clinic.medical-dental') }}" class="row g-3 align-items-end">

@@ -27,7 +27,10 @@ use Yajra\DataTables\Facades\DataTables;
 
 class MedicineDispensingController extends Controller implements HasMiddleware
 {
-    public function __construct(protected AuditLogger $auditLogger) {}
+    public function __construct(
+        protected AuditLogger $auditLogger,
+        protected SettingService $settingService,
+    ) {}
 
     public static function middleware(): array
     {
@@ -68,7 +71,7 @@ class MedicineDispensingController extends Controller implements HasMiddleware
 
                     return "<a href=\"{$url}\" class=\"font-monospace fw-bold text-dark text-decoration-none\">{$num}</a>";
                 })
-                ->addColumn('date_col', fn (MedicineDispensing $d): string => '<span class="small text-muted">'.($d->dispensed_date ? e($d->dispensed_date->format('M d, Y')) : 'N/A').'</span>')
+                ->addColumn('date_col', fn (MedicineDispensing $d): string => '<span class="small text-muted">'.($d->dispensed_date ? e($d->dispensed_date->format($this->settingService->dateFormat())) : 'N/A').'</span>')
                 ->addColumn('patient_col', function (MedicineDispensing $d): string {
                     $p = $d->patient;
                     if (! $p) {
@@ -98,13 +101,14 @@ class MedicineDispensingController extends Controller implements HasMiddleware
                     $showUrl = route('inventory.dispensings.show', $d);
                     $printUrl = route('inventory.dispensings.print', $d);
 
-                    return "<div class=\"d-flex align-items-center justify-content-end gap-1\">
-                        <a href=\"{$showUrl}\" class=\"btn btn-sm btn-light border p-1 px-2\" title=\"View Details\">
-                            <i class=\"bi bi-eye\"></i>
-                        </a>
-                        <a href=\"{$printUrl}\" target=\"_blank\" class=\"btn btn-sm btn-light border p-1 px-2 text-primary\" title=\"Print Dispensing Slip\">
-                            <i class=\"bi bi-printer\"></i>
-                        </a>
+                    return "<div class=\"dropdown\">
+                        <button class=\"btn btn-sm btn-outline-secondary dropdown-toggle py-1 px-2\" type=\"button\" data-bs-toggle=\"dropdown\" aria-expanded=\"false\">
+                            <i class=\"bi bi-gear-fill me-1\"></i> Action
+                        </button>
+                        <ul class=\"dropdown-menu shadow-sm\">
+                            <li><a class=\"dropdown-item\" href=\"{$showUrl}\"><i class=\"bi bi-eye me-2\"></i>View Details</a></li>
+                            <li><a class=\"dropdown-item text-primary\" href=\"{$printUrl}\" target=\"_blank\"><i class=\"bi bi-printer me-2\"></i>Print Slip</a></li>
+                        </ul>
                     </div>";
                 })
                 ->orderColumn('slip_col', 'dispensing_number $1')

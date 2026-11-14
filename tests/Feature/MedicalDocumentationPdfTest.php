@@ -435,7 +435,10 @@ class MedicalDocumentationPdfTest extends TestCase
         $staffResponse = $this->actingAs($admin)->get(route('clinic-logbooks.index'));
         $staffResponse->assertOk();
         $staffResponse->assertSee('Daily Clinic Logbook');
-        $staffResponse->assertSee($entry->full_name);
+
+        $ajaxResponse = $this->actingAs($admin)->getJson(route('clinic-logbooks.index'));
+        $ajaxResponse->assertOk();
+        $this->assertStringContainsString($entry->full_name, json_encode($ajaxResponse->json('data')));
     }
 
     public function test_global_navbar_search_returns_categorized_results_across_system(): void

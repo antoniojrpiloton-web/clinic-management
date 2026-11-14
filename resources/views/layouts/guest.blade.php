@@ -25,6 +25,14 @@
     <title>{{ $title ? "{$title} — {$systemName}" : "{$systemName} — {$universityName}" }}</title>
 
     <link rel="icon" href="{{ $faviconUrl }}">
+    <script>
+        (function () {
+            const saved = localStorage.getItem('clinic_theme');
+            const theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-bs-theme', theme);
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
     <link rel="stylesheet" href="{{ asset('assets/fonts/inter/inter.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/plugins/bootstrap/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/plugins/bootstrap-icons/bootstrap-icons.min.css') }}">
@@ -32,15 +40,15 @@
 
     <style>
         body {
-            background-color: #f2f5f3;
+            background-color: var(--app-body-bg);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            color: #2c3a33;
+            color: var(--app-body-color);
         }
         .univ-top-stripe {
             height: 4px;
-            background: linear-gradient(90deg, #005a36 0%, #005a36 78%, #d4a017 78%, #d4a017 100%);
+            background: linear-gradient(90deg, #696cff 0%, #696cff 78%, #71dd37 78%, #71dd37 100%);
             width: 100%;
         }
         .portal-wrapper {
@@ -61,40 +69,40 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.12em;
-            color: #617369;
+            color: var(--app-muted-color);
             margin-bottom: 0.15rem;
         }
         .portal-univ-name {
             font-size: 1.05rem;
             font-weight: 800;
             letter-spacing: -0.01em;
-            color: #11231a;
+            color: var(--app-heading-color);
             line-height: 1.25;
             text-transform: uppercase;
         }
         .portal-dept-name {
             font-size: 0.86rem;
             font-weight: 600;
-            color: #005a36;
+            color: var(--app-primary);
             margin-top: 0.15rem;
         }
         .portal-system-name {
             font-size: 0.74rem;
-            color: #617369;
+            color: var(--app-muted-color);
         }
         .portal-card {
             width: 100%;
             max-width: 440px;
-            background: #ffffff;
-            border: 1px solid #d0dcd4;
-            border-top: 4px solid #005a36;
-            border-radius: 6px;
-            box-shadow: 0 4px 18px rgba(17, 35, 26, 0.05);
+            background: var(--app-card-bg);
+            border: 1px solid var(--app-border-color);
+            border-top: 4px solid var(--app-primary);
+            border-radius: var(--app-card-radius);
+            box-shadow: var(--app-card-shadow);
         }
         .portal-card-header {
             padding: 1.75rem 1.75rem 1.15rem;
             text-align: center;
-            border-bottom: 1px solid #edf2ef;
+            border-bottom: 1px solid var(--app-border-color);
         }
         .portal-seal-img {
             width: 76px;
@@ -104,15 +112,15 @@
         }
         .portal-auth-badge {
             display: inline-block;
-            background: #eaf3ee;
-            color: #005a36;
-            border: 1px solid #bed6c8;
+            background: var(--app-primary-light);
+            color: var(--app-primary);
+            border: 1px solid rgba(105, 108, 255, 0.25);
             font-size: 0.68rem;
             font-weight: 700;
             letter-spacing: 0.05em;
             text-transform: uppercase;
             padding: 0.25rem 0.65rem;
-            border-radius: 3px;
+            border-radius: 9999px;
         }
         .portal-card-body {
             padding: 1.5rem 1.75rem 1.75rem;
@@ -122,7 +130,7 @@
             text-align: center;
             margin-top: 1.35rem;
             font-size: 0.7rem;
-            color: #6c7c73;
+            color: var(--app-muted-color);
             line-height: 1.45;
         }
         .portal-footer {
@@ -130,9 +138,9 @@
             text-align: center;
             padding: 1rem;
             font-size: 0.72rem;
-            color: #798a80;
-            border-top: 1px solid #e1e7e3;
-            background: #ffffff;
+            color: var(--app-muted-color);
+            border-top: 1px solid var(--app-border-color);
+            background: var(--app-card-bg);
         }
     </style>
 </head>

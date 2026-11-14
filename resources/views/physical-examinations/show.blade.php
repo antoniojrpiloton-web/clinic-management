@@ -16,7 +16,7 @@
                 <span class="badge {{ $exam->fitness_badge_class }} px-2 py-1 fs-6">{{ $exam->fitness_assessment ?: 'Class A' }}</span>
                 <span class="badge bg-light text-dark border">{{ $exam->purpose }}</span>
             </div>
-            <p class="dashboard-subheading mb-0 mt-1">Conducted on {{ $exam->exam_date->format('F d, Y') }} &bull; Examiner: {{ $exam->examiner_name ?: 'Attending Physician' }}</p>
+            <p class="dashboard-subheading mb-0 mt-1">Conducted on {{ $exam->exam_date->format($appSettings['date_format'] ?? 'F d, Y') }} &bull; Examiner: {{ $exam->examiner_name ?: 'Attending Physician' }}</p>
         </div>
 
         <div class="d-flex flex-wrap gap-2">
@@ -59,7 +59,7 @@
                                 <a href="{{ route('patients.show', $patient) }}" class="text-dark text-decoration-none">{{ $patient->full_name }}</a>
                             </h5>
                             <div class="small text-muted mt-1">ID: {{ $patient->primary_identifier }}</div>
-                            <div class="small text-muted">{{ $patient->gender }} &bull; {{ $patient->age }} y/o &bull; DOB: {{ $patient->date_of_birth->format('M d, Y') }}</div>
+                            <div class="small text-muted">{{ $patient->gender }} &bull; {{ $patient->age }} y/o &bull; DOB: {{ $patient->date_of_birth->format($appSettings['date_format'] ?? 'M d, Y') }}</div>
                         </div>
                     </div>
 
@@ -274,7 +274,7 @@
                             <span class="text-muted small d-block">Chest X-Ray Findings:</span>
                             <div class="fw-semibold text-dark mt-1">{{ $exam->chest_xray_findings ?: 'Normal chest radiograph / clear lung fields' }}</div>
                             @if ($exam->chest_xray_date)
-                                <div class="small text-muted">Date: {{ $exam->chest_xray_date->format('M d, Y') }}</div>
+                                <div class="small text-muted">Date: {{ $exam->chest_xray_date->format($appSettings['date_format'] ?? 'M d, Y') }}</div>
                             @endif
                         </div>
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AcademicYear;
 use App\Services\AuditLogger;
+use App\Services\SettingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -26,9 +27,10 @@ class AcademicYearController extends Controller implements HasMiddleware
         ];
     }
 
-    public function index(Request $request): View|JsonResponse
+    public function index(Request $request, SettingService $settingService): View|JsonResponse
     {
         if ($request->ajax()) {
+            $dateFormat = $settingService->dateFormat();
             $canEdit = $request->user()?->can('academic-years.edit') ?? false;
             $canDelete = $request->user()?->can('academic-years.delete') ?? false;
 
@@ -38,7 +40,7 @@ class AcademicYearController extends Controller implements HasMiddleware
                 ->addColumn('code_col', fn (AcademicYear $ay): string => '<span class="fw-bold text-dark">'.e($ay->code).'</span>')
                 ->addColumn('name_col', fn (AcademicYear $ay): string => e($ay->name))
                 ->addColumn('semester_col', fn (AcademicYear $ay): string => '<span class="badge badge-pill badge-soft-blue">'.e($ay->semester).'</span>')
-                ->addColumn('duration_col', fn (AcademicYear $ay): string => '<span class="text-muted small">'.$ay->start_date->format('M d, Y').' &mdash; '.$ay->end_date->format('M d, Y').'</span>')
+                ->addColumn('duration_col', fn (AcademicYear $ay): string => '<span class="text-muted small">'.$ay->start_date->format($dateFormat).' &mdash; '.$ay->end_date->format($dateFormat).'</span>')
                 ->addColumn('current_col', function (AcademicYear $ay) use ($canEdit): string {
                     if ($ay->is_current) {
                         return '<span class="badge badge-pill badge-soft-green"><i class="bi bi-check-circle me-1"></i> Current Active</span>';
@@ -59,7 +61,7 @@ class AcademicYearController extends Controller implements HasMiddleware
                     return "<span class=\"status-badge {$cls}\">".e($ay->status).'</span>';
                 })
                 ->addColumn('actions_col', function (AcademicYear $ay) use ($canEdit, $canDelete): string {
-                    $html = '<div class="d-inline-flex gap-1">';
+                    $items = '';
 
                     if ($canEdit) {
                         $updateUrl = route('academic-years.update', $ay);
@@ -71,20 +73,31 @@ class AcademicYearController extends Controller implements HasMiddleware
                         $status = e($ay->status);
                         $current = $ay->is_current ? '1' : '0';
 
-                        $html .= "<button type=\"button\" class=\"btn btn-sm btn-light border p-1\" data-bs-toggle=\"modal\" data-bs-target=\"#edit-ay-modal\" data-update-url=\"{$updateUrl}\" data-code=\"{$code}\" data-name=\"{$name}\" data-semester=\"{$sem}\" data-start=\"{$start}\" data-end=\"{$end}\" data-status=\"{$status}\" data-current=\"{$current}\" title=\"Edit\"><i class=\"bi bi-pencil\"></i></button>";
+                        $items .= "<li><button type=\"button\" class=\"dropdown-item\" data-bs-toggle=\"modal\" data-bs-target=\"#edit-ay-modal\" data-update-url=\"{$updateUrl}\" data-code=\"{$code}\" data-name=\"{$name}\" data-semester=\"{$sem}\" data-start=\"{$start}\" data-end=\"{$end}\" data-status=\"{$status}\" data-current=\"{$current}\"><i class=\"bi bi-pencil me-2\"></i>Edit Term</button></li>";
                     }
 
                     if ($canDelete && ! $ay->is_current) {
                         $deleteUrl = route('academic-years.destroy', $ay);
-                        $csrf = csrf_field();
-                        $method = method_field('DELETE');
+                        $csrfToken = csrf_token();
 
-                        $html .= "<form method=\"POST\" action=\"{$deleteUrl}\" data-confirm=\"Are you sure you want to delete this academic year?\" class=\"d-inline\">{$csrf}{$method}<button type=\"submit\" class=\"btn btn-sm btn-light border text-danger p-1\" title=\"Delete\"><i class=\"bi bi-trash\"></i></button></form>";
+                        if ($canEdit) {
+                            $items .= '<li><hr class="dropdown-divider"></li>';
+                        }
+                        $items .= "<li><form method=\"POST\" action=\"{$deleteUrl}\" data-confirm=\"Are you sure you want to delete this academic year?\"><input type=\"hidden\" name=\"_token\" value=\"{$csrfToken}\"><input type=\"hidden\" name=\"_method\" value=\"DELETE\"><button type=\"submit\" class=\"dropdown-item text-danger\"><i class=\"bi bi-trash me-2\"></i>Delete Term</button></form></li>";
                     }
 
-                    $html .= '</div>';
+                    if (empty($items)) {
+                        return '';
+                    }
 
-                    return $html;
+                    return "<div class=\"dropdown\">
+                        <button class=\"btn btn-sm btn-outline-secondary dropdown-toggle py-1 px-2\" type=\"button\" data-bs-toggle=\"dropdown\" aria-expanded=\"false\">
+                            <i class=\"bi bi-gear-fill me-1\"></i> Action
+                        </button>
+                        <ul class=\"dropdown-menu shadow-sm\">
+                            {$items}
+                        </ul>
+                    </div>";
                 })
                 ->orderColumn('code_col', 'code $1')
                 ->orderColumn('name_col', 'name $1')

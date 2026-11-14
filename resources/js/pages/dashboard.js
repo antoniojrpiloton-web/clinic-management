@@ -30,25 +30,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    const isDark = () => document.documentElement.getAttribute('data-bs-theme') === 'dark' || document.documentElement.getAttribute('data-theme') === 'dark';
+    const getThemeMode = () => (isDark() ? 'dark' : 'light');
+    const getGridColor = () => (isDark() ? '#363853' : 'rgba(67, 89, 113, 0.1)');
+    const getLabelColor = () => (isDark() ? '#a3a4cc' : '#566a7f');
+    const getHeadingColor = () => (isDark() ? '#dbdcff' : '#566a7f');
+
+    const sneatPalette = ['#696cff', '#03c3ec', '#71dd37', '#ffab00', '#ff3e1d', '#8592a3', '#5f61e6'];
+
     const renderCharts = (data) => {
-        const { Chart } = window;
-        if (!Chart || !data) {
+        const { ApexCharts } = window;
+        if (!ApexCharts || !data) {
             return;
         }
 
-        Chart.defaults.font.family = getComputedStyle(document.body).fontFamily || "'Inter', sans-serif";
-        Chart.defaults.color = '#5a6b63';
-
-        const mountChart = (canvasId, config) => {
-            const canvas = document.getElementById(canvasId);
-            if (!canvas) {
+        const mountChart = (containerId, options) => {
+            const container = document.getElementById(containerId);
+            if (!container) {
                 return;
             }
-            if (chartInstances[canvasId]) {
-                chartInstances[canvasId].destroy();
+            if (chartInstances[containerId]) {
+                chartInstances[containerId].destroy();
             }
-            chartInstances[canvasId] = new Chart(canvas, config);
-            const overlay = canvas.parentElement?.querySelector('.chart-loader-overlay');
+            const chart = new ApexCharts(container, options);
+            chart.render();
+            chartInstances[containerId] = chart;
+            const overlay = container.parentElement?.querySelector('.chart-loader-overlay');
             if (overlay) {
                 overlay.classList.add('is-loaded');
             }
@@ -57,328 +64,378 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data.monthly_utilization) {
             const mu = data.monthly_utilization;
             mountChart('monthly-utilization-chart', {
-                type: 'bar',
-                data: {
-                    labels: mu.months,
-                    datasets: [
-                        {
-                            label: 'Medical Consults',
-                            data: mu.medical,
-                            backgroundColor: '#1b5e3a',
-                            borderRadius: 4,
-                            barPercentage: 0.7,
-                            categoryPercentage: 0.6,
-                        },
-                        {
-                            label: 'Dental Consults',
-                            data: mu.dental,
-                            backgroundColor: '#28666e',
-                            borderRadius: 4,
-                            barPercentage: 0.7,
-                            categoryPercentage: 0.6,
-                        },
-                        {
-                            label: 'Emergency / First Aid',
-                            data: mu.emergency,
-                            backgroundColor: '#b86b14',
-                            borderRadius: 4,
-                            barPercentage: 0.7,
-                            categoryPercentage: 0.6,
-                        },
-                    ],
+                chart: {
+                    type: 'area',
+                    height: 310,
+                    toolbar: { show: false },
+                    parentHeightOffset: 0,
+                    fontFamily: 'Inter, sans-serif',
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                            align: 'end',
-                            labels: {
-                                boxWidth: 10,
-                                boxHeight: 10,
-                                padding: 12,
-                                font: { size: 11, weight: '500' },
-                            },
-                        },
-                        tooltip: {
-                            backgroundColor: '#182620',
-                            titleColor: '#ffffff',
-                            bodyColor: '#dce3de',
-                            padding: 10,
-                            cornerRadius: 8,
-                        },
+                series: [
+                    { name: 'Medical Consults', data: mu.medical || [] },
+                    { name: 'Dental Consults', data: mu.dental || [] },
+                    { name: 'Emergency / First Aid', data: mu.emergency || [] },
+                ],
+                colors: ['#696cff', '#03c3ec', '#71dd37'],
+                stroke: {
+                    curve: 'smooth',
+                    width: 2.5,
+                },
+                fill: {
+                    type: 'gradient',
+                    gradient: {
+                        shadeIntensity: 1,
+                        opacityFrom: 0.42,
+                        opacityTo: 0.05,
+                        stops: [0, 95, 100],
                     },
-                    scales: {
-                        x: {
-                            stacked: true,
-                            grid: { display: false },
-                            border: { display: false },
-                        },
-                        y: {
-                            stacked: true,
-                            beginAtZero: true,
-                            ticks: {
-                                precision: 0,
-                                callback: (v) => v.toLocaleString(),
-                            },
-                            grid: { color: '#eef2ef' },
-                            border: { display: false },
-                        },
+                },
+                dataLabels: { enabled: false },
+                legend: {
+                    position: 'top',
+                    horizontalAlign: 'right',
+                    fontSize: '11px',
+                    labels: { colors: getLabelColor() },
+                    markers: { radius: 12, width: 9, height: 9 },
+                    itemMargin: { horizontal: 8 },
+                },
+                grid: {
+                    borderColor: getGridColor(),
+                    strokeDashArray: 4,
+                    padding: { top: 0, right: 10, bottom: 0, left: 10 },
+                },
+                xaxis: {
+                    categories: mu.months || [],
+                    axisBorder: { show: false },
+                    axisTicks: { show: false },
+                    labels: { style: { colors: getLabelColor(), fontSize: '11px' } },
+                },
+                yaxis: {
+                    labels: {
+                        style: { colors: getLabelColor(), fontSize: '11px' },
+                        formatter: (val) => Number(val).toLocaleString(),
                     },
+                },
+                tooltip: {
+                    theme: getThemeMode(),
                 },
             });
         }
 
         if (data.classification_breakdown) {
             const cb = data.classification_breakdown;
+            const total = (cb.data || []).reduce((a, b) => a + Number(b), 0);
             mountChart('classification-donut-chart', {
-                type: 'doughnut',
-                data: {
-                    labels: cb.labels,
-                    datasets: [{
-                        data: cb.data,
-                        backgroundColor: cb.colors,
-                        borderWidth: 2,
-                        borderColor: '#ffffff',
-                        hoverOffset: 4,
-                    }],
+                chart: {
+                    type: 'donut',
+                    height: 240,
+                    parentHeightOffset: 0,
+                    fontFamily: 'Inter, sans-serif',
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '65%',
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
+                series: (cb.data || []).map((v) => Number(v)),
+                labels: cb.labels || ['Students', 'Faculty', 'Staff', 'Others'],
+                colors: ['#696cff', '#03c3ec', '#71dd37', '#ffab00'],
+                stroke: { width: 4, colors: [isDark() ? '#2b2c40' : '#ffffff'] },
+                dataLabels: { enabled: false },
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            size: '72%',
                             labels: {
-                                boxWidth: 10,
-                                boxHeight: 10,
-                                padding: 12,
-                                font: { size: 11, weight: '500' },
+                                show: true,
+                                name: {
+                                    fontSize: '12px',
+                                    fontFamily: 'Inter, sans-serif',
+                                    color: getLabelColor(),
+                                    offsetY: -4,
+                                },
+                                value: {
+                                    fontSize: '18px',
+                                    fontFamily: 'Inter, sans-serif',
+                                    fontWeight: 700,
+                                    color: getHeadingColor(),
+                                    offsetY: 4,
+                                    formatter: (val) => Number(val).toLocaleString(),
+                                },
+                                total: {
+                                    show: true,
+                                    label: 'Total',
+                                    fontSize: '11px',
+                                    fontFamily: 'Inter, sans-serif',
+                                    color: getLabelColor(),
+                                    formatter: () => total.toLocaleString(),
+                                },
                             },
-                        },
-                        tooltip: {
-                            backgroundColor: '#182620',
-                            titleColor: '#ffffff',
-                            bodyColor: '#dce3de',
-                            padding: 10,
-                            cornerRadius: 8,
                         },
                     },
                 },
+                legend: {
+                    position: 'bottom',
+                    fontSize: '11px',
+                    labels: { colors: getLabelColor() },
+                    markers: { radius: 12, width: 8, height: 8 },
+                    itemMargin: { horizontal: 6 },
+                },
+                tooltip: { theme: getThemeMode() },
             });
         }
 
         if (data.services_breakdown) {
             const sb = data.services_breakdown;
+            const total = (sb.data || []).reduce((a, b) => a + Number(b), 0);
             mountChart('services-breakdown-chart', {
-                type: 'polarArea',
-                data: {
-                    labels: sb.labels,
-                    datasets: [{
-                        data: sb.data,
-                        backgroundColor: sb.colors.map((c) => `${c}CC`),
-                        borderColor: sb.colors,
-                        borderWidth: 1,
-                    }],
+                chart: {
+                    type: 'donut',
+                    height: 250,
+                    parentHeightOffset: 0,
+                    fontFamily: 'Inter, sans-serif',
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
+                series: (sb.data || []).map((v) => Number(v)),
+                labels: sb.labels || ['Medical', 'Dental', 'Emergency', 'First Aid', 'General'],
+                colors: ['#696cff', '#03c3ec', '#ff3e1d', '#ffab00', '#71dd37'],
+                stroke: { width: 4, colors: [isDark() ? '#2b2c40' : '#ffffff'] },
+                dataLabels: { enabled: false },
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            size: '72%',
                             labels: {
-                                boxWidth: 10,
-                                boxHeight: 10,
-                                padding: 8,
-                                font: { size: 10, weight: '500' },
+                                show: true,
+                                name: {
+                                    fontSize: '11px',
+                                    color: getLabelColor(),
+                                    offsetY: -4,
+                                },
+                                value: {
+                                    fontSize: '17px',
+                                    fontWeight: 700,
+                                    color: getHeadingColor(),
+                                    offsetY: 4,
+                                    formatter: (val) => Number(val).toLocaleString(),
+                                },
+                                total: {
+                                    show: true,
+                                    label: 'Total',
+                                    fontSize: '11px',
+                                    color: getLabelColor(),
+                                    formatter: () => total.toLocaleString(),
+                                },
                             },
                         },
-                        tooltip: {
-                            backgroundColor: '#182620',
-                            padding: 10,
-                            cornerRadius: 8,
-                        },
-                    },
-                    scales: {
-                        r: {
-                            ticks: { display: false },
-                            grid: { color: '#eef2ef' },
-                        },
                     },
                 },
+                legend: {
+                    position: 'bottom',
+                    fontSize: '10px',
+                    labels: { colors: getLabelColor() },
+                    markers: { radius: 12, width: 8, height: 8 },
+                    itemMargin: { horizontal: 5 },
+                },
+                tooltip: { theme: getThemeMode() },
             });
         }
 
         if (data.top_complaints) {
             const tc = data.top_complaints;
             mountChart('top-complaints-chart', {
-                type: 'bar',
-                data: {
-                    labels: tc.labels,
-                    datasets: [{
-                        label: 'Visits',
-                        data: tc.data,
-                        backgroundColor: '#3b6e52',
-                        borderRadius: 4,
-                        barPercentage: 0.65,
-                    }],
+                chart: {
+                    type: 'bar',
+                    height: 250,
+                    toolbar: { show: false },
+                    parentHeightOffset: 0,
+                    fontFamily: 'Inter, sans-serif',
                 },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: '#182620',
-                            padding: 10,
-                            cornerRadius: 8,
-                        },
-                    },
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            ticks: { precision: 0 },
-                            grid: { color: '#eef2ef' },
-                            border: { display: false },
-                        },
-                        y: {
-                            grid: { display: false },
-                            border: { display: false },
-                            ticks: { font: { size: 10 } },
-                        },
+                series: [{ name: 'Visits', data: tc.data || [] }],
+                colors: sneatPalette,
+                plotOptions: {
+                    bar: {
+                        horizontal: true,
+                        borderRadius: 5,
+                        barHeight: '48%',
+                        distributed: true,
                     },
                 },
+                legend: { show: false },
+                dataLabels: { enabled: false },
+                grid: {
+                    borderColor: getGridColor(),
+                    strokeDashArray: 4,
+                    xaxis: { lines: { show: true } },
+                    yaxis: { lines: { show: false } },
+                },
+                xaxis: {
+                    categories: tc.labels || [],
+                    labels: {
+                        style: { colors: getLabelColor(), fontSize: '10px' },
+                        formatter: (val) => Number(val).toLocaleString(),
+                    },
+                    axisBorder: { show: false },
+                    axisTicks: { show: false },
+                },
+                yaxis: {
+                    labels: { style: { colors: getLabelColor(), fontSize: '10px' } },
+                },
+                tooltip: { theme: getThemeMode() },
             });
         }
 
         if (data.pe_fitness_breakdown) {
             const fb = data.pe_fitness_breakdown;
+            const total = (fb.data || []).reduce((a, b) => a + Number(b), 0);
             mountChart('fitness-assessment-chart', {
-                type: 'doughnut',
-                data: {
-                    labels: fb.labels,
-                    datasets: [{
-                        data: fb.data,
-                        backgroundColor: fb.colors,
-                        borderWidth: 2,
-                        borderColor: '#ffffff',
-                        hoverOffset: 4,
-                    }],
+                chart: {
+                    type: 'donut',
+                    height: 250,
+                    parentHeightOffset: 0,
+                    fontFamily: 'Inter, sans-serif',
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '60%',
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
+                series: (fb.data || []).map((v) => Number(v)),
+                labels: fb.labels || ['Class A', 'Class B', 'Class C', 'Class D', 'Class E'],
+                colors: ['#71dd37', '#03c3ec', '#696cff', '#ffab00', '#ff3e1d'],
+                stroke: { width: 4, colors: [isDark() ? '#2b2c40' : '#ffffff'] },
+                dataLabels: { enabled: false },
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            size: '72%',
                             labels: {
-                                boxWidth: 8,
-                                boxHeight: 8,
-                                padding: 6,
-                                font: { size: 9, weight: '500' },
+                                show: true,
+                                name: {
+                                    fontSize: '11px',
+                                    color: getLabelColor(),
+                                    offsetY: -4,
+                                },
+                                value: {
+                                    fontSize: '17px',
+                                    fontWeight: 700,
+                                    color: getHeadingColor(),
+                                    offsetY: 4,
+                                    formatter: (val) => Number(val).toLocaleString(),
+                                },
+                                total: {
+                                    show: true,
+                                    label: 'Total',
+                                    fontSize: '11px',
+                                    color: getLabelColor(),
+                                    formatter: () => total.toLocaleString(),
+                                },
                             },
-                        },
-                        tooltip: {
-                            backgroundColor: '#182620',
-                            padding: 10,
-                            cornerRadius: 8,
                         },
                     },
                 },
+                legend: {
+                    position: 'bottom',
+                    fontSize: '9px',
+                    labels: { colors: getLabelColor() },
+                    markers: { radius: 12, width: 8, height: 8 },
+                    itemMargin: { horizontal: 4 },
+                },
+                tooltip: { theme: getThemeMode() },
             });
         }
 
         if (data.college_utilization) {
             const cu = data.college_utilization;
             mountChart('college-utilization-chart', {
-                type: 'bar',
-                data: {
-                    labels: cu.labels,
-                    datasets: [{
-                        label: 'Consultations',
-                        data: cu.data,
-                        backgroundColor: '#28666e',
-                        borderRadius: 4,
-                        barPercentage: 0.65,
-                    }],
+                chart: {
+                    type: 'bar',
+                    height: 250,
+                    toolbar: { show: false },
+                    parentHeightOffset: 0,
+                    fontFamily: 'Inter, sans-serif',
                 },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: '#182620',
-                            padding: 10,
-                            cornerRadius: 8,
-                        },
-                    },
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            ticks: { precision: 0 },
-                            grid: { color: '#eef2ef' },
-                            border: { display: false },
-                        },
-                        y: {
-                            grid: { display: false },
-                            border: { display: false },
-                            ticks: { font: { size: 10 } },
-                        },
+                series: [{ name: 'Consultations', data: cu.data || [] }],
+                colors: sneatPalette,
+                plotOptions: {
+                    bar: {
+                        horizontal: true,
+                        borderRadius: 5,
+                        barHeight: '48%',
+                        distributed: true,
                     },
                 },
+                legend: { show: false },
+                dataLabels: { enabled: false },
+                grid: {
+                    borderColor: getGridColor(),
+                    strokeDashArray: 4,
+                    xaxis: { lines: { show: true } },
+                    yaxis: { lines: { show: false } },
+                },
+                xaxis: {
+                    categories: cu.labels || [],
+                    labels: {
+                        style: { colors: getLabelColor(), fontSize: '10px' },
+                        formatter: (val) => Number(val).toLocaleString(),
+                    },
+                    axisBorder: { show: false },
+                    axisTicks: { show: false },
+                },
+                yaxis: {
+                    labels: { style: { colors: getLabelColor(), fontSize: '10px' } },
+                },
+                tooltip: { theme: getThemeMode() },
             });
         }
 
         if (data.top_medicines) {
             const tm = data.top_medicines;
             mountChart('medicine-utilization-chart', {
-                type: 'bar',
-                data: {
-                    labels: tm.labels,
-                    datasets: [{
-                        label: 'Units Dispensed',
-                        data: tm.quantities,
-                        backgroundColor: '#1b5e3a',
-                        borderRadius: 4,
-                        barPercentage: 0.65,
-                    }],
+                chart: {
+                    type: 'bar',
+                    height: 250,
+                    toolbar: { show: false },
+                    parentHeightOffset: 0,
+                    fontFamily: 'Inter, sans-serif',
                 },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: '#182620',
-                            padding: 10,
-                            cornerRadius: 8,
-                        },
-                    },
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            ticks: { precision: 0 },
-                            grid: { color: '#eef2ef' },
-                            border: { display: false },
-                        },
-                        y: {
-                            grid: { display: false },
-                            border: { display: false },
-                            ticks: { font: { size: 10 } },
-                        },
+                series: [{ name: 'Units Dispensed', data: tm.quantities || [] }],
+                colors: sneatPalette,
+                plotOptions: {
+                    bar: {
+                        horizontal: true,
+                        borderRadius: 5,
+                        barHeight: '48%',
+                        distributed: true,
                     },
                 },
+                legend: { show: false },
+                dataLabels: { enabled: false },
+                grid: {
+                    borderColor: getGridColor(),
+                    strokeDashArray: 4,
+                    xaxis: { lines: { show: true } },
+                    yaxis: { lines: { show: false } },
+                },
+                xaxis: {
+                    categories: tm.labels || [],
+                    labels: {
+                        style: { colors: getLabelColor(), fontSize: '10px' },
+                        formatter: (val) => Number(val).toLocaleString(),
+                    },
+                    axisBorder: { show: false },
+                    axisTicks: { show: false },
+                },
+                yaxis: {
+                    labels: { style: { colors: getLabelColor(), fontSize: '10px' } },
+                },
+                tooltip: { theme: getThemeMode() },
             });
         }
     };
+
+    window.addEventListener('clinic:theme-changed', () => {
+        Object.values(chartInstances).forEach((chart) => {
+            if (chart && typeof chart.updateOptions === 'function') {
+                chart.updateOptions({
+                    theme: { mode: getThemeMode() },
+                    grid: { borderColor: getGridColor() },
+                    xaxis: { labels: { style: { colors: getLabelColor() } } },
+                    yaxis: { labels: { style: { colors: getLabelColor() } } },
+                    legend: { labels: { colors: getLabelColor() } },
+                });
+            }
+        });
+    });
 
     const loadDashboardMetrics = async (forceRefresh = false) => {
         setLoadingState();

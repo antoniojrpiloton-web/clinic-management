@@ -52,7 +52,7 @@ class MedicineCategoryController extends Controller implements HasMiddleware
                         : '<span class="badge badge-soft-gray"><i class="bi bi-pause-circle me-1"></i>Inactive</span>';
                 })
                 ->addColumn('actions_col', function (MedicineCategory $cat) use ($canEdit, $canDelete): string {
-                    $html = '<div class="d-flex align-items-center justify-content-end gap-1">';
+                    $items = '';
 
                     if ($canEdit) {
                         $updateUrl = route('medicine-categories.update', $cat);
@@ -61,21 +61,32 @@ class MedicineCategoryController extends Controller implements HasMiddleware
                         $desc = e($cat->description);
                         $active = $cat->is_active ? '1' : '0';
 
-                        $html .= "<button type=\"button\" class=\"btn btn-sm btn-light border p-1 px-2\" title=\"Edit Category\" data-bs-toggle=\"modal\" data-bs-target=\"#modal-edit-category\" data-category-id=\"{$cat->id}\" data-category-name=\"{$name}\" data-category-code=\"{$code}\" data-category-description=\"{$desc}\" data-category-active=\"{$active}\" data-update-url=\"{$updateUrl}\"><i class=\"bi bi-pencil\"></i></button>";
+                        $items .= "<li><button type=\"button\" class=\"dropdown-item\" data-bs-toggle=\"modal\" data-bs-target=\"#modal-edit-category\" data-category-id=\"{$cat->id}\" data-category-name=\"{$name}\" data-category-code=\"{$code}\" data-category-description=\"{$desc}\" data-category-active=\"{$active}\" data-update-url=\"{$updateUrl}\"><i class=\"bi bi-pencil me-2\"></i>Edit Category</button></li>";
                     }
 
                     if ($canDelete) {
                         $deleteUrl = route('medicine-categories.destroy', $cat);
-                        $csrf = csrf_field();
-                        $method = method_field('DELETE');
+                        $csrfToken = csrf_token();
                         $nameJs = e(addslashes($cat->name));
 
-                        $html .= "<form method=\"POST\" action=\"{$deleteUrl}\" class=\"d-inline\" onsubmit=\"return confirm('Are you sure you want to remove category {$nameJs}?');\">{$csrf}{$method}<button type=\"submit\" class=\"btn btn-sm btn-light border text-danger p-1 px-2\" title=\"Delete\"><i class=\"bi bi-trash\"></i></button></form>";
+                        if ($canEdit) {
+                            $items .= '<li><hr class="dropdown-divider"></li>';
+                        }
+                        $items .= "<li><form method=\"POST\" action=\"{$deleteUrl}\" onsubmit=\"return confirm('Are you sure you want to remove category {$nameJs}?');\"><input type=\"hidden\" name=\"_token\" value=\"{$csrfToken}\"><input type=\"hidden\" name=\"_method\" value=\"DELETE\"><button type=\"submit\" class=\"dropdown-item text-danger\"><i class=\"bi bi-trash me-2\"></i>Delete Category</button></form></li>";
                     }
 
-                    $html .= '</div>';
+                    if (empty($items)) {
+                        return '';
+                    }
 
-                    return $html;
+                    return "<div class=\"dropdown\">
+                        <button class=\"btn btn-sm btn-outline-secondary dropdown-toggle py-1 px-2\" type=\"button\" data-bs-toggle=\"dropdown\" aria-expanded=\"false\">
+                            <i class=\"bi bi-gear-fill me-1\"></i> Action
+                        </button>
+                        <ul class=\"dropdown-menu shadow-sm\">
+                            {$items}
+                        </ul>
+                    </div>";
                 })
                 ->orderColumn('code_col', 'code $1')
                 ->orderColumn('name_col', 'name $1')

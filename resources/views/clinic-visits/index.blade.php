@@ -224,48 +224,47 @@
 
         <div class="tab-pane fade {{ ($activeTab ?? 'visits') === 'logbook' ? 'show active' : '' }}" id="tab-logbook" role="tabpanel" aria-labelledby="tab-logbook-btn">
             <div class="card mb-3 p-3">
-                <form method="GET" action="{{ route('clinic-visits.index') }}" class="row g-2 align-items-center">
-                    <input type="hidden" name="tab" value="logbook">
+                <form id="logbook-filter-form" class="row g-2 align-items-center">
                     <div class="col-md-3">
                         <div class="input-group">
                             <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
-                            <input type="text" name="log_search" value="{{ $logbookFilters['log_search'] ?? '' }}" class="form-control border-start-0" placeholder="Search name, ID number, notes...">
+                            <input type="text" id="filter-log-search" name="log_search" class="form-control border-start-0" placeholder="Search name, ID number, notes...">
                         </div>
                     </div>
 
                     <div class="col-md-2">
-                        <select name="visitor_type" class="form-select">
+                        <select name="visitor_type" id="filter-log-visitor-type" class="form-select">
                             <option value="">All Visitor Types</option>
-                            <option value="student" @selected(($logbookFilters['visitor_type'] ?? '') === 'student')>Students</option>
-                            <option value="employee" @selected(($logbookFilters['visitor_type'] ?? '') === 'employee')>Employees</option>
-                            <option value="visitor" @selected(($logbookFilters['visitor_type'] ?? '') === 'visitor')>Visitors / Guests</option>
+                            <option value="student">Students</option>
+                            <option value="employee">Employees</option>
+                            <option value="visitor">Visitors</option>
                         </select>
                     </div>
 
                     <div class="col-md-2">
-                        <select name="purpose" class="form-select">
+                        <select name="purpose" id="filter-log-purpose" class="form-select">
                             <option value="">All Visit Purposes</option>
                             @foreach ($purposes as $purp)
-                                <option value="{{ $purp }}" @selected(($logbookFilters['purpose'] ?? '') === $purp)>{{ $purp }}</option>
+                                <option value="{{ $purp }}">{{ $purp }}</option>
                             @endforeach
                         </select>
                     </div>
 
                     <div class="col-md-2">
-                        <select name="log_status" class="form-select">
+                        <select name="log_status" id="filter-log-status" class="form-select">
                             <option value="">All Statuses</option>
-                            <option value="inside" @selected(($logbookFilters['log_status'] ?? '') === 'inside')>Currently Inside</option>
-                            <option value="completed" @selected(($logbookFilters['log_status'] ?? '') === 'completed')>Completed (Timed Out)</option>
+                            <option value="inside">Inside</option>
+                            <option value="completed">Completed</option>
                         </select>
                     </div>
 
                     <div class="col-md-2">
-                        <input type="date" name="log_date_from" value="{{ $logbookFilters['log_date_from'] ?? '' }}" class="form-control">
+                        <input type="date" name="log_date_from" id="filter-log-date-from" class="form-control">
                     </div>
 
                     <div class="col-md-1 d-flex gap-1">
                         <button type="submit" class="btn btn-primary w-100" title="Apply filter"><i class="bi bi-funnel"></i></button>
-                        <a href="{{ route('clinic-visits.index', ['tab' => 'logbook']) }}" class="btn btn-outline-secondary" title="Reset filter"><i class="bi bi-arrow-clockwise"></i></a>
+                        <button type="reset" class="btn btn-outline-secondary" title="Reset filter"><i class="bi bi-arrow-clockwise"></i></button>
                     </div>
                 </form>
             </div>
@@ -276,119 +275,27 @@
                         <span class="fw-bold text-dark"><i class="bi bi-journal-text me-1"></i> Daily Clinic Logbook</span>
                         <span class="text-muted small ms-2">Walk-in visitors and clinic attendance</span>
                     </div>
-                    <span class="badge badge-soft-gray">{{ $logs->total() }} total entries</span>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0 w-100">
+                        <table id="logbook-table" class="table table-hover align-middle mb-0 w-100">
                             <thead>
                                 <tr>
+                                    <th style="width: 100px;">ACTION</th>
                                     <th>LOG # &amp; DATE</th>
                                     <th>TIME IN / OUT</th>
                                     <th>VISITOR / PATIENT</th>
                                     <th>TYPE &amp; PROGRAM / DEPT</th>
-                                    <th>PURPOSE &amp; CLINICAL LINK</th>
+                                    <th>PURPOSE</th>
                                     <th>STATUS</th>
-                                    <th class="text-end" style="min-width: 170px;">ACTIONS</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse ($logs as $log)
-                                    <tr>
-                                        <td>
-                                            <span class="fw-mono text-dark fw-bold">{{ $log->log_number }}</span>
-                                            <div class="small text-muted">{{ $log->log_date ? $log->log_date->format('M d, Y') : '—' }}</div>
-                                        </td>
-                                        <td>
-                                            <div class="fw-medium text-dark"><i class="bi bi-box-arrow-in-right text-success me-1"></i>{{ $log->time_in ? \Carbon\Carbon::parse($log->time_in)->format('h:i A') : '—' }}</div>
-                                            <div class="small text-muted">
-                                                @if ($log->time_out)
-                                                    <i class="bi bi-box-arrow-right text-secondary me-1"></i>{{ \Carbon\Carbon::parse($log->time_out)->format('h:i A') }}
-                                                @else
-                                                    <span class="badge badge-soft-amber" style="font-size: 0.7rem;"><i class="bi bi-dot"></i> Inside</span>
-                                                @endif
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="fw-semibold text-dark">{{ $log->full_name }}</div>
-                                            <div class="small text-muted">
-                                                ID: {{ $log->id_number ?: 'N/A' }}
-                                                @if ($log->contact_number)
-                                                    &bull; {{ $log->contact_number }}
-                                                @endif
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span class="badge {{ $log->visitor_type === 'student' ? 'badge-soft-green' : ($log->visitor_type === 'faculty' ? 'badge-soft-purple' : ($log->visitor_type === 'staff' ? 'badge-soft-blue' : 'badge-soft-gray')) }}">
-                                                {{ $log->visitor_type === 'faculty' ? 'Faculty' : ($log->visitor_type === 'staff' ? 'Staff' : ucfirst($log->visitor_type)) }}
-                                            </span>
-                                            <div class="small text-muted mt-1">{{ $log->course_or_department ?: '—' }} {{ $log->year_or_position ? '• '.$log->year_or_position : '' }}</div>
-                                        </td>
-                                        <td>
-                                            <div class="fw-semibold text-dark">{{ $log->purpose }}</div>
-                                            @if ($log->notes)
-                                                <div class="small text-muted">{{ $log->notes }}</div>
-                                            @endif
-                                            @if ($log->clinicVisit)
-                                                <div class="mt-1">
-                                                    <a href="{{ route('clinic-visits.show', $log->clinicVisit) }}" class="badge badge-soft-purple text-decoration-none">
-                                                        <i class="bi bi-link-45deg"></i> Linked: {{ $log->clinicVisit->visit_number }} ({{ $log->clinicVisit->type_label }})
-                                                    </a>
-                                                </div>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if ($log->status === 'inside')
-                                                <span class="badge bg-warning text-dark"><i class="bi bi-person-walking me-1"></i>Inside</span>
-                                            @else
-                                                <span class="badge bg-success"><i class="bi bi-check2 me-1"></i>Completed</span>
-                                            @endif
-                                        </td>
-                                        <td class="text-end">
-                                            <div class="d-flex justify-content-end gap-1">
-                                                @if (! $log->time_out)
-                                                    <form method="POST" action="{{ route('clinic-logbooks.time-out', $log) }}">
-                                                        @csrf
-                                                        <button type="submit" class="btn btn-sm btn-warning text-dark fw-semibold py-1 px-2" title="Mark Time Out">
-                                                            <i class="bi bi-box-arrow-right"></i> Out
-                                                        </button>
-                                                    </form>
-                                                @endif
-
-                                                @if (! $log->clinicVisit)
-                                                    <a href="{{ route('clinic-visits.create', ['patient_id' => $log->patient_id, 'logbook_id' => $log->id, 'complaint' => $log->purpose]) }}" class="btn btn-sm btn-outline-primary py-1 px-2 fw-semibold" title="Log Clinic Visit">
-                                                        <i class="bi bi-plus-circle me-1"></i> Log Visit
-                                                    </a>
-                                                @else
-                                                    <a href="{{ route('clinic-visits.show', $log->clinicVisit) }}" class="btn btn-sm btn-outline-secondary py-1 px-2" title="View Linked Visit">
-                                                        <i class="bi bi-eye"></i>
-                                                    </a>
-                                                @endif
-
-                                                <form method="POST" action="{{ route('clinic-logbooks.destroy', $log) }}" onsubmit="return confirm('Delete logbook entry {{ $log->log_number }}?');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2" title="Delete">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="7" class="text-center text-muted py-5">No daily clinic logbook records found for this filter.</td>
-                                    </tr>
-                                @endforelse
+                                <x-table-skeleton :cols="7" :rows="8" />
                             </tbody>
                         </table>
                     </div>
                 </div>
-                @if ($logs->hasPages())
-                    <div class="card-footer bg-white">
-                        {{ $logs->links() }}
-                    </div>
-                @endif
             </div>
         </div>
 
@@ -737,19 +644,15 @@
         </div>
     </div>
 
-    @pushOnce('styles', 'datatables-styles')
-        <link rel="stylesheet" href="{{ asset('assets/plugins/datatables/dataTables.bootstrap5.min.css') }}">
-    @endPushOnce
+    @include('partials.plugins.datatables')
 
-    @pushOnce('scripts', 'datatables-scripts')
-        <script src="{{ asset('assets/plugins/datatables/dataTables.min.js') }}"></script>
-        <script src="{{ asset('assets/plugins/datatables/dataTables.bootstrap5.min.js') }}"></script>
+    @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', () => {
                 const table = $('#visits-table').DataTable({
                     processing: true,
                     serverSide: true,
-                    pageLength: 25,
+                    pageLength: {{ (int) ($appSettings['table_page_length'] ?? 25) }},
                     lengthMenu: [10, 25, 50, 100],
                     order: [[8, 'desc']],
                     dom: "<'row p-3 align-items-center'<'col-sm-6'l><'col-sm-6'f>>" +
@@ -806,31 +709,98 @@
                     table.draw();
                 });
 
+                const logbookTable = $('#logbook-table').DataTable({
+                    processing: true,
+                    serverSide: true,
+                    pageLength: {{ (int) ($appSettings['table_page_length'] ?? 25) }},
+                    lengthMenu: [10, 25, 50, 100],
+                    order: [[1, 'desc']],
+                    dom: "<'row p-3 align-items-center'<'col-sm-6'l><'col-sm-6'f>>" +
+                         "<'row'<'col-sm-12'tr>>" +
+                         "<'row p-3 align-items-center'<'col-sm-5'i><'col-sm-7'p>>",
+                    ajax: {
+                        url: "{{ route('clinic-visits.index') }}",
+                        data: function (d) {
+                            d.table = 'logbook';
+                            d.visitor_type = $('#filter-log-visitor-type').val();
+                            d.purpose = $('#filter-log-purpose').val();
+                            d.log_status = $('#filter-log-status').val();
+                            d.log_date_from = $('#filter-log-date-from').val();
+                            d.custom_search = $('#filter-log-search').val();
+                        }
+                    },
+                    columns: [
+                        { data: 'actions', name: 'actions', orderable: false, searchable: false },
+                        { data: 'log_number_col', name: 'log_number' },
+                        { data: 'time_col', name: 'time_in' },
+                        { data: 'visitor_col', name: 'full_name' },
+                        { data: 'type_dept_col', name: 'visitor_type' },
+                        { data: 'purpose_col', name: 'purpose' },
+                        { data: 'status_col', name: 'status' }
+                    ],
+                    language: {
+                        search: "",
+                        searchPlaceholder: "Quick filter...",
+                        emptyTable: "No clinic logbook entries found.",
+                        processing: '<div class="spinner-border spinner-border-sm text-primary me-1"></div> Loading logbook...'
+                    }
+                });
+
+                let logSearchTimer;
+                $('#filter-log-search').on('input', function () {
+                    clearTimeout(logSearchTimer);
+                    logSearchTimer = setTimeout(() => logbookTable.draw(), 300);
+                });
+
+                $('#logbook-filter-form').on('submit', function (e) {
+                    e.preventDefault();
+                    logbookTable.draw();
+                });
+
+                $('#logbook-filter-form').on('reset', function () {
+                    setTimeout(() => {
+                        $('#filter-log-date-from').val('');
+                        logbookTable.draw();
+                    }, 50);
+                });
+
+                $('#filter-log-visitor-type, #filter-log-purpose, #filter-log-status, #filter-log-date-from').on('change', function () {
+                    logbookTable.draw();
+                });
+
+                $('#tab-logbook-btn').on('shown.bs.tab', function () {
+                    logbookTable.columns.adjust().draw();
+                });
+
                 const modeExistingVisit = document.getElementById('modeExistingVisit');
                 const modeNewVisit = document.getElementById('modeNewVisit');
                 const existingSec = document.getElementById('existingPatientSectionVisit');
-                const newSec = document.getElementById('newStudentSectionVisit');
+                const newSec = document.getElementById('newPatientSectionVisit');
                 const patientSelect = document.getElementById('appointment_patient_id_visit');
                 const modal = document.getElementById('bookAppointmentModal');
 
                 function updateVisitMode(mode) {
                     if (mode === 'new') {
-                        existingSec.classList.add('d-none');
-                        newSec.classList.remove('d-none');
+                        if (existingSec) existingSec.classList.add('d-none');
+                        if (newSec) newSec.classList.remove('d-none');
                         if (patientSelect) {
                             patientSelect.removeAttribute('required');
                             if (window.jQuery) {
                                 window.jQuery(patientSelect).val(null).trigger('change');
                             }
                         }
-                        newSec.querySelectorAll('input[name="new_first_name"], input[name="new_last_name"]').forEach(i => i.setAttribute('required', 'required'));
+                        if (newSec) {
+                            newSec.querySelectorAll('input[name="new_first_name"], input[name="new_last_name"]').forEach(i => i.setAttribute('required', 'required'));
+                        }
                     } else {
-                        existingSec.classList.remove('d-none');
-                        newSec.classList.add('d-none');
+                        if (existingSec) existingSec.classList.remove('d-none');
+                        if (newSec) newSec.classList.add('d-none');
                         if (patientSelect) {
                             patientSelect.setAttribute('required', 'required');
                         }
-                        newSec.querySelectorAll('input[name="new_first_name"], input[name="new_last_name"]').forEach(i => i.removeAttribute('required'));
+                        if (newSec) {
+                            newSec.querySelectorAll('input[name="new_first_name"], input[name="new_last_name"]').forEach(i => i.removeAttribute('required'));
+                        }
                     }
                 }
 
@@ -875,7 +845,7 @@
                 }
             });
         </script>
-    @endPushOnce
+    @endpush
 
     @include('partials.plugins.select2')
 </x-layouts.app>

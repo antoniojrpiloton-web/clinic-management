@@ -62,12 +62,12 @@
                 <table id="medicine-categories-table" class="table table-hover align-middle w-100 mb-0">
                     <thead class="table-light">
                         <tr>
+                            <th style="width: 100px;">ACTION</th>
                             <th>Code</th>
                             <th>Category Name</th>
                             <th>Description</th>
                             <th class="text-center">Medicines Count</th>
                             <th class="text-center">Status</th>
-                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -166,15 +166,16 @@
                         processing: true,
                         serverSide: true,
                         ajax: '{{ route('medicine-categories.index') }}',
-                        pageLength: 25,
-                        order: [[1, 'asc']],
+                        pageLength: {{ (int) ($appSettings['table_page_length'] ?? 25) }},
+                        lengthMenu: [10, 25, 50, 100],
+                        order: [[2, 'asc']],
                         columns: [
+                            { data: 'actions_col', orderable: false, searchable: false },
                             { data: 'code_col', name: 'code' },
                             { data: 'name_col', name: 'name' },
                             { data: 'desc_col', name: 'description', orderable: false },
                             { data: 'count_col', name: 'medicines_count', className: 'text-center', searchable: false },
-                            { data: 'status_col', name: 'is_active', className: 'text-center', searchable: false },
-                            { data: 'actions_col', orderable: false, searchable: false, className: 'text-end' }
+                            { data: 'status_col', name: 'is_active', className: 'text-center', searchable: false }
                         ]
                     });
                 }

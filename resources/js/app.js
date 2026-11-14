@@ -41,7 +41,7 @@ async function confirmAction({ title = 'Are you sure?', text = '', confirmText =
             showCancelButton: true,
             confirmButtonText: confirmText,
             cancelButtonText: 'Cancel',
-            confirmButtonColor: '#1b5e3a',
+            confirmButtonColor: '#696cff',
             reverseButtons: true,
             focusCancel: true,
         });
@@ -83,7 +83,44 @@ function escapeHtml(value) {
 
 window.App = { notify, confirmAction, request, escapeHtml, csrfToken };
 
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-bs-theme', theme);
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('clinic_theme', theme);
+    document.querySelectorAll('.theme-toggle-btn').forEach((btn) => {
+        const darkIcon = btn.querySelector('.theme-icon-dark');
+        const lightIcon = btn.querySelector('.theme-icon-light');
+        if (theme === 'dark') {
+            darkIcon?.classList.add('d-none');
+            lightIcon?.classList.remove('d-none');
+            btn.setAttribute('title', 'Switch to Light Mode');
+        } else {
+            darkIcon?.classList.remove('d-none');
+            lightIcon?.classList.add('d-none');
+            btn.setAttribute('title', 'Switch to Dark Mode');
+        }
+    });
+    window.dispatchEvent(new CustomEvent('clinic:theme-changed', { detail: { theme } }));
+}
+
+function initTheme() {
+    const saved = localStorage.getItem('clinic_theme');
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initialTheme = saved || (prefersDark ? 'dark' : 'light');
+    applyTheme(initialTheme);
+
+    document.querySelectorAll('.theme-toggle-btn').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const current = document.documentElement.getAttribute('data-bs-theme') || 'light';
+            const next = current === 'dark' ? 'light' : 'dark';
+            applyTheme(next);
+        });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
     document.querySelectorAll('[data-toggle="sidebar"]').forEach((button) => {
         button.addEventListener('click', () => {
             document.querySelector('.app-sidebar')?.classList.toggle('show');

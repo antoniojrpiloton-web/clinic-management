@@ -266,7 +266,7 @@ class DashboardAnalyticsService
         return [
             'labels' => ['Students', 'Faculty', 'Staff', 'Others'],
             'data' => [$students, $faculty, $staff, $others],
-            'colors' => ['#1b5e3a', '#28666e', '#c27829', '#6e8078'],
+            'colors' => ['#696cff', '#03c3ec', '#ffab00', '#8592a3'],
         ];
     }
 
@@ -286,7 +286,7 @@ class DashboardAnalyticsService
         return [
             'labels' => ['Medical', 'Dental', 'Emergency', 'First Aid', 'General Checkup'],
             'data' => [$medical, $dental, $emergency, $firstAid, $general],
-            'colors' => ['#1b5e3a', '#28666e', '#b42318', '#c27829', '#52796f'],
+            'colors' => ['#696cff', '#03c3ec', '#ff3e1d', '#ffab00', '#71dd37'],
         ];
     }
 
@@ -469,7 +469,7 @@ class DashboardAnalyticsService
         return [
             'labels' => ['Class A (Fit all)', 'Class B (Correctable defect)', 'Class C (Restricted work)', 'Class D (Defective/Unfit)', 'Class E (Pending/Exempt)'],
             'data' => [$classA, $classB, $classC, $classD, $classE],
-            'colors' => ['#1b5e3a', '#28666e', '#c27829', '#c25e14', '#b42318'],
+            'colors' => ['#71dd37', '#03c3ec', '#ffab00', '#ff3e1d', '#8592a3'],
         ];
     }
 

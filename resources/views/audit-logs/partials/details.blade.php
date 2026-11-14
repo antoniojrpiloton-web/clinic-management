@@ -1,6 +1,6 @@
 <dl class="row mb-0">
     <dt class="col-sm-3 text-muted">Timestamp</dt>
-    <dd class="col-sm-9">{{ $auditLog->created_at->format('M d, Y h:i:s A') }} ({{ $auditLog->created_at->diffForHumans() }})</dd>
+    <dd class="col-sm-9">{{ $auditLog->created_at->format(($appSettings['date_format'] ?? 'M d, Y').' h:i:s A') }} ({{ $auditLog->created_at->diffForHumans() }})</dd>
 
     <dt class="col-sm-3 text-muted">User</dt>
     <dd class="col-sm-9">

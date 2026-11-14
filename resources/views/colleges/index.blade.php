@@ -99,12 +99,12 @@
                 <table id="colleges-table" class="table table-hover align-middle w-100 mb-0">
                     <thead>
                         <tr>
+                            <th style="width: 100px;">ACTION</th>
                             <th>CODE</th>
                             <th>COLLEGE / FACULTY NAME</th>
                             <th>DEAN / HEAD OF UNIT</th>
                             <th>DEGREE PROGRAMS</th>
                             <th>STATUS</th>
-                            <th class="text-end">ACTIONS</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -207,15 +207,16 @@
                         processing: true,
                         serverSide: true,
                         ajax: '{{ route('colleges.index') }}',
-                        pageLength: 25,
-                        order: [[0, 'asc']],
+                        pageLength: {{ (int) ($appSettings['table_page_length'] ?? 25) }},
+                        lengthMenu: [10, 25, 50, 100],
+                        order: [[1, 'asc']],
                         columns: [
+                            { data: 'actions_col', orderable: false, searchable: false },
                             { data: 'code_col', name: 'code' },
                             { data: 'name_col', name: 'name' },
                             { data: 'dean_col', name: 'dean' },
                             { data: 'programs_col', name: 'programs_count', searchable: false },
-                            { data: 'status_col', name: 'is_active', searchable: false },
-                            { data: 'actions_col', orderable: false, searchable: false, className: 'text-end' }
+                            { data: 'status_col', name: 'is_active', searchable: false }
                         ]
                     });
                 }

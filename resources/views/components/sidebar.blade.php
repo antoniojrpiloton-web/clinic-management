@@ -18,11 +18,14 @@
         return ! $fc->userCanAccess($key, $user);
     };
 
-    $patientActive = request()->routeIs(['patients.*']);
-    $operationsActive = request()->routeIs(['appointments.*', 'clinic-logbooks.*', 'clinic-visits.*', 'medical-consultations.*', 'dental-consultations.*', 'emergency-records.*', 'first-aid-records.*', 'physical-exam-schedules.*']);
-    $clinicalActive = request()->routeIs(['physical-examinations.*', 'medical-profiles.*', 'clinicians.*']);
-    $pharmacyActive = request()->routeIs(['medicines.*', 'medicine-categories.*', 'inventory.*']) && ! request()->routeIs('inventory.reports');
-    $reportsActive = request()->routeIs(['reports.clinic.*', 'inventory.reports']);
+    $patientActive = request()->routeIs(['patients.*', 'students.*', 'employees.*', 'medical-profiles.*']);
+    $operationsActive = request()->routeIs(['appointments.*', 'clinic-logbooks.*', 'clinic-visits.*']);
+    $consultationsActive = request()->routeIs(['medical-consultations.*', 'dental-consultations.*', 'emergency-records.*', 'first-aid-records.*']);
+    $peActive = request()->routeIs(['physical-examinations.*', 'physical-exam-schedules.*', 'clinicians.*']);
+    $dispensingActive = request()->routeIs(['inventory.dispensings.*', 'medicines.*', 'medicine-categories.*']);
+    $stockActive = request()->routeIs(['inventory.stock-in*', 'inventory.stock-out*', 'inventory.expirations', 'inventory.transactions', 'inventory.batches.*']);
+    $morbidityReportsActive = request()->routeIs(['reports.clinic.index', 'reports.clinic.communicable', 'reports.clinic.non-communicable']);
+    $serviceReportsActive = request()->routeIs(['reports.clinic.medical-dental', 'reports.clinic.login-records', 'inventory.reports']);
     $adminActive = request()->routeIs(['users.*', 'roles.*', 'permissions.*', 'audit-logs.*']);
     $configActive = request()->routeIs(['settings.*', 'academic-years.*', 'colleges.*', 'programs.*', 'disease-categories.*']);
     $dbActive = request()->routeIs(['backups.*']);
@@ -56,7 +59,7 @@
             </a>
         @endif
 
-        <div class="nav-heading">MAIN MENU</div>
+        <div class="nav-heading">MAIN</div>
 
         @can('dashboard.view')
             @if ($canSeeFeature('feature_dashboard'))
@@ -71,6 +74,8 @@
                 </a>
             @endif
         @endcan
+
+        <div class="nav-heading">PATIENT CARE &amp; CLINICAL</div>
 
         @if ($canSeeFeature('feature_patients'))
             <button
@@ -116,7 +121,7 @@
                     @can('patients.import')
                         <li>
                             <a href="{{ route('patients.import') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('patients.import')])>
-                                <span>Batch Import</span>
+                                <span>Batch CSV Import</span>
                                 @if ($isFeatureLocked('feature_patients'))
                                     <i class="bi bi-lock-fill text-warning small"></i>
                                 @endif
@@ -129,10 +134,7 @@
 
         @php
             $showAnyOperations = $canSeeFeature('feature_logbook')
-                || $canSeeFeature('feature_medical_consultations')
-                || $canSeeFeature('feature_dental_consultations')
-                || $canSeeFeature('feature_emergency_first_aid')
-                || $canSeeFeature('feature_physical_examinations');
+                || $canSeeFeature('feature_medical_consultations');
         @endphp
         @if ($showAnyOperations)
             <button
@@ -160,6 +162,18 @@
                             </a>
                         </li>
                     @endif
+                    @can('clinic-visits.view')
+                        @if ($canSeeFeature('feature_medical_consultations'))
+                            <li>
+                                <a href="{{ route('clinic-visits.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('clinic-visits.*')])>
+                                    <span>Patient Visit Logs</span>
+                                    @if ($isFeatureLocked('feature_medical_consultations'))
+                                        <i class="bi bi-lock-fill text-warning small"></i>
+                                    @endif
+                                </a>
+                            </li>
+                        @endif
+                    @endcan
                     <li>
                         <a href="{{ route('appointments.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('appointments.index')])>
                             <span>Doctor Appointments</span>
@@ -170,11 +184,41 @@
                             <span>Appointment Calendar</span>
                         </a>
                     </li>
+                </ul>
+            </div>
+        @endif
+
+        @php
+            $showAnyConsultations = $canSeeFeature('feature_medical_consultations')
+                || $canSeeFeature('feature_dental_consultations')
+                || $canSeeFeature('feature_emergency_first_aid');
+        @endphp
+        @if ($showAnyConsultations)
+            <button
+                type="button"
+                @class(['nav-dropdown-toggle', 'active' => $consultationsActive])
+                data-bs-toggle="collapse"
+                data-bs-target="#submenu-consultations"
+                aria-expanded="{{ $consultationsActive ? 'true' : 'false' }}"
+            >
+                <div class="nav-left">
+                    <i class="bi bi-heart-pulse menu-icon"></i>
+                    <span>Clinical Consultations</span>
+                </div>
+                <div class="d-flex align-items-center gap-1">
+                    @if ($isFeatureLocked('feature_medical_consultations') && $isFeatureLocked('feature_dental_consultations') && $isFeatureLocked('feature_emergency_first_aid'))
+                        <i class="bi bi-lock-fill text-warning small" title="Locked"></i>
+                    @endif
+                    <i class="bi bi-chevron-right menu-chevron"></i>
+                </div>
+            </button>
+            <div @class(['collapse', 'show' => $consultationsActive]) id="submenu-consultations">
+                <ul class="sidebar-submenu">
                     @can('medical-consultations.view')
                         @if ($canSeeFeature('feature_medical_consultations'))
                             <li>
                                 <a href="{{ route('medical-consultations.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('medical-consultations.*')])>
-                                    <span>1. Medical Consultation</span>
+                                    <span>Medical Consultation</span>
                                     @if ($isFeatureLocked('feature_medical_consultations'))
                                         <i class="bi bi-lock-fill text-warning small"></i>
                                     @endif
@@ -186,7 +230,7 @@
                         @if ($canSeeFeature('feature_dental_consultations'))
                             <li>
                                 <a href="{{ route('dental-consultations.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('dental-consultations.*')])>
-                                    <span>2. Dental Consultation</span>
+                                    <span>Dental Consultation</span>
                                     @if ($isFeatureLocked('feature_dental_consultations'))
                                         <i class="bi bi-lock-fill text-warning small"></i>
                                     @endif
@@ -198,7 +242,7 @@
                         @if ($canSeeFeature('feature_emergency_first_aid'))
                             <li>
                                 <a href="{{ route('emergency-records.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('emergency-records.*')])>
-                                    <span>3. Emergency Records</span>
+                                    <span>Emergency Records</span>
                                     @if ($isFeatureLocked('feature_emergency_first_aid'))
                                         <i class="bi bi-lock-fill text-warning small"></i>
                                     @endif
@@ -210,32 +254,8 @@
                         @if ($canSeeFeature('feature_emergency_first_aid'))
                             <li>
                                 <a href="{{ route('first-aid-records.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('first-aid-records.*')])>
-                                    <span>4. First Aid Records</span>
+                                    <span>First Aid Records</span>
                                     @if ($isFeatureLocked('feature_emergency_first_aid'))
-                                        <i class="bi bi-lock-fill text-warning small"></i>
-                                    @endif
-                                </a>
-                            </li>
-                        @endif
-                    @endcan
-                    @can('physical-examinations.view')
-                        @if ($canSeeFeature('feature_physical_examinations'))
-                            <li>
-                                <a href="{{ route('physical-exam-schedules.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('physical-exam-schedules.*')])>
-                                    <span>5. Scheduled PE</span>
-                                    @if ($isFeatureLocked('feature_physical_examinations'))
-                                        <i class="bi bi-lock-fill text-warning small"></i>
-                                    @endif
-                                </a>
-                            </li>
-                        @endif
-                    @endcan
-                    @can('clinic-visits.view')
-                        @if ($canSeeFeature('feature_medical_consultations'))
-                            <li>
-                                <a href="{{ route('clinic-visits.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('clinic-visits.*')])>
-                                    <span>6. Patient Visit Logs</span>
-                                    @if ($isFeatureLocked('feature_medical_consultations'))
                                         <i class="bi bi-lock-fill text-warning small"></i>
                                     @endif
                                 </a>
@@ -249,14 +269,14 @@
         @if ($canSeeFeature('feature_physical_examinations'))
             <button
                 type="button"
-                @class(['nav-dropdown-toggle', 'active' => $clinicalActive])
+                @class(['nav-dropdown-toggle', 'active' => $peActive])
                 data-bs-toggle="collapse"
-                data-bs-target="#submenu-clinical"
-                aria-expanded="{{ $clinicalActive ? 'true' : 'false' }}"
+                data-bs-target="#submenu-pe"
+                aria-expanded="{{ $peActive ? 'true' : 'false' }}"
             >
                 <div class="nav-left">
-                    <i class="bi bi-heart-pulse menu-icon"></i>
-                    <span>Clinical &amp; PE</span>
+                    <i class="bi bi-lungs menu-icon"></i>
+                    <span>Physical Examination</span>
                 </div>
                 <div class="d-flex align-items-center gap-1">
                     @if ($isFeatureLocked('feature_physical_examinations'))
@@ -265,9 +285,17 @@
                     <i class="bi bi-chevron-right menu-chevron"></i>
                 </div>
             </button>
-            <div @class(['collapse', 'show' => $clinicalActive]) id="submenu-clinical">
+            <div @class(['collapse', 'show' => $peActive]) id="submenu-pe">
                 <ul class="sidebar-submenu">
                     @can('physical-examinations.view')
+                        <li>
+                            <a href="{{ route('physical-exam-schedules.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('physical-exam-schedules.*')])>
+                                <span>PE Schedules &amp; Batches</span>
+                                @if ($isFeatureLocked('feature_physical_examinations'))
+                                    <i class="bi bi-lock-fill text-warning small"></i>
+                                @endif
+                            </a>
+                        </li>
                         <li>
                             <a href="{{ route('physical-examinations.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('physical-examinations.index') || request()->routeIs('physical-examinations.show')])>
                                 <span>Physical Exam Registry</span>
@@ -302,33 +330,28 @@
         @endif
 
         @if ($canSeeFeature('feature_pharmacy_dispensing') || $canSeeFeature('feature_pharmacy_inventory'))
+            <div class="nav-heading">PHARMACY &amp; INVENTORY</div>
+
             <button
                 type="button"
-                @class(['nav-dropdown-toggle', 'active' => $pharmacyActive])
+                @class(['nav-dropdown-toggle', 'active' => $dispensingActive])
                 data-bs-toggle="collapse"
-                data-bs-target="#submenu-pharmacy"
-                aria-expanded="{{ $pharmacyActive ? 'true' : 'false' }}"
+                data-bs-target="#submenu-pharmacy-dispensing"
+                aria-expanded="{{ $dispensingActive ? 'true' : 'false' }}"
             >
                 <div class="nav-left">
                     <i class="bi bi-capsule-pill menu-icon"></i>
-                    <span>Pharmacy &amp; Inventory</span>
+                    <span>Pharmacy &amp; Dispensing</span>
                 </div>
-                <i class="bi bi-chevron-right menu-chevron"></i>
+                <div class="d-flex align-items-center gap-1">
+                    @if ($isFeatureLocked('feature_pharmacy_dispensing') && $isFeatureLocked('feature_pharmacy_inventory'))
+                        <i class="bi bi-lock-fill text-warning small" title="Locked"></i>
+                    @endif
+                    <i class="bi bi-chevron-right menu-chevron"></i>
+                </div>
             </button>
-            <div @class(['collapse', 'show' => $pharmacyActive]) id="submenu-pharmacy">
+            <div @class(['collapse', 'show' => $dispensingActive]) id="submenu-pharmacy-dispensing">
                 <ul class="sidebar-submenu">
-                    @can('medicines.view')
-                        @if ($canSeeFeature('feature_pharmacy_inventory'))
-                            <li>
-                                <a href="{{ route('medicines.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('medicines.*')])>
-                                    <span>Medicine Masterlist</span>
-                                    @if ($isFeatureLocked('feature_pharmacy_inventory'))
-                                        <i class="bi bi-lock-fill text-warning small"></i>
-                                    @endif
-                                </a>
-                            </li>
-                        @endif
-                    @endcan
                     @can('inventory.dispense')
                         @if ($canSeeFeature('feature_pharmacy_dispensing'))
                             <li>
@@ -341,43 +364,11 @@
                             </li>
                         @endif
                     @endcan
-                    @can('inventory.stock-in')
+                    @can('medicines.view')
                         @if ($canSeeFeature('feature_pharmacy_inventory'))
                             <li>
-                                <a href="{{ route('inventory.stock-in') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('inventory.stock-in')])>
-                                    <span>Receive Stock (Stock-In)</span>
-                                    @if ($isFeatureLocked('feature_pharmacy_inventory'))
-                                        <i class="bi bi-lock-fill text-warning small"></i>
-                                    @endif
-                                </a>
-                            </li>
-                        @endif
-                    @endcan
-                    @can('inventory.stock-out')
-                        @if ($canSeeFeature('feature_pharmacy_inventory'))
-                            <li>
-                                <a href="{{ route('inventory.stock-out') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('inventory.stock-out')])>
-                                    <span>Deduct Stock (Stock-Out)</span>
-                                    @if ($isFeatureLocked('feature_pharmacy_inventory'))
-                                        <i class="bi bi-lock-fill text-warning small"></i>
-                                    @endif
-                                </a>
-                            </li>
-                        @endif
-                    @endcan
-                    @can('inventory.view')
-                        @if ($canSeeFeature('feature_pharmacy_inventory'))
-                            <li>
-                                <a href="{{ route('inventory.expirations') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('inventory.expirations')])>
-                                    <span>Expiration Monitoring</span>
-                                    @if ($isFeatureLocked('feature_pharmacy_inventory'))
-                                        <i class="bi bi-lock-fill text-warning small"></i>
-                                    @endif
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{{ route('inventory.transactions') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('inventory.transactions')])>
-                                    <span>Transaction Ledger</span>
+                                <a href="{{ route('medicines.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('medicines.*')])>
+                                    <span>Medicine Masterlist</span>
                                     @if ($isFeatureLocked('feature_pharmacy_inventory'))
                                         <i class="bi bi-lock-fill text-warning small"></i>
                                     @endif
@@ -399,20 +390,84 @@
                     @endcan
                 </ul>
             </div>
+
+            @if ($canSeeFeature('feature_pharmacy_inventory'))
+                <button
+                    type="button"
+                    @class(['nav-dropdown-toggle', 'active' => $stockActive])
+                    data-bs-toggle="collapse"
+                    data-bs-target="#submenu-pharmacy-stock"
+                    aria-expanded="{{ $stockActive ? 'true' : 'false' }}"
+                >
+                    <div class="nav-left">
+                        <i class="bi bi-boxes menu-icon"></i>
+                        <span>Stock &amp; Inventory</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-1">
+                        @if ($isFeatureLocked('feature_pharmacy_inventory'))
+                            <i class="bi bi-lock-fill text-warning small" title="Locked"></i>
+                        @endif
+                        <i class="bi bi-chevron-right menu-chevron"></i>
+                    </div>
+                </button>
+                <div @class(['collapse', 'show' => $stockActive]) id="submenu-pharmacy-stock">
+                    <ul class="sidebar-submenu">
+                        @can('inventory.stock-in')
+                            <li>
+                                <a href="{{ route('inventory.stock-in') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('inventory.stock-in')])>
+                                    <span>Receive Stock (Stock-In)</span>
+                                    @if ($isFeatureLocked('feature_pharmacy_inventory'))
+                                        <i class="bi bi-lock-fill text-warning small"></i>
+                                    @endif
+                                </a>
+                            </li>
+                        @endcan
+                        @can('inventory.stock-out')
+                            <li>
+                                <a href="{{ route('inventory.stock-out') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('inventory.stock-out')])>
+                                    <span>Deduct Stock (Stock-Out)</span>
+                                    @if ($isFeatureLocked('feature_pharmacy_inventory'))
+                                        <i class="bi bi-lock-fill text-warning small"></i>
+                                    @endif
+                                </a>
+                            </li>
+                        @endcan
+                        @can('inventory.view')
+                            <li>
+                                <a href="{{ route('inventory.expirations') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('inventory.expirations')])>
+                                    <span>Expiration Monitoring</span>
+                                    @if ($isFeatureLocked('feature_pharmacy_inventory'))
+                                        <i class="bi bi-lock-fill text-warning small"></i>
+                                    @endif
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('inventory.transactions') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('inventory.transactions')])>
+                                    <span>Transaction Ledger</span>
+                                    @if ($isFeatureLocked('feature_pharmacy_inventory'))
+                                        <i class="bi bi-lock-fill text-warning small"></i>
+                                    @endif
+                                </a>
+                            </li>
+                        @endcan
+                    </ul>
+                </div>
+            @endif
         @endif
 
         @can('inventory.reports')
             @if ($canSeeFeature('feature_reports_analytics'))
+                <div class="nav-heading">REPORTS &amp; ANALYTICS</div>
                 <button
                     type="button"
-                    @class(['nav-dropdown-toggle', 'active' => $reportsActive])
+                    @class(['nav-dropdown-toggle', 'active' => $morbidityReportsActive])
                     data-bs-toggle="collapse"
-                    data-bs-target="#submenu-reports"
-                    aria-expanded="{{ $reportsActive ? 'true' : 'false' }}"
+                    data-bs-target="#submenu-reports-morbidity"
+                    aria-expanded="{{ $morbidityReportsActive ? 'true' : 'false' }}"
                 >
                     <div class="nav-left">
-                        <i class="bi bi-bar-chart-line menu-icon"></i>
-                        <span>Reports &amp; Analytics</span>
+                        <i class="bi bi-activity menu-icon"></i>
+                        <span>Morbidity &amp; Surveillance</span>
                     </div>
                     <div class="d-flex align-items-center gap-1">
                         @if ($isFeatureLocked('feature_reports_analytics'))
@@ -421,19 +476,11 @@
                         <i class="bi bi-chevron-right menu-chevron"></i>
                     </div>
                 </button>
-                <div @class(['collapse', 'show' => $reportsActive]) id="submenu-reports">
+                <div @class(['collapse', 'show' => $morbidityReportsActive]) id="submenu-reports-morbidity">
                     <ul class="sidebar-submenu">
                         <li>
-                            <a href="{{ route('reports.clinic.medical-dental') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('reports.clinic.medical-dental')])>
-                                <span>Medical &amp; Dental Records</span>
-                                @if ($isFeatureLocked('feature_reports_analytics'))
-                                    <i class="bi bi-lock-fill text-warning small"></i>
-                                @endif
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('reports.clinic.login-records') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('reports.clinic.login-records')])>
-                                <span>Medical &amp; Dental Log-In</span>
+                            <a href="{{ route('reports.clinic.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('reports.clinic.index')])>
+                                <span>Morbidity &amp; Utilization</span>
                                 @if ($isFeatureLocked('feature_reports_analytics'))
                                     <i class="bi bi-lock-fill text-warning small"></i>
                                 @endif
@@ -455,9 +502,40 @@
                                 @endif
                             </a>
                         </li>
+                    </ul>
+                </div>
+
+                <button
+                    type="button"
+                    @class(['nav-dropdown-toggle', 'active' => $serviceReportsActive])
+                    data-bs-toggle="collapse"
+                    data-bs-target="#submenu-reports-service"
+                    aria-expanded="{{ $serviceReportsActive ? 'true' : 'false' }}"
+                >
+                    <div class="nav-left">
+                        <i class="bi bi-file-earmark-bar-graph menu-icon"></i>
+                        <span>Service &amp; Inventory Logs</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-1">
+                        @if ($isFeatureLocked('feature_reports_analytics'))
+                            <i class="bi bi-lock-fill text-warning small" title="Locked"></i>
+                        @endif
+                        <i class="bi bi-chevron-right menu-chevron"></i>
+                    </div>
+                </button>
+                <div @class(['collapse', 'show' => $serviceReportsActive]) id="submenu-reports-service">
+                    <ul class="sidebar-submenu">
                         <li>
-                            <a href="{{ route('reports.clinic.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('reports.clinic.index')])>
-                                <span>Morbidity &amp; Utilization</span>
+                            <a href="{{ route('reports.clinic.medical-dental') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('reports.clinic.medical-dental')])>
+                                <span>Medical &amp; Dental Records</span>
+                                @if ($isFeatureLocked('feature_reports_analytics'))
+                                    <i class="bi bi-lock-fill text-warning small"></i>
+                                @endif
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('reports.clinic.login-records') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('reports.clinic.login-records')])>
+                                <span>Daily Log-In Records</span>
                                 @if ($isFeatureLocked('feature_reports_analytics'))
                                     <i class="bi bi-lock-fill text-warning small"></i>
                                 @endif
@@ -475,6 +553,10 @@
                 </div>
             @endif
         @endcan
+
+        @if ($canSeeFeature('feature_administration') || $canSeeFeature('feature_configuration_backups'))
+            <div class="nav-heading">SETTINGS &amp; ADMINISTRATION</div>
+        @endif
 
         @if ($canSeeFeature('feature_administration'))
             <button
@@ -571,6 +653,14 @@
                                 @endif
                             </a>
                         </li>
+                        <li>
+                            <a href="{{ route('settings.edit') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('settings.*') && ! str_contains(request()->fullUrl(), '#clinic-info')])>
+                                <span>System Settings</span>
+                                @if ($isFeatureLocked('feature_configuration_backups'))
+                                    <i class="bi bi-lock-fill text-warning small"></i>
+                                @endif
+                            </a>
+                        </li>
                     @endcan
                     @can('academic-years.view')
                         <li>
@@ -606,16 +696,6 @@
                         <li>
                             <a href="{{ route('disease-categories.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('disease-categories.*')])>
                                 <span>Disease Categories</span>
-                                @if ($isFeatureLocked('feature_configuration_backups'))
-                                    <i class="bi bi-lock-fill text-warning small"></i>
-                                @endif
-                            </a>
-                        </li>
-                    @endcan
-                    @can('settings.manage')
-                        <li>
-                            <a href="{{ route('settings.edit') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('settings.*')])>
-                                <span>System Settings</span>
                                 @if ($isFeatureLocked('feature_configuration_backups'))
                                     <i class="bi bi-lock-fill text-warning small"></i>
                                 @endif
@@ -662,54 +742,10 @@
                                 @endif
                             </a>
                         </li>
-                        <li>
-                            <a href="{{ route('backups.index') }}" class="submenu-link d-flex justify-content-between align-items-center">
-                                <span>Backup History</span>
-                                @if ($isFeatureLocked('feature_configuration_backups'))
-                                    <i class="bi bi-lock-fill text-warning small"></i>
-                                @endif
-                            </a>
-                        </li>
                     @endcan
                 </ul>
             </div>
         @endif
-
-        <button
-            type="button"
-            @class(['nav-dropdown-toggle', 'active' => $accountActive])
-            data-bs-toggle="collapse"
-            data-bs-target="#submenu-account"
-            aria-expanded="{{ $accountActive ? 'true' : 'false' }}"
-        >
-            <div class="nav-left">
-                <i class="bi bi-person-circle menu-icon"></i>
-                <span>User Account</span>
-            </div>
-            <i class="bi bi-chevron-right menu-chevron"></i>
-        </button>
-        <div @class(['collapse', 'show' => $accountActive]) id="submenu-account">
-            <ul class="sidebar-submenu">
-                <li>
-                    <a href="{{ route('profile.edit') }}" @class(['submenu-link', 'active' => request()->routeIs('profile.*')])>
-                        <span>My Profile</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('profile.edit') }}#password" class="submenu-link">
-                        <span>Change Password</span>
-                    </a>
-                </li>
-                <li>
-                    <form method="POST" action="{{ route('logout') }}" class="d-inline">
-                        @csrf
-                        <button type="submit" class="submenu-link w-100 border-0 bg-transparent text-start text-danger">
-                            <span>Logout</span>
-                        </button>
-                    </form>
-                </li>
-            </ul>
-        </div>
     </nav>
 
     @if ($user)

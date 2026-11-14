@@ -7,6 +7,7 @@ use App\Models\Medicine;
 use App\Models\MedicineBatch;
 use App\Models\MedicineCategory;
 use App\Services\AuditLogger;
+use App\Services\SettingService;
 use App\Support\IdObfuscator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -20,7 +21,10 @@ use Yajra\DataTables\Facades\DataTables;
 
 class InventoryController extends Controller implements HasMiddleware
 {
-    public function __construct(protected AuditLogger $auditLogger) {}
+    public function __construct(
+        protected AuditLogger $auditLogger,
+        protected SettingService $settingService,
+    ) {}
 
     public static function middleware(): array
     {
@@ -223,7 +227,7 @@ class InventoryController extends Controller implements HasMiddleware
                 })
                 ->addColumn('category_col', fn (MedicineBatch $batch): string => '<span class="badge badge-soft-blue">'.e($batch->medicine?->category?->name ?? 'N/A').'</span>')
                 ->addColumn('batch_col', fn (MedicineBatch $batch): string => '<span class="font-monospace fw-semibold">'.e($batch->batch_number).'</span>')
-                ->addColumn('expiration_col', fn (MedicineBatch $batch): string => '<span class="fw-medium">'.e($batch->expiration_date->format('M d, Y')).'</span>')
+                ->addColumn('expiration_col', fn (MedicineBatch $batch): string => '<span class="fw-medium">'.e($batch->expiration_date->format($this->settingService->dateFormat())).'</span>')
                 ->addColumn('risk_col', function (MedicineBatch $batch): string {
                     if ($batch->is_expired) {
                         return '<span class="badge badge-soft-red"><i class="bi bi-exclamation-octagon me-1"></i>EXPIRED ('.abs($batch->days_until_expiration).'d ago)</span>';
@@ -249,24 +253,30 @@ class InventoryController extends Controller implements HasMiddleware
                     if (! $canStockOut) {
                         return '';
                     }
+
+                    $stockOutUrl = route('inventory.stock-out', ['medicine_id' => $batch->medicine_id, 'batch_id' => $batch->id]);
+                    $disposeItem = '';
                     if ($batch->is_expired) {
                         $disposeUrl = route('inventory.batches.dispose', $batch);
                         $csrf = csrf_field();
                         $qty = (int) $batch->quantity_remaining;
-
-                        return "<form method=\"POST\" action=\"{$disposeUrl}\" class=\"d-inline\" data-confirm=\"Confirm safe medical disposal and write-off of remaining {$qty} units?\">
-                            {$csrf}
-                            <button type=\"submit\" class=\"btn btn-sm btn-danger py-1 px-2\">
-                                <i class=\"bi bi-trash3 me-1\"></i> Dispose Batch
-                            </button>
-                        </form>";
+                        $disposeItem = "<li>
+                            <form method=\"POST\" action=\"{$disposeUrl}\" data-confirm=\"Confirm safe medical disposal and write-off of remaining {$qty} units?\">
+                                {$csrf}
+                                <button type=\"submit\" class=\"dropdown-item text-danger\"><i class=\"bi bi-trash3 me-2\"></i>Dispose Batch</button>
+                            </form>
+                        </li>";
                     }
 
-                    $stockOutUrl = route('inventory.stock-out', ['medicine_id' => $batch->medicine_id, 'batch_id' => $batch->id]);
-
-                    return "<a href=\"{$stockOutUrl}\" class=\"btn btn-sm btn-light border py-1 px-2 text-danger\">
-                        <i class=\"bi bi-box-arrow-up me-1\"></i> Deduct
-                    </a>";
+                    return "<div class=\"dropdown\">
+                        <button class=\"btn btn-sm btn-outline-secondary dropdown-toggle py-1 px-2\" type=\"button\" data-bs-toggle=\"dropdown\" aria-expanded=\"false\">
+                            <i class=\"bi bi-gear-fill me-1\"></i> Action
+                        </button>
+                        <ul class=\"dropdown-menu shadow-sm\">
+                            <li><a class=\"dropdown-item text-danger\" href=\"{$stockOutUrl}\"><i class=\"bi bi-box-arrow-up me-2\"></i>Deduct / Stock Out</a></li>
+                            {$disposeItem}
+                        </ul>
+                    </div>";
                 })
                 ->orderColumn('batch_col', 'batch_number $1')
                 ->orderColumn('expiration_col', 'expiration_date $1')
@@ -362,7 +372,7 @@ class InventoryController extends Controller implements HasMiddleware
                         });
                     }
                 })
-                ->addColumn('date_col', fn (InventoryTransaction $txn): string => '<span class="small text-muted text-nowrap">'.($txn->transaction_date ? e($txn->transaction_date->format('M d, Y h:i A')) : 'N/A').'</span>')
+                ->addColumn('date_col', fn (InventoryTransaction $txn): string => '<span class="small text-muted text-nowrap">'.($txn->transaction_date ? e($txn->transaction_date->format($this->settingService->dateFormat().' h:i A')) : 'N/A').'</span>')
                 ->addColumn('txn_col', fn (InventoryTransaction $txn): string => '<span class="font-monospace small fw-medium">'.e($txn->transaction_number).'</span>')
                 ->addColumn('type_col', function (InventoryTransaction $txn): string {
                     if ($txn->type === 'stock_in') {

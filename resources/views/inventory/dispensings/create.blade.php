@@ -49,20 +49,21 @@
         }
         .pos-ticket-footer {
             padding: 0.85rem 1.15rem;
-            background: #fbfdfc;
-            border-top: 2px solid #e1e9e4;
+            background: var(--app-card-bg);
+            border-top: 1px solid var(--app-border-color);
             flex-shrink: 0;
         }
         .pos-search-input {
             border-radius: 8px;
             padding: 0.6rem 0.85rem 0.6rem 2.4rem;
             font-size: 0.92rem;
-            border: 1px solid #c7d5cd;
-            background: #ffffff;
+            border: 1px solid var(--app-border-color);
+            background: var(--app-card-bg);
+            color: var(--app-body-color);
         }
         .pos-search-input:focus {
-            border-color: #1b5e3a;
-            box-shadow: 0 0 0 3px rgba(27, 94, 58, 0.12);
+            border-color: var(--app-primary);
+            box-shadow: 0 0 0 3px rgba(105, 108, 255, 0.15);
         }
         .pos-cat-pill {
             display: inline-block;
@@ -70,23 +71,23 @@
             font-size: 0.76rem;
             font-weight: 600;
             border-radius: 20px;
-            border: 1px solid #cdd8d2;
-            background: #ffffff;
-            color: #384d42;
+            border: 1px solid var(--app-border-color);
+            background: var(--app-card-bg);
+            color: var(--app-body-color);
             cursor: pointer;
             transition: all 0.15s ease;
             white-space: nowrap;
         }
         .pos-cat-pill:hover,
         .pos-cat-pill.active {
-            background: #1b5e3a;
+            background: var(--app-primary);
             color: #ffffff;
-            border-color: #1b5e3a;
+            border-color: var(--app-primary);
         }
         .pos-med-card {
-            background: #ffffff;
-            border: 1px solid #dbe4de;
-            border-radius: 8px;
+            background: var(--app-card-bg);
+            border: 1px solid var(--app-border-color);
+            border-radius: var(--app-card-radius);
             padding: 0.8rem 0.9rem;
             display: flex;
             flex-direction: column;
@@ -97,29 +98,29 @@
         }
         .pos-med-card:hover {
             transform: translateY(-2px);
-            border-color: #1b5e3a;
-            box-shadow: 0 4px 12px rgba(27, 94, 58, 0.08);
+            border-color: var(--app-primary);
+            box-shadow: 0 4px 12px rgba(105, 108, 255, 0.15);
         }
         .pos-med-card.is-out-of-stock {
             opacity: 0.65;
             cursor: not-allowed;
-            background: #fafafa;
+            background: var(--app-body-bg);
         }
         .pos-med-card.is-out-of-stock:hover {
             transform: none;
-            border-color: #dbe4de;
+            border-color: var(--app-border-color);
             box-shadow: none;
         }
         .pos-ticket-item {
-            background: #fbfdfc;
-            border: 1px solid #dce5e0;
+            background: var(--app-card-bg);
+            border: 1px solid var(--app-border-color);
             border-radius: 8px;
             padding: 0.75rem 0.85rem;
             margin-bottom: 0.65rem;
             transition: border-color 0.15s ease;
         }
         .pos-ticket-item:hover {
-            border-color: #1b5e3a;
+            border-color: var(--app-primary);
         }
         .pos-qty-btn {
             width: 28px;
@@ -137,17 +138,60 @@
             font-size: 0.68rem;
             padding: 0.15rem 0.45rem;
             border-radius: 4px;
-            background: #eef3f0;
-            color: #214332;
-            border: 1px solid #c9d8d0;
+            background: var(--app-primary-light);
+            color: var(--app-primary);
+            border: 1px solid rgba(105, 108, 255, 0.25);
             cursor: pointer;
             margin-right: 0.25rem;
             margin-top: 0.25rem;
         }
         .pos-sig-chip:hover {
-            background: #1b5e3a;
+            background: var(--app-primary);
             color: #ffffff;
-            border-color: #1b5e3a;
+            border-color: var(--app-primary);
+        }
+        .pos-med-table-wrapper {
+            background: var(--app-card-bg);
+            border: 1px solid var(--app-border-color);
+            border-radius: var(--app-card-radius);
+            overflow: hidden;
+        }
+        .pos-med-table {
+            width: 100%;
+            margin-bottom: 0;
+            font-size: 0.83rem;
+            color: var(--app-body-color);
+        }
+        .pos-med-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: var(--app-body-bg);
+            border-bottom: 1px solid var(--app-border-color);
+            color: var(--app-body-color);
+            font-weight: 600;
+            padding: 0.65rem 0.75rem;
+            white-space: nowrap;
+        }
+        .pos-med-table tbody td {
+            padding: 0.6rem 0.75rem;
+            border-bottom: 1px solid var(--app-border-color);
+            vertical-align: middle;
+        }
+        .pos-med-row {
+            cursor: pointer;
+            transition: background-color 0.12s ease;
+        }
+        .pos-med-row:hover {
+            background-color: rgba(105, 108, 255, 0.06);
+        }
+        .pos-med-row.is-out-of-stock {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background: var(--app-body-bg);
+        }
+        .pos-med-row.is-out-of-stock:hover {
+            background-color: var(--app-body-bg);
         }
     </style>
 
@@ -166,7 +210,17 @@
                             </span>
                             <span class="text-muted small">Catalog Quick Launch</span>
                         </div>
-                        <span class="small text-muted font-monospace"><kbd>F2</kbd> Focus Search &bull; <kbd>F9</kbd> Issue</span>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="btn-group btn-group-sm" role="group" aria-label="Catalog View Mode">
+                                <button type="button" class="btn btn-primary" id="btn-view-table" title="Table View">
+                                    <i class="bi bi-table me-1"></i>Table
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="btn-view-cards" title="Cards View">
+                                    <i class="bi bi-grid me-1"></i>Cards
+                                </button>
+                            </div>
+                            <span class="small text-muted font-monospace"><kbd>F2</kbd> Focus Search &bull; <kbd>F9</kbd> Issue</span>
+                        </div>
                     </div>
 
                     <div class="position-relative mb-2">
@@ -186,7 +240,98 @@
                 </div>
 
                 <div class="pos-catalog-scroll">
-                    <div class="row g-2" id="pos-med-grid">
+                    <div id="pos-med-table-container" class="pos-med-table-wrapper table-responsive">
+                        <table class="pos-med-table align-middle">
+                            <thead>
+                                <tr>
+                                    <th style="min-width: 170px;">Medicine &amp; Spec</th>
+                                    <th style="min-width: 110px;">Category &amp; Form</th>
+                                    <th style="min-width: 130px;">FEFO Lot &amp; Expiry</th>
+                                    <th class="text-center" style="min-width: 85px;">Stock</th>
+                                    <th class="text-end" style="min-width: 80px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($medicines as $med)
+                                    @php
+                                        $stock = (int) $med->stock_on_hand;
+                                        $isOut = $stock <= 0;
+                                        $firstBatch = $med->activeBatches->first();
+                                        $batchesJson = $med->activeBatches->map(fn ($b) => [
+                                            'id' => $b->id,
+                                            'batch_number' => $b->batch_number,
+                                            'expiration_date' => $b->expiration_date?->format('Y-m-d'),
+                                            'quantity_remaining' => (int) $b->quantity_remaining,
+                                        ])->values();
+                                    @endphp
+                                    <tr class="pos-row-wrapper pos-med-row @if($isOut) is-out-of-stock @endif"
+                                        data-id="{{ $med->id }}"
+                                        data-name="{{ $med->generic_name }} {{ $med->brand_name }} {{ $med->strength }}"
+                                        data-cat="{{ $med->category_id }}"
+                                        data-unit="{{ $med->unit ?? 'unit' }}"
+                                        data-stock="{{ $stock }}"
+                                        data-batches="{{ $batchesJson->toJson() }}"
+                                        @if(!$isOut) onclick="posAddToCart({{ $med->id }})" @endif>
+                                        <td>
+                                            <div class="fw-bold text-dark lh-sm text-truncate" title="{{ $med->generic_name }}">
+                                                {{ $med->generic_name }}
+                                            </div>
+                                            <div class="small text-muted text-truncate" style="font-size: 0.76rem;">
+                                                {{ $med->brand_name ? "({$med->brand_name})" : '' }} {{ $med->strength }}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-light text-dark border text-truncate mb-1" style="max-width: 120px; font-size: 0.7rem;">
+                                                {{ $med->category?->name ?? 'General' }}
+                                            </span>
+                                            <div class="small text-muted" style="font-size: 0.72rem;">{{ $med->dosage_form }}</div>
+                                        </td>
+                                        <td>
+                                            @if ($firstBatch)
+                                                <div class="fw-semibold text-dark" style="font-size: 0.78rem;">
+                                                    <i class="bi bi-upc-scan me-1 text-muted"></i>{{ $firstBatch->batch_number }}
+                                                </div>
+                                                <div class="small text-muted" style="font-size: 0.72rem;">
+                                                    Exp: {{ $firstBatch->expiration_date?->format('M Y') }}
+                                                </div>
+                                            @else
+                                                <span class="text-muted small" style="font-size: 0.74rem;">No active lot</span>
+                                            @endif
+                                        </td>
+                                        <td class="text-center">
+                                            @if ($stock > 0)
+                                                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.72rem;">
+                                                    {{ number_format($stock) }} {{ $med->unit ?? 'unit' }}s
+                                                </span>
+                                            @else
+                                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1" style="font-size: 0.72rem;">
+                                                    Out of Stock
+                                                </span>
+                                            @endif
+                                        </td>
+                                        <td class="text-end">
+                                            @if (! $isOut)
+                                                <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size: 0.75rem;" onclick="event.stopPropagation(); posAddToCart({{ $med->id }});">
+                                                    <i class="bi bi-plus-lg"></i> Add
+                                                </button>
+                                            @else
+                                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle py-1 px-2" style="font-size: 0.72rem;">Unavailable</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-4">
+                                            <i class="bi bi-capsule fs-3 d-block mb-1 text-secondary opacity-50"></i>
+                                            <div>No active medicines available in the inventory.</div>
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="row g-2 d-none" id="pos-med-grid">
                         @forelse ($medicines as $med)
                             @php
                                 $stock = (int) $med->stock_on_hand;
@@ -236,7 +381,7 @@
                                             @endif
                                         </small>
                                         @if (! $isOut)
-                                            <button type="button" class="btn btn-sm btn-outline-forest py-0 px-2" style="font-size: 0.75rem;" onclick="event.stopPropagation(); posAddToCart({{ $med->id }});">
+                                            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.75rem;" onclick="event.stopPropagation(); posAddToCart({{ $med->id }});">
                                                 <i class="bi bi-plus"></i> Add
                                             </button>
                                         @else
@@ -532,9 +677,55 @@
                 const searchInput = document.getElementById('pos-med-search');
                 const clearBtn = document.getElementById('pos-clear-search');
                 const cards = document.querySelectorAll('.pos-card-wrapper');
+                const rows = document.querySelectorAll('.pos-row-wrapper');
                 const noMatch = document.getElementById('pos-no-match');
                 const pills = document.querySelectorAll('.pos-cat-pill');
+                const viewTableBtn = document.getElementById('btn-view-table');
+                const viewCardsBtn = document.getElementById('btn-view-cards');
+                const tableContainer = document.getElementById('pos-med-table-container');
+                const gridContainer = document.getElementById('pos-med-grid');
                 let activeCat = 'all';
+
+                function setViewMode(mode) {
+                    if (mode === 'cards') {
+                        if (tableContainer) tableContainer.classList.add('d-none');
+                        if (gridContainer) gridContainer.classList.remove('d-none');
+                        if (viewCardsBtn) {
+                            viewCardsBtn.classList.add('btn-primary');
+                            viewCardsBtn.classList.remove('btn-outline-secondary');
+                        }
+                        if (viewTableBtn) {
+                            viewTableBtn.classList.remove('btn-primary');
+                            viewTableBtn.classList.add('btn-outline-secondary');
+                        }
+                        try {
+                            localStorage.setItem('pos_medicine_view_mode', 'cards');
+                        } catch (e) {}
+                    } else {
+                        if (gridContainer) gridContainer.classList.add('d-none');
+                        if (tableContainer) tableContainer.classList.remove('d-none');
+                        if (viewTableBtn) {
+                            viewTableBtn.classList.add('btn-primary');
+                            viewTableBtn.classList.remove('btn-outline-secondary');
+                        }
+                        if (viewCardsBtn) {
+                            viewCardsBtn.classList.remove('btn-primary');
+                            viewCardsBtn.classList.add('btn-outline-secondary');
+                        }
+                        try {
+                            localStorage.setItem('pos_medicine_view_mode', 'table');
+                        } catch (e) {}
+                    }
+                }
+
+                viewTableBtn?.addEventListener('click', () => setViewMode('table'));
+                viewCardsBtn?.addEventListener('click', () => setViewMode('cards'));
+
+                let initialMode = 'table';
+                try {
+                    initialMode = localStorage.getItem('pos_medicine_view_mode') || 'table';
+                } catch (e) {}
+                setViewMode(initialMode);
 
                 function filterCatalog() {
                     const q = (searchInput.value || '').trim().toLowerCase();
@@ -551,6 +742,19 @@
                             visibleCount++;
                         } else {
                             card.classList.add('d-none');
+                        }
+                    });
+
+                    rows.forEach(row => {
+                        const name = (row.dataset.name || '').toLowerCase();
+                        const cat = row.dataset.cat;
+                        const matchText = !q || name.includes(q);
+                        const matchCat = activeCat === 'all' || cat === activeCat;
+
+                        if (matchText && matchCat) {
+                            row.classList.remove('d-none');
+                        } else {
+                            row.classList.add('d-none');
                         }
                     });
 

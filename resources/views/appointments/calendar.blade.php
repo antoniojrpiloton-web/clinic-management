@@ -33,7 +33,7 @@
             <div class="card border shadow-xs mb-3">
                 <div class="card-header bg-white py-2 px-3 fw-bold small text-dark d-flex align-items-center justify-content-between">
                     <span><i class="bi bi-speedometer2 text-primary me-1.5"></i>Today's Summary</span>
-                    <span class="badge badge-soft-green" style="font-size: 0.65rem;">{{ now()->format('M d, Y') }}</span>
+                    <span class="badge badge-soft-green" style="font-size: 0.65rem;">{{ now()->format($appSettings['date_format'] ?? 'M d, Y') }}</span>
                 </div>
                 <div class="card-body p-2.5">
                     <div class="row g-2">
@@ -426,15 +426,15 @@
     @push('styles')
         <style>
             .fc {
-                --fc-border-color: #e2e8e5;
+                --fc-border-color: var(--app-border-color);
                 --fc-button-text-color: #ffffff;
-                --fc-button-bg-color: #1b5e3a;
-                --fc-button-border-color: #1b5e3a;
-                --fc-button-hover-bg-color: #14472c;
-                --fc-button-hover-border-color: #14472c;
-                --fc-button-active-bg-color: #14472c;
-                --fc-button-active-border-color: #14472c;
-                --fc-today-bg-color: #f2f7f4;
+                --fc-button-bg-color: var(--app-primary);
+                --fc-button-border-color: var(--app-primary);
+                --fc-button-hover-bg-color: var(--app-primary-hover);
+                --fc-button-hover-border-color: var(--app-primary-hover);
+                --fc-button-active-bg-color: var(--app-primary-active);
+                --fc-button-active-border-color: var(--app-primary-active);
+                --fc-today-bg-color: rgba(105, 108, 255, 0.08);
                 font-family: var(--app-font);
             }
             .fc .fc-toolbar {
@@ -445,27 +445,27 @@
             .fc .fc-toolbar-title {
                 font-size: 1.25rem;
                 font-weight: 700;
-                color: #182620;
+                color: var(--app-heading-color);
             }
             .fc .fc-button {
                 font-size: 0.8rem;
                 font-weight: 600;
                 padding: 0.35rem 0.75rem;
-                border-radius: 0.35rem;
-                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+                border-radius: 0.375rem;
+                box-shadow: 0 0.125rem 0.25rem 0 rgba(105, 108, 255, 0.25);
             }
             .fc .fc-button-primary:not(:disabled).fc-button-active,
             .fc .fc-button-primary:not(:disabled):active {
-                background-color: #14472c;
-                border-color: #14472c;
+                background-color: var(--app-primary-active);
+                border-color: var(--app-primary-active);
             }
             .fc .fc-col-header-cell {
-                background-color: #f7faf8;
+                background-color: var(--app-body-bg);
             }
             .fc .fc-col-header-cell-cushion {
                 font-size: 0.75rem;
                 font-weight: 700;
-                color: #5a6b63;
+                color: var(--app-body-color);
                 text-decoration: none;
                 padding: 6px 0;
                 letter-spacing: 0.04em;
@@ -473,18 +473,18 @@
             .fc .fc-daygrid-day-number {
                 font-size: 0.8rem;
                 font-weight: 600;
-                color: #182620;
+                color: var(--app-heading-color);
                 text-decoration: none;
                 padding: 4px 6px;
             }
             .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
-                background: #1b5e3a;
+                background: var(--app-primary);
                 color: #ffffff;
                 border-radius: 4px;
                 padding: 2px 6px;
             }
             .fc .fc-daygrid-day:hover {
-                background-color: #f8fbf9;
+                background-color: rgba(105, 108, 255, 0.04);
             }
             .fc .fc-daygrid-day-frame {
                 cursor: pointer;

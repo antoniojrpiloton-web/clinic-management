@@ -13,16 +13,16 @@
         <div>
             <div class="d-flex align-items-center gap-2">
                 <h1 class="dashboard-heading mb-0">Medical &amp; Dental Log-In Records ({{ $loginRec['year'] }})</h1>
-                <span class="badge badge-soft-amber"><i class="bi bi-journal-check me-1"></i> Official 12-Month Log-In Tally</span>
+                <span class="badge badge-soft-amber"><i class="bi bi-journal-check me-1"></i> 12-Month Summary</span>
             </div>
             <p class="dashboard-subheading mb-0 mt-1">
-                Dynamic annual monthly clinic log-in tally across Employee and Student Academic Programs.
+                Monthly clinic attendance tally for students and employees.
             </p>
         </div>
 
         <div class="d-flex flex-wrap gap-2">
             <a href="{{ route('reports.clinic.print-login-records', request()->query()) }}" target="_blank" class="btn btn-warning text-dark fw-semibold btn-sm px-3 py-2">
-                <i class="bi bi-file-earmark-pdf me-1"></i> Export Official PDF (Landscape)
+                <i class="bi bi-file-earmark-pdf me-1"></i> Export PDF
             </a>
             <button type="button" onclick="window.print()" class="btn btn-outline-secondary btn-sm px-3 py-2">
                 <i class="bi bi-printer me-1"></i> Print View
@@ -32,8 +32,8 @@
 
     <div class="card border mb-4">
         <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-            <span class="fw-bold text-dark"><i class="bi bi-funnel me-1"></i> Filter Report Parameters</span>
-            <span class="badge badge-soft-blue">Grand Total: {{ number_format($loginRec['grand_total']) }} Log-Ins</span>
+            <span class="fw-bold text-dark"><i class="bi bi-funnel me-1"></i> Filters</span>
+            <span class="badge badge-soft-blue">Total: {{ number_format($loginRec['grand_total']) }} Visits</span>
         </div>
         <div class="card-body">
             <form method="GET" action="{{ route('reports.clinic.login-records') }}" class="row g-3 align-items-end">

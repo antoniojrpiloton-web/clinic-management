@@ -18,7 +18,7 @@
             </div>
             <p class="dashboard-subheading mb-0 mt-1">
                 Target: <span class="fw-semibold text-dark">{{ $schedule->target_group_label }}</span>
-                • Date: <span class="fw-semibold text-dark">{{ $schedule->scheduled_date->format('F d, Y') }} ({{ $schedule->time_range }})</span>
+                • Date: <span class="fw-semibold text-dark">{{ $schedule->scheduled_date->format($appSettings['date_format'] ?? 'F d, Y') }} ({{ $schedule->time_range }})</span>
                 • Venue: <span class="fw-semibold text-dark">{{ $schedule->venue ?: 'Clinic Room' }}</span>
             </p>
         </div>
@@ -153,7 +153,7 @@
                             <td>
                                 <span class="badge {{ $att->status_badge }}">{{ $att->status_label }}</span>
                                 @if($att->attended_at)
-                                    <small class="text-muted d-block mt-1">{{ $att->attended_at->format('M d, h:i A') }}</small>
+                                    <small class="text-muted d-block mt-1">{{ $att->attended_at->format(($appSettings['date_format'] ?? 'M d, Y').' h:i A') }}</small>
                                 @endif
                             </td>
                             <td>

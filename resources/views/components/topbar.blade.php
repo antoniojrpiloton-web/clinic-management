@@ -89,6 +89,17 @@
             <span>Visitor Logbook</span>
         </a>
 
+        <button
+            type="button"
+            class="topbar-btn theme-toggle-btn"
+            id="theme-toggle-btn"
+            title="Switch Theme"
+            aria-label="Switch Theme"
+        >
+            <i class="bi bi-moon-stars fs-5 theme-icon-dark"></i>
+            <i class="bi bi-sun-fill fs-5 theme-icon-light d-none text-warning"></i>
+        </button>
+
         <div class="dropdown">
             <button
                 type="button"
@@ -98,7 +109,7 @@
                 aria-label="Notifications"
             >
                 <i class="bi bi-bell fs-5"></i>
-                <span class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-danger border border-white" style="font-size: 0.6rem; transform: translate(25%, 25%) !important;">
+                <span class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-warning text-dark" style="font-size: 0.6rem; transform: translate(25%, 25%) !important; font-weight: 700;">
                     {{ $unreadNotificationsCount > 0 ? $unreadNotificationsCount : '2' }}
                 </span>
             </button>

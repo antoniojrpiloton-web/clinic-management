@@ -13,10 +13,10 @@
                 <table id="permissions-table" class="table table-hover align-middle w-100 mb-0">
                     <thead>
                         <tr>
+                            <th style="width: 100px;">ACTION</th>
                             <th>Permission</th>
                             <th>Module</th>
                             <th>Assigned Roles</th>
-                            <th class="text-end"></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -38,13 +38,14 @@
                         processing: true,
                         serverSide: true,
                         ajax: '{{ route('permissions.index') }}',
-                        pageLength: 25,
-                        order: [[0, 'asc']],
+                        pageLength: {{ (int) ($appSettings['table_page_length'] ?? 25) }},
+                        lengthMenu: [10, 25, 50, 100],
+                        order: [[1, 'asc']],
                         columns: [
+                            { data: 'actions_col', orderable: false, searchable: false },
                             { data: 'permission_col', name: 'name' },
                             { data: 'module_col', name: 'name' },
-                            { data: 'roles_col', name: 'roles_count', searchable: false },
-                            { data: 'actions_col', orderable: false, searchable: false, className: 'text-end' }
+                            { data: 'roles_col', name: 'roles_count', searchable: false }
                         ]
                     });
                 }

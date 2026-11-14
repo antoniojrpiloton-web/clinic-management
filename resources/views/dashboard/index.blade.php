@@ -43,9 +43,9 @@
             pointer-events: none;
         }
         .db-stat-tile {
-            background: #ffffff;
-            border: 1px solid #dce3de;
-            border-radius: 8px;
+            background: var(--app-card-bg);
+            border: 1px solid var(--app-border-color);
+            border-radius: var(--app-card-radius);
             padding: 0.75rem 0.9rem;
             transition: transform 0.15s ease, box-shadow 0.15s ease;
             text-decoration: none;
@@ -54,13 +54,13 @@
         }
         .db-stat-tile:hover {
             transform: translateY(-1px);
-            box-shadow: 0 3px 10px rgba(24, 38, 32, 0.05);
-            border-color: #b7c6bd;
+            box-shadow: 0 3px 10px rgba(105, 108, 255, 0.08);
+            border-color: var(--app-primary);
         }
         .quick-launch-tile {
-            background: #fbfdfc;
-            border: 1px solid #e1e7e3;
-            border-radius: 8px;
+            background: var(--app-card-bg);
+            border: 1px solid var(--app-border-color);
+            border-radius: var(--app-card-radius);
             padding: 0.75rem 0.65rem;
             text-decoration: none;
             display: flex;
@@ -72,11 +72,11 @@
             color: inherit;
         }
         .quick-launch-tile:hover {
-            background: #ffffff;
-            border-color: #1b5e3a;
+            background: var(--app-card-bg);
+            border-color: var(--app-primary);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(27, 94, 58, 0.08);
-            color: #1b5e3a;
+            box-shadow: 0 4px 12px rgba(105, 108, 255, 0.15);
+            color: var(--app-primary);
         }
         .quick-launch-tile .ql-icon-box {
             width: 38px;
@@ -92,28 +92,25 @@
         .quick-launch-tile:hover .ql-icon-box {
             transform: scale(1.08);
         }
-        .ql-icon-box.ql-green { background: #eaf3ee; color: #1b5e3a; }
-        .ql-icon-box.ql-blue { background: #eaf2f7; color: #1f5f8b; }
-        .ql-icon-box.ql-forest { background: #e3ede7; color: #154d2f; }
-        .ql-icon-box.ql-cyan { background: #e6f4f5; color: #1e7077; }
-        .ql-icon-box.ql-teal { background: #e5f5f0; color: #196f53; }
-        .ql-icon-box.ql-amber { background: #fdf5ea; color: #9c6014; }
-        .ql-icon-box.ql-red { background: #fbeeed; color: #ab2721; }
-        .ql-icon-box.ql-purple { background: #f2eef8; color: #5a3d7a; }
-        .ql-icon-box.ql-gray { background: #edf0ee; color: #44544b; }
+        .ql-icon-box.ql-green, .ql-icon-box.ql-forest { background: rgba(113, 221, 55, 0.16); color: #71dd37; }
+        .ql-icon-box.ql-blue, .ql-icon-box.ql-purple { background: rgba(105, 108, 255, 0.16); color: #696cff; }
+        .ql-icon-box.ql-cyan, .ql-icon-box.ql-teal { background: rgba(3, 195, 236, 0.16); color: #03c3ec; }
+        .ql-icon-box.ql-amber { background: rgba(255, 171, 0, 0.16); color: #ffab00; }
+        .ql-icon-box.ql-red { background: rgba(255, 62, 29, 0.16); color: #ff3e1d; }
+        .ql-icon-box.ql-gray { background: rgba(133, 146, 163, 0.16); color: #8592a3; }
         .quick-launch-tile .ql-label {
             font-weight: 600;
             font-size: 0.82rem;
-            color: #1a2921;
+            color: var(--app-heading-color);
             line-height: 1.25;
             margin-bottom: 0.15rem;
         }
         .quick-launch-tile:hover .ql-label {
-            color: #1b5e3a;
+            color: var(--app-primary);
         }
         .quick-launch-tile .ql-sub {
             font-size: 0.7rem;
-            color: #63776b;
+            color: var(--app-muted-color);
             line-height: 1.2;
         }
     </style>
@@ -154,7 +151,7 @@
         </div>
     </div>
 
-    <div class="card mb-4 border-0 shadow-sm" style="background: #ffffff; border: 1px solid #dce3de !important; border-radius: 10px;">
+    <div class="card mb-4 border-0 shadow-sm" style="background: var(--app-card-bg); border: 1px solid var(--app-border-color) !important; border-radius: var(--app-card-radius);">
         <div class="card-body p-3">
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 pb-2 border-bottom">
                 <div class="d-flex align-items-center gap-2">
@@ -455,7 +452,7 @@
                             <div class="spinner-border text-primary spinner-border-sm mb-2" role="status"></div>
                             <span class="small text-muted fw-medium">Aggregating 6-month visit trend...</span>
                         </div>
-                        <canvas id="monthly-utilization-chart"></canvas>
+                        <div id="monthly-utilization-chart"></div>
                     </div>
                 </div>
             </div>
@@ -473,7 +470,7 @@
                             <div class="spinner-border text-primary spinner-border-sm mb-2" role="status"></div>
                             <span class="small text-muted fw-medium">Loading clientele breakdown...</span>
                         </div>
-                        <canvas id="classification-donut-chart"></canvas>
+                        <div id="classification-donut-chart"></div>
                     </div>
                 </div>
             </div>
@@ -493,7 +490,7 @@
                             <div class="spinner-border text-info spinner-border-sm mb-2" role="status"></div>
                             <span class="small text-muted fw-medium">Loading service distribution...</span>
                         </div>
-                        <canvas id="services-breakdown-chart"></canvas>
+                        <div id="services-breakdown-chart"></div>
                     </div>
                 </div>
             </div>
@@ -511,7 +508,7 @@
                             <div class="spinner-border text-primary spinner-border-sm mb-2" role="status"></div>
                             <span class="small text-muted fw-medium">Ranking chief complaints...</span>
                         </div>
-                        <canvas id="top-complaints-chart"></canvas>
+                        <div id="top-complaints-chart"></div>
                     </div>
                 </div>
             </div>
@@ -529,7 +526,7 @@
                             <div class="spinner-border text-success spinner-border-sm mb-2" role="status"></div>
                             <span class="small text-muted fw-medium">Loading fitness classifications...</span>
                         </div>
-                        <canvas id="fitness-assessment-chart"></canvas>
+                        <div id="fitness-assessment-chart"></div>
                     </div>
                 </div>
             </div>
@@ -631,7 +628,7 @@
                             <div class="spinner-border text-info spinner-border-sm mb-2" role="status"></div>
                             <span class="small text-muted fw-medium">Aggregating college visits...</span>
                         </div>
-                        <canvas id="college-utilization-chart"></canvas>
+                        <div id="college-utilization-chart"></div>
                     </div>
                 </div>
             </div>
@@ -653,7 +650,7 @@
                             <div class="spinner-border text-success spinner-border-sm mb-2" role="status"></div>
                             <span class="small text-muted fw-medium">Calculating dispensed medicines...</span>
                         </div>
-                        <canvas id="medicine-utilization-chart"></canvas>
+                        <div id="medicine-utilization-chart"></div>
                     </div>
                 </div>
             </div>
@@ -958,8 +955,12 @@
         </div>
     </div>
 
-    @pushOnce('scripts', 'chartjs-scripts')
-        <script src="{{ asset('assets/plugins/chartjs/chart.umd.min.js') }}"></script>
+    @pushOnce('styles', 'apexcharts-styles')
+        <link rel="stylesheet" href="{{ asset('assets/plugins/apexcharts/apexcharts.css') }}">
+    @endPushOnce
+
+    @pushOnce('scripts', 'apexcharts-scripts')
+        <script src="{{ asset('assets/plugins/apexcharts/apexcharts.min.js') }}"></script>
         @vite(['resources/js/pages/dashboard.js'])
     @endPushOnce
 </x-layouts.app>

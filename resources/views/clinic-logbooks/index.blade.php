@@ -43,7 +43,7 @@
                 <div class="kpi-value">{{ number_format($stats['total_today']) }}</div>
                 <div class="kpi-trend">
                     <span class="trend-badge up"><i class="bi bi-calendar-check"></i> Today</span>
-                    <span class="trend-compare">{{ now()->format('M d, Y') }}</span>
+                    <span class="trend-compare">{{ now()->format($appSettings['date_format'] ?? 'M d, Y') }}</span>
                 </div>
             </div>
         </div>
@@ -91,49 +91,52 @@
         </div>
     </div>
 
-    <div class="card border mb-4">
+    <div class="card border mb-3">
         <div class="card-header bg-white py-3">
-            <span class="fw-bold text-dark"><i class="bi bi-funnel me-1"></i> Filter Clinic Logbook</span>
+            <span class="fw-bold text-dark"><i class="bi bi-funnel me-2 text-primary"></i>Filter Logbook</span>
         </div>
         <div class="card-body">
-            <form method="GET" action="{{ route('clinic-logbooks.index') }}" class="row g-3 align-items-end">
+            <form id="logbook-filter-form" class="row g-2 align-items-end">
                 <div class="col-md-3">
-                    <label class="form-label small fw-semibold">Search Name / ID / Log #</label>
-                    <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" class="form-control form-control-sm" placeholder="Search visitor name, ID, purpose...">
+                    <label class="form-label small fw-semibold">Search Visitor</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white text-muted"><i class="bi bi-search"></i></span>
+                        <input type="text" id="filter-log-search" class="form-control" placeholder="Search name, ID...">
+                    </div>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small fw-semibold">Classification</label>
-                    <select name="visitor_type" class="form-select form-select-sm">
+                    <label class="form-label small fw-semibold">Visitor Type</label>
+                    <select name="visitor_type" id="filter-log-visitor-type" class="form-select form-select-sm">
                         <option value="">All Types</option>
-                        <option value="student" @selected(($filters['visitor_type'] ?? '') === 'student')>Student</option>
-                        <option value="employee" @selected(($filters['visitor_type'] ?? '') === 'employee')>Employee (Teaching / Non-Teaching)</option>
-                        <option value="visitor" @selected(($filters['visitor_type'] ?? '') === 'visitor')>Visitor</option>
+                        <option value="student">Student</option>
+                        <option value="employee">Employee</option>
+                        <option value="visitor">Visitor</option>
                     </select>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small fw-semibold">Program / Level</label>
-                    <select name="program_id" class="form-select form-select-sm">
+                    <select name="program_id" id="filter-log-program" class="form-select form-select-sm">
                         <option value="">All Programs</option>
                         @foreach ($programs as $prog)
-                            <option value="{{ $prog->id }}" @selected(($filters['program_id'] ?? '') == $prog->id)>{{ $prog->code }}</option>
+                            <option value="{{ $prog->id }}">{{ $prog->code }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small fw-semibold">Date From</label>
-                    <input type="date" name="date_from" value="{{ $filters['date_from'] ?? '' }}" class="form-control form-control-sm">
+                    <input type="date" name="date_from" id="filter-log-date-from" class="form-control form-control-sm">
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small fw-semibold">Date To</label>
-                    <input type="date" name="date_to" value="{{ $filters['date_to'] ?? '' }}" class="form-control form-control-sm">
+                    <input type="date" name="date_to" id="filter-log-date-to" class="form-control form-control-sm">
                 </div>
                 <div class="col-md-1 d-flex gap-1">
                     <button type="submit" class="btn btn-primary btn-sm w-100" title="Filter">
                         <i class="bi bi-search"></i>
                     </button>
-                    <a href="{{ route('clinic-logbooks.index') }}" class="btn btn-outline-secondary btn-sm" title="Reset">
+                    <button type="reset" class="btn btn-outline-secondary btn-sm" title="Reset">
                         <i class="bi bi-arrow-counterclockwise"></i>
-                    </a>
+                    </button>
                 </div>
             </form>
         </div>
@@ -142,117 +145,28 @@
     <div class="card border mb-4">
         <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
             <span class="fw-bold text-dark"><i class="bi bi-table me-2 text-primary"></i>Logbook Entries</span>
-            <span class="badge badge-soft-gray">{{ number_format($logs->total()) }} Total Records</span>
+            <span class="badge badge-soft-gray">{{ number_format($totalLogs) }} Total Records</span>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table id="logbook-table" class="table table-hover align-middle mb-0 w-100">
                     <thead class="table-light">
                         <tr>
-                            <th>Log # / Date</th>
-                            <th>Time In / Out</th>
-                            <th>Visitor Name &amp; ID</th>
-                            <th>Classification &amp; Program</th>
-                            <th>Purpose / Remarks</th>
-                            <th>Contact No.</th>
-                            <th class="text-end">Actions</th>
+                            <th style="width: 100px;">ACTION</th>
+                            <th>LOG # &amp; DATE</th>
+                            <th>TIME IN / OUT</th>
+                            <th>VISITOR / PATIENT</th>
+                            <th>TYPE &amp; PROGRAM / DEPT</th>
+                            <th>PURPOSE</th>
+                            <th>STATUS</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse ($logs as $log)
-                            <tr>
-                                <td>
-                                    <div class="fw-bold text-dark">{{ $log->log_number }}</div>
-                                    <div class="small text-muted">{{ $log->log_date->format('M d, Y') }}</div>
-                                </td>
-                                <td>
-                                    <div class="fw-bold text-primary">In: {{ \Carbon\Carbon::parse($log->time_in)->format('h:i A') }}</div>
-                                    @if ($log->time_out)
-                                        <div class="small text-success fw-semibold">Out: {{ \Carbon\Carbon::parse($log->time_out)->format('h:i A') }}</div>
-                                    @else
-                                        <span class="badge bg-warning text-dark" style="font-size: 0.68rem;">Inside Clinic</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    <div class="fw-bold text-dark">
-                                        @if ($log->patient)
-                                            <a href="{{ route('patients.show', $log->patient) }}" class="text-dark text-decoration-none">{{ $log->full_name }}</a>
-                                        @else
-                                            {{ $log->full_name }}
-                                        @endif
-                                    </div>
-                                    @if ($log->id_number)
-                                        <div class="small text-muted">ID: {{ $log->id_number }}</div>
-                                    @endif
-                                </td>
-                                <td>
-                                    <span class="badge {{ $log->visitor_type === 'student' ? 'badge-soft-blue' : ($log->visitor_type === 'faculty' ? 'badge-soft-purple' : ($log->visitor_type === 'staff' ? 'badge-soft-green' : 'badge-soft-gray')) }}">
-                                        {{ $log->visitor_type === 'faculty' ? 'Faculty' : ($log->visitor_type === 'staff' ? 'Staff' : ucfirst($log->visitor_type)) }}
-                                    </span>
-                                    <div class="small fw-semibold text-dark mt-1">
-                                        {{ $log->program?->code ?? ($log->course_or_department ?: '—') }}
-                                        @if ($log->year_or_position)
-                                            <span class="text-muted fw-normal">({{ $log->year_or_position }})</span>
-                                        @endif
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="fw-semibold text-dark">{{ $log->purpose }}</div>
-                                    @if ($log->notes)
-                                        <div class="small text-muted">{{ $log->notes }}</div>
-                                    @endif
-                                    @if ($log->clinicVisit)
-                                        <div class="mt-1">
-                                            <a href="{{ route('clinic-visits.show', $log->clinicVisit) }}" class="badge badge-soft-purple text-decoration-none">
-                                                <i class="bi bi-link-45deg"></i> {{ $log->clinicVisit->visit_number }} ({{ $log->clinicVisit->type_label }})
-                                            </a>
-                                        </div>
-                                    @else
-                                        <div class="mt-1">
-                                            <span class="badge badge-soft-gray" style="font-size: 0.65rem;">Logbook Entry Only</span>
-                                        </div>
-                                    @endif
-                                </td>
-                                <td class="small text-muted">{{ $log->contact_number ?: '—' }}</td>
-                                <td class="text-end">
-                                    <div class="d-flex justify-content-end gap-1">
-                                        @if (! $log->time_out)
-                                            <form method="POST" action="{{ route('clinic-logbooks.time-out', $log) }}">
-                                                @csrf
-                                                <button type="submit" class="btn btn-sm btn-warning text-dark fw-semibold py-1 px-2" title="Mark Time Out">
-                                                    <i class="bi bi-box-arrow-right"></i> Out
-                                                </button>
-                                            </form>
-                                        @endif
-                                        @if ($log->patient_id)
-                                            <a href="{{ route('clinic-visits.create', ['patient_id' => $log->patient_id]) }}" class="btn btn-sm btn-outline-primary py-1 px-2" title="Log Clinic Visit">
-                                                <i class="bi bi-clipboard2-pulse"></i>
-                                            </a>
-                                        @endif
-                                        <form method="POST" action="{{ route('clinic-logbooks.destroy', $log) }}" onsubmit="return confirm('Delete logbook entry {{ $log->log_number }}?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2" title="Delete">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="text-center text-muted py-5">No clinic logbook entries found for the selected filter.</td>
-                            </tr>
-                        @endforelse
+                        <x-table-skeleton :cols="7" :rows="8" />
                     </tbody>
                 </table>
             </div>
         </div>
-        @if ($logs->hasPages())
-            <div class="card-footer bg-white">
-                {{ $logs->links() }}
-            </div>
-        @endif
     </div>
 
     <div class="modal fade" id="addLogbookModal" tabindex="-1" aria-hidden="true">
@@ -319,5 +233,72 @@
             </form>
         </div>
     </div>
+
+    @include('partials.plugins.datatables')
+
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const logbookTable = $('#logbook-table').DataTable({
+                    processing: true,
+                    serverSide: true,
+                    pageLength: {{ (int) ($appSettings['table_page_length'] ?? 25) }},
+                    lengthMenu: [10, 25, 50, 100],
+                    order: [[1, 'desc']],
+                    dom: "<'row p-3 align-items-center'<'col-sm-6'l><'col-sm-6'f>>" +
+                         "<'row'<'col-sm-12'tr>>" +
+                         "<'row p-3 align-items-center'<'col-sm-5'i><'col-sm-7'p>>",
+                    ajax: {
+                        url: "{{ route('clinic-logbooks.index') }}",
+                        data: function (d) {
+                            d.visitor_type = $('#filter-log-visitor-type').val();
+                            d.program_id = $('#filter-log-program').val();
+                            d.date_from = $('#filter-log-date-from').val();
+                            d.date_to = $('#filter-log-date-to').val();
+                            d.custom_search = $('#filter-log-search').val();
+                        }
+                    },
+                    columns: [
+                        { data: 'actions', name: 'actions', orderable: false, searchable: false },
+                        { data: 'log_number_col', name: 'log_number' },
+                        { data: 'time_col', name: 'time_in' },
+                        { data: 'visitor_col', name: 'full_name' },
+                        { data: 'type_dept_col', name: 'visitor_type' },
+                        { data: 'purpose_col', name: 'purpose' },
+                        { data: 'status_col', name: 'status' }
+                    ],
+                    language: {
+                        search: "",
+                        searchPlaceholder: "Quick filter...",
+                        emptyTable: "No clinic logbook entries found.",
+                        processing: '<div class="spinner-border spinner-border-sm text-primary me-1"></div> Loading logbook...'
+                    }
+                });
+
+                let logSearchTimer;
+                $('#filter-log-search').on('input', function () {
+                    clearTimeout(logSearchTimer);
+                    logSearchTimer = setTimeout(() => logbookTable.draw(), 300);
+                });
+
+                $('#logbook-filter-form').on('submit', function (e) {
+                    e.preventDefault();
+                    logbookTable.draw();
+                });
+
+                $('#logbook-filter-form').on('reset', function () {
+                    setTimeout(() => {
+                        $('#filter-log-date-from').val('');
+                        $('#filter-log-date-to').val('');
+                        logbookTable.draw();
+                    }, 50);
+                });
+
+                $('#filter-log-visitor-type, #filter-log-program, #filter-log-date-from, #filter-log-date-to').on('change', function () {
+                    logbookTable.draw();
+                });
+            });
+        </script>
+    @endPush
 </x-layouts.app>
 

@@ -153,19 +153,15 @@
         </div>
     </div>
 
-    @pushOnce('styles', 'datatables-styles')
-        <link rel="stylesheet" href="{{ asset('assets/plugins/datatables/dataTables.bootstrap5.min.css') }}">
-    @endPushOnce
+    @include('partials.plugins.datatables')
 
-    @pushOnce('scripts', 'datatables-scripts')
-        <script src="{{ asset('assets/plugins/datatables/dataTables.min.js') }}"></script>
-        <script src="{{ asset('assets/plugins/datatables/dataTables.bootstrap5.min.js') }}"></script>
+    @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', () => {
                 const table = $('#operations-table').DataTable({
                     processing: true,
                     serverSide: true,
-                    pageLength: 25,
+                    pageLength: {{ (int) ($appSettings['table_page_length'] ?? 25) }},
                     lengthMenu: [10, 25, 50, 100],
                     order: [[7, 'desc']],
                     dom: "<'row p-3 align-items-center'<'col-sm-6'l><'col-sm-6'f>>" +
@@ -222,6 +218,6 @@
                 });
             });
         </script>
-    @endPushOnce
+    @endpush
 </x-layouts.app>
 

@@ -17,7 +17,7 @@
                 <span class="badge {{ $visit->status_badge }}">{{ $visit->status_label }}</span>
             </div>
             <p class="dashboard-subheading mb-0 mt-1">
-                Encounter on {{ $visit->visit_date->format('F d, Y \a\t h:i A') }}
+                Encounter on {{ $visit->visit_date->format(($appSettings['date_format'] ?? 'M d, Y').' \a\t h:i A') }}
                 by <span class="fw-semibold text-dark">{{ $visit->clinician?->name ?? 'Attending Clinician' }}</span>
                 • Logged by {{ $visit->recorder?->name ?? 'System' }}
             </p>
@@ -260,7 +260,7 @@
                         @foreach($previousVisits as $pv)
                             <tr>
                                 <td class="ps-3 font-monospace fw-bold">{{ $pv->visit_number }}</td>
-                                <td class="small">{{ $pv->visit_date->format('M d, Y') }}</td>
+                                <td class="small">{{ $pv->visit_date->format($appSettings['date_format'] ?? 'M d, Y') }}</td>
                                 <td><span class="badge {{ $pv->type_badge }}">{{ $pv->type_label }}</span></td>
                                 <td class="small text-truncate" style="max-width: 280px;">{{ $pv->summary ?: $pv->chief_complaint }}</td>
                                 <td class="small">{{ $pv->disposition_label }}</td>

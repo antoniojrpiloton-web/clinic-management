@@ -1,6 +1,6 @@
 {
   "resources/css/app.css": {
-    "file": "css/app-CIAOQLiW.css",
+    "file": "css/app-Dtp4KOj7.css",
     "name": "app",
     "names": [
       "app.css"
@@ -9,7 +9,7 @@
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "js/app-D6IsX_FG.js",
+    "file": "js/app-DmtrlV9M.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true
@@ -27,7 +27,7 @@
     "isEntry": true
   },
   "resources/js/pages/dashboard.js": {
-    "file": "js/dashboard-D4tiwRsM.js",
+    "file": "js/dashboard-DAJBLv7c.js",
     "name": "dashboard",
     "src": "resources/js/pages/dashboard.js",
     "isEntry": true
@@ -39,7 +39,7 @@
     "isEntry": true
   },
   "resources/js/plugins/datatables.js": {
-    "file": "js/datatables-BnCKqsdS.js",
+    "file": "js/datatables-CphF-W8J.js",
     "name": "datatables",
     "src": "resources/js/plugins/datatables.js",
     "isEntry": true
@@ -51,7 +51,7 @@
     "isEntry": true
   },
   "resources/js/plugins/select2.js": {
-    "file": "js/select2-BGSHFfHO.js",
+    "file": "js/select2-Dv7ugWt9.js",
     "name": "select2",
     "src": "resources/js/plugins/select2.js",
     "isEntry": true

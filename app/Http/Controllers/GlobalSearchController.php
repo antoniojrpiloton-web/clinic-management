@@ -15,6 +15,7 @@ use App\Models\Patient;
 use App\Models\PhysicalExamination;
 use App\Models\PhysicalExamSchedule;
 use App\Models\Program;
+use App\Services\SettingService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -22,6 +23,8 @@ use Illuminate\Support\Facades\Schema;
 
 class GlobalSearchController extends Controller
 {
+    public function __construct(protected SettingService $settingService) {}
+
     public function __invoke(Request $request): JsonResponse
     {
         $query = trim((string) $request->query('q', ''));
@@ -350,7 +353,7 @@ class GlobalSearchController extends Controller
 
         foreach ($batches as $batch) {
             $medName = $batch->medicine?->generic_name ?? 'Medicine';
-            $expStr = $batch->expiration_date?->format('M d, Y') ?? 'N/A';
+            $expStr = $batch->expiration_date ? $this->settingService->formatDate($batch->expiration_date, 'N/A') : 'N/A';
 
             $items[] = [
                 'title' => "Batch {$batch->batch_number} — {$medName}",
@@ -377,7 +380,7 @@ class GlobalSearchController extends Controller
         $medName = $txn->medicine?->generic_name ?? 'Medicine';
         $batchNo = $txn->batch?->batch_number ? " • Batch: {$txn->batch->batch_number}" : '';
         $refNo = $txn->reference_number ? " • Ref: {$txn->reference_number}" : '';
-        $dateStr = $txn->transaction_date?->format('M d, Y h:i A') ?? '';
+        $dateStr = $txn->transaction_date ? $this->settingService->formatDateTime($txn->transaction_date, '') : '';
         $typeLabel = strtoupper(str_replace('_', ' ', (string) $txn->type));
         $badgeClass = match ($txn->type) {
             'stock_in' => 'badge-soft-green',
@@ -411,7 +414,7 @@ class GlobalSearchController extends Controller
     protected function formatDispensingItem(MedicineDispensing $disp): array
     {
         $patientName = $disp->patient?->full_name ?? 'Patient';
-        $dateStr = $disp->dispensed_date?->format('M d, Y') ?? '';
+        $dateStr = $disp->dispensed_date ? $this->settingService->formatDate($disp->dispensed_date, '') : '';
         $diag = $disp->diagnosis ? " • {$disp->diagnosis}" : '';
 
         return [
@@ -568,7 +571,7 @@ class GlobalSearchController extends Controller
         $typeMeta = ClinicVisit::TYPES[$visit->visit_type] ?? ClinicVisit::TYPES[ClinicVisit::TYPE_GENERAL];
         $routePrefix = $typeMeta['route'] ?? 'clinic-visits';
         $patientName = $visit->patient?->full_name ?? 'Unknown Patient';
-        $dateStr = $visit->visit_date?->format('M d, Y') ?? '';
+        $dateStr = $visit->visit_date ? $this->settingService->formatDate($visit->visit_date, '') : '';
         $complaint = $visit->medicalConsultation?->diagnosis
             ?: ($visit->dentalConsultation?->diagnosis ?: ($visit->chief_complaint ?: 'Clinic Visit'));
 
@@ -633,7 +636,7 @@ class GlobalSearchController extends Controller
             ->limit(3)
             ->get()
             ->map(function (PhysicalExamSchedule $sched): array {
-                $dateStr = $sched->scheduled_date?->format('M d, Y') ?? '';
+                $dateStr = $sched->scheduled_date ? $this->settingService->formatDate($sched->scheduled_date, '') : '';
 
                 return [
                     'title' => "{$sched->schedule_number} — {$sched->title}",
@@ -654,7 +657,7 @@ class GlobalSearchController extends Controller
     protected function formatPhysicalExamItem(PhysicalExamination $exam): array
     {
         $patientName = $exam->patient?->full_name ?? 'Unknown Patient';
-        $dateStr = $exam->exam_date?->format('M d, Y') ?? '';
+        $dateStr = $exam->exam_date ? $this->settingService->formatDate($exam->exam_date, '') : '';
 
         return [
             'title' => "{$exam->pe_number} — {$patientName}",
@@ -698,7 +701,7 @@ class GlobalSearchController extends Controller
 
     protected function formatLogbookItem(ClinicLogbook $log): array
     {
-        $dateStr = $log->log_date?->format('M d, Y') ?? '';
+        $dateStr = $log->log_date ? $this->settingService->formatDate($log->log_date, '') : '';
         $course = $log->program?->code ?: ($log->course_or_department ?: ucfirst($log->visitor_type));
 
         return [

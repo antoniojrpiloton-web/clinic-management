@@ -6,6 +6,7 @@ use App\Jobs\CreateDatabaseBackup;
 use App\Models\Backup;
 use App\Services\AuditLogger;
 use App\Services\BackupService;
+use App\Services\SettingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,7 +21,11 @@ use Yajra\DataTables\Facades\DataTables;
 
 class BackupController extends Controller implements HasMiddleware
 {
-    public function __construct(protected AuditLogger $auditLogger, protected BackupService $backupService) {}
+    public function __construct(
+        protected AuditLogger $auditLogger,
+        protected BackupService $backupService,
+        protected SettingService $settingService,
+    ) {}
 
     public static function middleware(): array
     {
@@ -54,26 +59,38 @@ class BackupController extends Controller implements HasMiddleware
                     return "<span class=\"status-badge {$cls}\">{$status}</span>{$err}";
                 })
                 ->addColumn('operator_col', fn (Backup $b): string => e($b->creator?->name ?? 'System'))
-                ->addColumn('timestamp_col', fn (Backup $b): string => '<span class="text-muted small">'.$b->created_at->format('M d, Y h:i A').'</span>')
+                ->addColumn('timestamp_col', fn (Backup $b): string => '<span class="text-muted small">'.$b->created_at->format($this->settingService->dateFormat().' h:i A').'</span>')
                 ->addColumn('actions_col', function (Backup $b) use ($canDownload, $canDelete): string {
-                    $html = '<div class="d-inline-flex gap-1">';
+                    $items = '';
 
                     if ($b->isCompleted() && $canDownload) {
                         $dlUrl = route('backups.download', $b);
-                        $html .= "<a href=\"{$dlUrl}\" class=\"btn btn-sm btn-light border p-1\" title=\"Download\"><i class=\"bi bi-download\"></i></a>";
+                        $items .= "<li><a class=\"dropdown-item text-primary\" href=\"{$dlUrl}\"><i class=\"bi bi-download me-2\"></i>Download Snapshot</a></li>";
                     }
 
                     if ($canDelete) {
                         $delUrl = route('backups.destroy', $b);
-                        $csrf = csrf_field();
-                        $method = method_field('DELETE');
+                        $csrfToken = csrf_token();
                         $label = e($b->filename ?? "#{$b->id}");
-                        $html .= "<form method=\"POST\" action=\"{$delUrl}\" data-confirm=\"Backup {$label} will be permanently removed.\">{$csrf}{$method}<button type=\"submit\" class=\"btn btn-sm btn-light border text-danger p-1\" title=\"Delete\"><i class=\"bi bi-trash\"></i></button></form>";
+
+                        if (! empty($items)) {
+                            $items .= '<li><hr class="dropdown-divider"></li>';
+                        }
+                        $items .= "<li><form method=\"POST\" action=\"{$delUrl}\" data-confirm=\"Backup {$label} will be permanently removed.\"><input type=\"hidden\" name=\"_token\" value=\"{$csrfToken}\"><input type=\"hidden\" name=\"_method\" value=\"DELETE\"><button type=\"submit\" class=\"dropdown-item text-danger\"><i class=\"bi bi-trash me-2\"></i>Delete Snapshot</button></form></li>";
                     }
 
-                    $html .= '</div>';
+                    if (empty($items)) {
+                        return '';
+                    }
 
-                    return $html;
+                    return "<div class=\"dropdown\">
+                        <button class=\"btn btn-sm btn-outline-secondary dropdown-toggle py-1 px-2\" type=\"button\" data-bs-toggle=\"dropdown\" aria-expanded=\"false\">
+                            <i class=\"bi bi-gear-fill me-1\"></i> Action
+                        </button>
+                        <ul class=\"dropdown-menu shadow-sm\">
+                            {$items}
+                        </ul>
+                    </div>";
                 })
                 ->orderColumn('filename_col', 'filename $1')
                 ->orderColumn('type_col', 'type $1')

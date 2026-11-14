@@ -63,7 +63,7 @@
 
         <div class="position-relative text-center my-3">
             <hr class="text-muted">
-            <span class="position-absolute top-50 start-50 translate-middle px-2 bg-white small text-muted">or</span>
+            <span class="position-absolute top-50 start-50 translate-middle px-2 bg-body small text-muted">or</span>
         </div>
 
         <a href="{{ route('auth.google') }}" class="btn btn-outline-secondary w-100 py-2 d-flex align-items-center justify-content-center gap-2">
@@ -78,7 +78,7 @@
 
         <div class="mt-4 pt-3 border-top text-center">
             <p class="small text-muted mb-2">Student, Employee, or Visitor entering the clinic?</p>
-            <a href="{{ route('logbook.kiosk') }}" class="btn btn-outline-forest w-100 py-2 fw-semibold">
+            <a href="{{ route('logbook.kiosk') }}" class="btn btn-outline-primary w-100 py-2 fw-semibold">
                 <i class="bi bi-journal-check me-1"></i>Open Clinic Visitor Logbook
             </a>
         </div>

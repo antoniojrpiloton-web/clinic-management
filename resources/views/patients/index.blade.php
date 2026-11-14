@@ -161,14 +161,7 @@
         </div>
     </div>
 
-    @pushOnce('styles', 'datatables-styles')
-        <link rel="stylesheet" href="{{ asset('assets/plugins/datatables/dataTables.bootstrap5.min.css') }}">
-    @endPushOnce
-
-    @pushOnce('scripts', 'datatables-scripts')
-        <script src="{{ asset('assets/plugins/datatables/dataTables.min.js') }}"></script>
-        <script src="{{ asset('assets/plugins/datatables/dataTables.bootstrap5.min.js') }}"></script>
-    @endPushOnce
+    @include('partials.plugins.datatables')
 
     @push('scripts')
         <script>
@@ -176,7 +169,7 @@
                 const table = $('#patients-table').DataTable({
                     processing: true,
                     serverSide: true,
-                    pageLength: 25,
+                    pageLength: {{ (int) ($appSettings['table_page_length'] ?? 25) }},
                     lengthMenu: [10, 25, 50, 100],
                     order: [[1, 'desc']],
                     dom: "<'row p-3 align-items-center'<'col-sm-6'l><'col-sm-6'f>>" +

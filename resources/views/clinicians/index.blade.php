@@ -128,11 +128,11 @@
                 <table id="clinicians-table" class="table table-hover align-middle mb-0" style="width: 100%;">
                     <thead class="table-light">
                         <tr>
+                            <th style="width: 100px;">ACTION</th>
                             <th>Healthcare Provider</th>
                             <th>PRC License / PTR</th>
                             <th>Contact Details</th>
                             <th>Status</th>
-                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -143,14 +143,7 @@
         </div>
     </div>
 
-    @pushOnce('styles', 'datatables-styles')
-        <link rel="stylesheet" href="{{ asset('assets/plugins/datatables/dataTables.bootstrap5.min.css') }}">
-    @endPushOnce
-
-    @pushOnce('scripts', 'datatables-scripts')
-        <script src="{{ asset('assets/plugins/datatables/dataTables.min.js') }}"></script>
-        <script src="{{ asset('assets/plugins/datatables/dataTables.bootstrap5.min.js') }}"></script>
-    @endPushOnce
+    @include('partials.plugins.datatables')
 
     @pushOnce('scripts', 'clinicians-table-script')
         <script>
@@ -169,14 +162,15 @@
                         }
                     },
                     columns: [
+                        { data: 'actions', name: 'actions', orderable: false, searchable: false },
                         { data: 'provider_card', name: 'name' },
                         { data: 'license_badge', name: 'license_number' },
                         { data: 'contact_info', name: 'email', orderable: false },
-                        { data: 'status_badge', name: 'is_active', className: 'text-center' },
-                        { data: 'actions', name: 'actions', orderable: false, searchable: false, className: 'text-end' }
+                        { data: 'status_badge', name: 'is_active', className: 'text-center' }
                     ],
-                    order: [[0, 'asc']],
-                    pageLength: 10,
+                    order: [[1, 'asc']],
+                    pageLength: {{ (int) ($appSettings['table_page_length'] ?? 10) }},
+                    lengthMenu: [10, 25, 50, 100],
                     dom: 'rt<"d-flex flex-wrap justify-content-between align-items-center p-3 border-top"ip>',
                     language: {
                         emptyTable: 'No healthcare providers found in the registry.',

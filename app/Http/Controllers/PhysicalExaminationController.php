@@ -19,9 +19,10 @@ use Yajra\DataTables\Facades\DataTables;
 
 class PhysicalExaminationController extends Controller
 {
-    public function index(Request $request): View|JsonResponse
+    public function index(Request $request, SettingService $settingService): View|JsonResponse
     {
         if ($request->ajax()) {
+            $dateFormat = $settingService->dateFormat();
             $query = PhysicalExamination::query()
                 ->with(['patient.college', 'academicYear', 'examiner'])
                 ->filter($request->only(['search', 'purpose', 'fitness_assessment', 'academic_year_id', 'date_from', 'date_to']))
@@ -69,7 +70,7 @@ class PhysicalExaminationController extends Controller
 
                     return "<span class=\"badge {$badge} px-2 py-1\">{$assessment}</span>";
                 })
-                ->addColumn('exam_date_formatted', fn (PhysicalExamination $pe) => $pe->exam_date->format('M d, Y'))
+                ->addColumn('exam_date_formatted', fn (PhysicalExamination $pe) => $pe->exam_date->format($dateFormat))
                 ->addColumn('actions', function (PhysicalExamination $pe) {
                     $viewUrl = route('physical-examinations.show', $pe);
                     $editUrl = route('physical-examinations.edit', $pe);

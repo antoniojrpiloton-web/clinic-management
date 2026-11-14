@@ -96,6 +96,7 @@
                 <table id="dispensings-table" class="table table-hover align-middle mb-0 w-100">
                     <thead class="table-light">
                         <tr>
+                            <th style="width: 100px;">ACTION</th>
                             <th>Slip Number</th>
                             <th>Dispensed Date</th>
                             <th>Patient</th>
@@ -103,7 +104,6 @@
                             <th class="text-center">Items Count</th>
                             <th>Diagnosis / Chief Complaint</th>
                             <th>Dispensed By</th>
-                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -114,14 +114,7 @@
         </div>
     </div>
 
-    @pushOnce('styles', 'datatables-styles')
-        <link rel="stylesheet" href="{{ asset('assets/plugins/datatables/dataTables.bootstrap5.min.css') }}">
-    @endPushOnce
-
-    @pushOnce('scripts', 'datatables-scripts')
-        <script src="{{ asset('assets/plugins/datatables/dataTables.min.js') }}"></script>
-        <script src="{{ asset('assets/plugins/datatables/dataTables.bootstrap5.min.js') }}"></script>
-    @endPushOnce
+    @include('partials.plugins.datatables')
 
     @push('scripts')
         <script>
@@ -129,9 +122,9 @@
                 const table = $('#dispensings-table').DataTable({
                     processing: true,
                     serverSide: true,
-                    pageLength: 25,
+                    pageLength: {{ (int) ($appSettings['table_page_length'] ?? 25) }},
                     lengthMenu: [10, 25, 50, 100],
-                    order: [[1, 'desc']],
+                    order: [[2, 'desc']],
                     dom: "<'row p-3 align-items-center'<'col-sm-6'l><'col-sm-6'f>>" +
                          "<'row'<'col-sm-12'tr>>" +
                          "<'row p-3 align-items-center'<'col-sm-5'i><'col-sm-7'p>>",
@@ -144,14 +137,14 @@
                         }
                     },
                     columns: [
+                        { data: 'actions', name: 'actions', orderable: false, searchable: false },
                         { data: 'slip_col', name: 'dispensing_number', searchable: false },
                         { data: 'date_col', name: 'dispensed_date', searchable: false },
                         { data: 'patient_col', name: 'patient_id', orderable: false, searchable: false },
                         { data: 'clinician_col', name: 'clinician_id', orderable: false, searchable: false },
                         { data: 'items_col', name: 'total_items', className: 'text-center', searchable: false },
                         { data: 'diagnosis_col', name: 'diagnosis', orderable: false, searchable: false },
-                        { data: 'dispenser_col', name: 'dispensed_by', orderable: false, searchable: false },
-                        { data: 'actions', name: 'actions', orderable: false, searchable: false, className: 'text-end' }
+                        { data: 'dispenser_col', name: 'dispensed_by', orderable: false, searchable: false }
                     ],
                     language: {
                         search: "",

@@ -146,13 +146,13 @@
                 <table id="medicines-table" class="table table-hover align-middle mb-0" style="width: 100%;">
                     <thead class="table-light">
                         <tr>
+                            <th style="width: 100px;">ACTION</th>
                             <th>Medicine &amp; Details</th>
                             <th>Category</th>
                             <th>Current Stock on Hand</th>
                             <th>Reorder Level</th>
                             <th>Classification</th>
                             <th>Status</th>
-                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -163,14 +163,7 @@
         </div>
     </div>
 
-    @pushOnce('styles', 'datatables-styles')
-        <link rel="stylesheet" href="{{ asset('assets/plugins/datatables/dataTables.bootstrap5.min.css') }}">
-    @endPushOnce
-
-    @pushOnce('scripts', 'datatables-scripts')
-        <script src="{{ asset('assets/plugins/datatables/dataTables.min.js') }}"></script>
-        <script src="{{ asset('assets/plugins/datatables/dataTables.bootstrap5.min.js') }}"></script>
-    @endPushOnce
+    @include('partials.plugins.datatables')
 
     @pushOnce('scripts', 'medicines-table-script')
         <script>
@@ -189,16 +182,17 @@
                         }
                     },
                     columns: [
+                        { data: 'actions', name: 'actions', orderable: false, searchable: false },
                         { data: 'medicine_card', name: 'generic_name' },
                         { data: 'category_badge', name: 'category.name' },
                         { data: 'stock_summary', name: 'id', orderable: false, searchable: false },
                         { data: 'reorder_level_formatted', name: 'reorder_level', className: 'text-center' },
                         { data: 'prescription_badge', name: 'is_prescription_required', className: 'text-center' },
-                        { data: 'status_badge', name: 'is_active', className: 'text-center' },
-                        { data: 'actions', name: 'actions', orderable: false, searchable: false, className: 'text-end' }
+                        { data: 'status_badge', name: 'is_active', className: 'text-center' }
                     ],
-                    order: [[0, 'asc']],
-                    pageLength: 10,
+                    order: [[1, 'asc']],
+                    pageLength: {{ (int) ($appSettings['table_page_length'] ?? 10) }},
+                    lengthMenu: [10, 25, 50, 100],
                     dom: 'rt<"d-flex flex-wrap justify-content-between align-items-center p-3 border-top"ip>',
                     language: {
                         emptyTable: 'No medicines found in the pharmacy catalog.',

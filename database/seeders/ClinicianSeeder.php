@@ -5,13 +5,18 @@ namespace Database\Seeders;
 use App\Models\Clinician;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Spatie\Permission\Models\Role;
 
 class ClinicianSeeder extends Seeder
 {
     public function run(): void
     {
-        $doctorUser = User::role('Doctor')->first();
-        $nurseUser = User::role('Nurse')->first();
+        $doctorUser = Role::where('name', 'Doctor')->exists()
+            ? User::role('Doctor')->first()
+            : null;
+        $nurseUser = Role::where('name', 'Nurse')->exists()
+            ? User::role('Nurse')->first()
+            : null;
 
         $clinicians = [
             [

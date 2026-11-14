@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function initSelect2(context) {
         const root = context || document;
-        root.querySelectorAll('select[data-select2], select[data-ajax-url], select.select2').forEach((select) => {
+        root.querySelectorAll('select[data-select2], select[data-select2-enable], select[data-ajax-url], select.select2').forEach((select) => {
             const modal = select.closest('.modal');
             const ajaxUrl = select.dataset.ajaxUrl;
             const placeholder = select.dataset.placeholder ?? 'Select an option';
@@ -12,8 +12,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const dependsOn = select.dataset.dependsOn;
             const dependsParam = select.dataset.dependsParam;
 
+            if ('select2' in select.dataset) {
+                delete select.dataset.select2;
+                select.removeAttribute('data-select2');
+            }
+
+            const existingData = $.data(select, 'select2');
+            if (existingData) {
+                if (typeof existingData.destroy === 'function') {
+                    $(select).select2('destroy');
+                } else {
+                    $.removeData(select, 'select2');
+                }
+            }
+
             if ($(select).hasClass('select2-hidden-accessible')) {
-                $(select).select2('destroy');
+                const inst = $(select).data('select2');
+                if (inst && typeof inst.destroy === 'function') {
+                    $(select).select2('destroy');
+                }
             }
 
             const options = {

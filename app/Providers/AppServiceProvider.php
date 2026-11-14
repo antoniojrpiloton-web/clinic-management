@@ -44,7 +44,7 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::before(fn (User $user): ?bool => $user->isSuperAdmin() ? true : null);
 
-        View::composer(['layouts.app', 'layouts.guest', 'layouts.pos', 'components.sidebar'], function ($view): void {
+        View::composer('*', function ($view): void {
             $view->with('appSettings', $this->app->make(SettingService::class)->all());
             $view->with('featureControl', $this->app->make(FeatureControlService::class));
         });

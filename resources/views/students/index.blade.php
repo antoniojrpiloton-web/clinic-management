@@ -36,7 +36,7 @@
                         <i class="bi bi-mortarboard"></i>
                     </span>
                 </div>
-                <div class="kpi-value">{{ $students->total() }}</div>
+                <div class="kpi-value">{{ number_format($totalStudents) }}</div>
                 <div class="kpi-trend">
                     <span class="trend-badge up"><i class="bi bi-check2"></i> Enrolled</span>
                     <span class="trend-compare">all years</span>
@@ -52,7 +52,7 @@
                         <i class="bi bi-building"></i>
                     </span>
                 </div>
-                <div class="kpi-value">{{ $colleges->count() }}</div>
+                <div class="kpi-value">{{ number_format($colleges->count()) }}</div>
                 <div class="kpi-trend">
                     <span class="trend-badge up">Faculties</span>
                     <span class="trend-compare">academic units</span>
@@ -68,7 +68,7 @@
                         <i class="bi bi-book"></i>
                     </span>
                 </div>
-                <div class="kpi-value">{{ $programs->count() }}</div>
+                <div class="kpi-value">{{ number_format($programs->count()) }}</div>
                 <div class="kpi-trend">
                     <span class="trend-badge up">Curricula</span>
                     <span class="trend-compare">active tracks</span>
@@ -84,9 +84,9 @@
                         <i class="bi bi-file-medical"></i>
                     </span>
                 </div>
-                <div class="kpi-value">{{ $students->total() }}</div>
+                <div class="kpi-value">{{ number_format($activeCount) }}</div>
                 <div class="kpi-trend">
-                    <span class="trend-badge up">100%</span>
+                    <span class="trend-badge up">Active</span>
                     <span class="trend-compare">verified</span>
                 </div>
             </div>
@@ -94,36 +94,37 @@
     </div>
 
     <div class="card mb-3 p-3">
-        <form method="GET" action="{{ route('students.index') }}" class="row g-2 align-items-center">
+        <form id="students-filter-form" class="row g-2 align-items-center">
             <div class="col-md-4">
-                <input type="text" name="search" value="{{ $search }}" class="form-control" placeholder="Search by student ID, name, email...">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                    <input type="text" id="filter-search" name="search" class="form-control border-start-0" placeholder="Search by student ID, name, email...">
+                </div>
             </div>
 
             <div class="col-md-3">
-                <select name="college_id" class="form-select" onchange="this.form.submit()">
+                <select name="college_id" id="filter-college" class="form-select">
                     <option value="">All Colleges</option>
                     @foreach ($colleges as $c)
-                        <option value="{{ $c->id }}" @selected($collegeId == $c->id)>{{ $c->code }} &mdash; {{ $c->name }}</option>
+                        <option value="{{ $c->id }}">{{ $c->code }} &mdash; {{ $c->name }}</option>
                     @endforeach
                 </select>
             </div>
 
             <div class="col-md-3">
-                <select name="year_level" class="form-select" onchange="this.form.submit()">
+                <select name="year_level" id="filter-year-level" class="form-select">
                     <option value="">All Year Levels</option>
-                    <option value="1st Year" @selected($yearLevel === '1st Year')>1st Year</option>
-                    <option value="2nd Year" @selected($yearLevel === '2nd Year')>2nd Year</option>
-                    <option value="3rd Year" @selected($yearLevel === '3rd Year')>3rd Year</option>
-                    <option value="4th Year" @selected($yearLevel === '4th Year')>4th Year</option>
-                    <option value="5th Year" @selected($yearLevel === '5th Year')>5th Year</option>
+                    <option value="1st Year">1st Year</option>
+                    <option value="2nd Year">2nd Year</option>
+                    <option value="3rd Year">3rd Year</option>
+                    <option value="4th Year">4th Year</option>
+                    <option value="5th Year">5th Year</option>
                 </select>
             </div>
 
-            <div class="col-md-2 d-flex gap-2">
-                <button type="submit" class="btn btn-primary w-100 fw-bold">Filter</button>
-                @if ($collegeId || $programId || $yearLevel || $search)
-                    <a href="{{ route('students.index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i></a>
-                @endif
+            <div class="col-md-2 d-flex gap-1">
+                <button type="submit" class="btn btn-primary w-100" title="Apply filter"><i class="bi bi-funnel"></i></button>
+                <button type="reset" class="btn btn-outline-secondary" title="Reset filter"><i class="bi bi-arrow-clockwise"></i></button>
             </div>
         </form>
     </div>
@@ -131,85 +132,85 @@
     <div class="card border">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table id="students-table" class="table table-hover align-middle mb-0 w-100">
                     <thead>
                         <tr>
+                            <th style="width: 100px;">ACTION</th>
                             <th>STUDENT ID</th>
                             <th>STUDENT NAME</th>
                             <th>COLLEGE &amp; PROGRAM</th>
                             <th>YEAR &amp; SECTION</th>
                             <th>CONTACT</th>
                             <th>STATUS</th>
-                            <th class="text-end">ACTIONS</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse ($students as $student)
-                            <tr>
-                                <td>
-                                    <span class="font-monospace fw-bold text-primary">{{ $student->student_id }}</span>
-                                </td>
-                                <td>
-                                    <a href="{{ route('patients.show', $student->patient) }}" class="fw-semibold text-dark text-decoration-none">
-                                        {{ $student->patient->full_name }}
-                                    </a>
-                                    <small class="text-muted d-block" style="font-size: 0.72rem;">{{ $student->patient->gender }}, {{ $student->patient->age }} y/o</small>
-                                </td>
-                                <td>
-                                    <span class="badge badge-pill badge-soft-blue">{{ $student->college->code }}</span>
-                                    <small class="text-dark fw-medium ms-1">{{ $student->program->code }}</small>
-                                </td>
-                                <td>
-                                    <span class="text-dark">{{ $student->year_level }}</span>
-                                    @if ($student->section)
-                                        <small class="text-muted ms-1">({{ $student->section }})</small>
-                                    @endif
-                                </td>
-                                <td>
-                                    <span class="small text-muted">{{ $student->patient->phone ?: $student->patient->email }}</span>
-                                </td>
-                                <td>
-                                    <span class="status-badge {{ $student->enrollment_status === 'enrolled' ? 'completed' : 'pending' }}">
-                                        {{ $student->enrollment_status }}
-                                    </span>
-                                </td>
-                                <td class="text-end">
-                                    <div class="d-inline-flex gap-1">
-                                        <a href="{{ route('patients.show', $student->patient) }}" class="btn btn-sm btn-light border p-1" title="View Patient Profile">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                        @can('students.edit')
-                                            <a href="{{ route('students.edit', $student) }}" class="btn btn-sm btn-light border p-1" title="Edit">
-                                                <i class="bi bi-pencil"></i>
-                                            </a>
-                                        @endcan
-                                        @can('students.delete')
-                                            <form method="POST" action="{{ route('students.destroy', $student) }}" data-confirm="Are you sure you want to delete student {{ $student->patient->full_name }}?">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-light border text-danger p-1" title="Delete">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </form>
-                                        @endcan
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="text-center text-muted py-4">No student records found matching the filter criteria.</td>
-                            </tr>
-                        @endforelse
+                        <x-table-skeleton :cols="7" :rows="8" />
                     </tbody>
                 </table>
             </div>
-
-            @if ($students->hasPages())
-                <div class="p-3 border-top">
-                    {{ $students->links() }}
-                </div>
-            @endif
         </div>
     </div>
+
+    @include('partials.plugins.datatables')
+
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const table = $('#students-table').DataTable({
+                    processing: true,
+                    serverSide: true,
+                    pageLength: {{ (int) ($appSettings['table_page_length'] ?? 25) }},
+                    lengthMenu: [10, 25, 50, 100],
+                    order: [[1, 'asc']],
+                    dom: "<'row p-3 align-items-center'<'col-sm-6'l><'col-sm-6'f>>" +
+                         "<'row'<'col-sm-12'tr>>" +
+                         "<'row p-3 align-items-center'<'col-sm-5'i><'col-sm-7'p>>",
+                    ajax: {
+                        url: "{{ route('students.index') }}",
+                        data: function (d) {
+                            d.college_id = $('#filter-college').val();
+                            d.year_level = $('#filter-year-level').val();
+                            d.custom_search = $('#filter-search').val();
+                        }
+                    },
+                    columns: [
+                        { data: 'actions', name: 'actions', orderable: false, searchable: false },
+                        { data: 'student_id_col', name: 'school_id_number' },
+                        { data: 'student_name_col', name: 'last_name' },
+                        { data: 'college_program_col', name: 'college_id' },
+                        { data: 'year_section_col', name: 'year_level' },
+                        { data: 'contact_col', name: 'phone', orderable: false, searchable: false },
+                        { data: 'status_col', name: 'status' }
+                    ],
+                    language: {
+                        search: "",
+                        searchPlaceholder: "Quick filter...",
+                        emptyTable: "No student records found.",
+                        processing: '<div class="spinner-border spinner-border-sm text-primary me-1"></div> Loading students...'
+                    }
+                });
+
+                let searchTimer;
+                $('#filter-search').on('input', function () {
+                    clearTimeout(searchTimer);
+                    searchTimer = setTimeout(() => table.draw(), 300);
+                });
+
+                $('#students-filter-form').on('submit', function (e) {
+                    e.preventDefault();
+                    table.draw();
+                });
+
+                $('#students-filter-form').on('reset', function () {
+                    setTimeout(() => table.draw(), 50);
+                });
+
+                $('#filter-college, #filter-year-level').on('change', function () {
+                    table.draw();
+                });
+            });
+        </script>
+    @endPush
 </x-layouts.app>
 

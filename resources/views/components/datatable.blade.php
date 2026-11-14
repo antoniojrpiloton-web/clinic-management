@@ -3,13 +3,16 @@
     'url' => null,
     'columns' => [],
     'filters' => null,
-    'pageLength' => 25,
+    'pageLength' => null,
 ])
+@php
+    $resolvedPageLength = (int) ($pageLength ?? $appSettings['table_page_length'] ?? 25);
+@endphp
 <div class="table-responsive">
     <table
         id="{{ $id }}"
         data-datatable
-        data-page-length="{{ $pageLength }}"
+        data-page-length="{{ $resolvedPageLength }}"
         @if ($url)
             data-url="{{ $url }}"
             data-columns='@json($columns)'
@@ -36,13 +39,5 @@
     </table>
 </div>
 
-@pushOnce('styles', 'datatables-styles')
-    <link rel="stylesheet" href="{{ asset('assets/plugins/datatables/dataTables.bootstrap5.min.css') }}">
-@endPushOnce
-
-@pushOnce('scripts', 'datatables-scripts')
-    <script src="{{ asset('assets/plugins/datatables/dataTables.min.js') }}"></script>
-    <script src="{{ asset('assets/plugins/datatables/dataTables.bootstrap5.min.js') }}"></script>
-    @vite(['resources/js/plugins/datatables.js'])
-@endPushOnce
+@include('partials.plugins.datatables')
 

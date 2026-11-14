@@ -21,10 +21,14 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Yajra\DataTables\Facades\DataTables;
 
 class ClinicVisitController extends Controller implements HasMiddleware
 {
-    public function __construct(protected ClinicVisitService $visitService) {}
+    public function __construct(
+        protected ClinicVisitService $visitService,
+        protected SettingService $settingService,
+    ) {}
 
     public static function middleware(): array
     {
@@ -38,7 +42,127 @@ class ClinicVisitController extends Controller implements HasMiddleware
 
     public function index(Request $request): View|JsonResponse
     {
-        if ($request->ajax() && ! $request->has('tab')) {
+        if ($request->ajax() || $request->wantsJson()) {
+            if ($request->input('table') === 'logbook' || $request->routeIs('clinic-logbooks.index')) {
+                $logQuery = ClinicLogbook::with(['patient', 'clinicVisit', 'program', 'college'])
+                    ->filter([
+                        'search' => $request->input('log_search') ?: $request->input('search.value'),
+                        'visitor_type' => $request->input('visitor_type'),
+                        'program_id' => $request->input('program_id'),
+                        'purpose' => $request->input('purpose'),
+                        'status' => $request->input('log_status') ?: $request->input('status'),
+                        'date_from' => $request->input('log_date_from') ?: $request->input('date_from'),
+                        'date_to' => $request->input('log_date_to') ?: $request->input('date_to'),
+                    ])
+                    ->orderByDesc('log_date')
+                    ->orderByDesc('time_in')
+                    ->orderByDesc('id');
+
+                return DataTables::eloquent($logQuery)
+                    ->addColumn('log_number_col', function (ClinicLogbook $log) {
+                        $num = e($log->log_number);
+                        $date = $log->log_date ? $log->log_date->format($this->settingService->dateFormat()) : '—';
+
+                        return "<div><span class=\"fw-mono text-dark fw-bold\">{$num}</span><div class=\"small text-muted\">{$date}</div></div>";
+                    })
+                    ->addColumn('time_col', function (ClinicLogbook $log) {
+                        $timeIn = $log->time_in ? Carbon::parse($log->time_in)->format('h:i A') : '—';
+                        $timeOut = $log->time_out
+                            ? '<i class="bi bi-box-arrow-right text-secondary me-1"></i>'.Carbon::parse($log->time_out)->format('h:i A')
+                            : '<span class="badge badge-soft-amber" style="font-size: 0.7rem;"><i class="bi bi-dot"></i> Inside</span>';
+
+                        return "<div><div class=\"fw-medium text-dark\"><i class=\"bi bi-box-arrow-in-right text-success me-1\"></i>{$timeIn}</div><div class=\"small text-muted\">{$timeOut}</div></div>";
+                    })
+                    ->addColumn('visitor_col', function (ClinicLogbook $log) {
+                        $name = e($log->full_name);
+                        $id = e($log->id_number ?: 'N/A');
+                        $contact = $log->contact_number ? ' &bull; '.e($log->contact_number) : '';
+
+                        return "<div><div class=\"fw-semibold text-dark\">{$name}</div><div class=\"small text-muted\">ID: {$id}{$contact}</div></div>";
+                    })
+                    ->addColumn('type_dept_col', function (ClinicLogbook $log) {
+                        $badgeClass = match ($log->visitor_type) {
+                            'student' => 'badge-soft-green',
+                            'faculty' => 'badge-soft-purple',
+                            'staff' => 'badge-soft-blue',
+                            default => 'badge-soft-gray',
+                        };
+                        $typeLabel = match ($log->visitor_type) {
+                            'faculty' => 'Faculty',
+                            'staff' => 'Staff',
+                            default => ucfirst($log->visitor_type),
+                        };
+                        $dept = e($log->course_or_department ?: '—');
+                        $pos = $log->year_or_position ? ' &bull; '.e($log->year_or_position) : '';
+
+                        return "<div><span class=\"badge {$badgeClass}\">{$typeLabel}</span><div class=\"small text-muted mt-1\">{$dept}{$pos}</div></div>";
+                    })
+                    ->addColumn('purpose_col', function (ClinicLogbook $log) {
+                        $purp = e($log->purpose);
+                        $notes = $log->notes ? '<div class="small text-muted">'.e($log->notes).'</div>' : '';
+                        $linked = '';
+                        if ($log->clinicVisit) {
+                            $vUrl = route('clinic-visits.show', $log->clinicVisit);
+                            $vNum = e($log->clinicVisit->visit_number);
+                            $vLbl = e($log->clinicVisit->type_label);
+                            $linked = "<div class=\"mt-1\"><a href=\"{$vUrl}\" class=\"badge badge-soft-purple text-decoration-none\"><i class=\"bi bi-link-45deg\"></i> Linked: {$vNum} ({$vLbl})</a></div>";
+                        }
+
+                        return "<div><div class=\"fw-semibold text-dark\">{$purp}</div>{$notes}{$linked}</div>";
+                    })
+                    ->addColumn('status_col', function (ClinicLogbook $log) {
+                        if ($log->status === 'inside') {
+                            return '<span class="badge bg-warning text-dark"><i class="bi bi-person-walking me-1"></i>Inside</span>';
+                        }
+
+                        return '<span class="badge bg-success"><i class="bi bi-check2 me-1"></i>Completed</span>';
+                    })
+                    ->addColumn('actions', function (ClinicLogbook $log) {
+                        $token = csrf_token();
+                        $items = '';
+
+                        if (! $log->time_out) {
+                            $outUrl = route('clinic-logbooks.time-out', $log);
+                            $items .= "<li>
+                                <form method=\"POST\" action=\"{$outUrl}\">
+                                    <input type=\"hidden\" name=\"_token\" value=\"{$token}\">
+                                    <button type=\"submit\" class=\"dropdown-item text-warning\"><i class=\"bi bi-box-arrow-right text-warning me-2\"></i> Time Out</button>
+                                </form>
+                            </li>";
+                        }
+
+                        if (! $log->clinicVisit) {
+                            $createUrl = route('clinic-visits.create', ['patient_id' => $log->patient_id, 'logbook_id' => $log->id, 'complaint' => $log->purpose]);
+                            $items .= "<li><a class=\"dropdown-item text-primary\" href=\"{$createUrl}\"><i class=\"bi bi-plus-circle text-primary me-2\"></i> Log Clinic Visit</a></li>";
+                        } else {
+                            $showUrl = route('clinic-visits.show', $log->clinicVisit);
+                            $items .= "<li><a class=\"dropdown-item\" href=\"{$showUrl}\"><i class=\"bi bi-eye text-secondary me-2\"></i> View Linked Visit</a></li>";
+                        }
+
+                        $delUrl = route('clinic-logbooks.destroy', $log);
+                        $num = e($log->log_number);
+                        $items .= "<li><hr class=\"dropdown-divider\"></li>
+                        <li>
+                            <form method=\"POST\" action=\"{$delUrl}\" onsubmit=\"return confirm('Delete logbook entry {$num}?');\">
+                                <input type=\"hidden\" name=\"_token\" value=\"{$token}\">
+                                <input type=\"hidden\" name=\"_method\" value=\"DELETE\">
+                                <button type=\"submit\" class=\"dropdown-item text-danger\"><i class=\"bi bi-trash me-2\"></i> Delete</button>
+                            </form>
+                        </li>";
+
+                        return "<div class=\"dropdown\">
+                            <button class=\"btn btn-sm btn-outline-secondary dropdown-toggle py-1 px-2\" type=\"button\" data-bs-toggle=\"dropdown\" aria-expanded=\"false\">
+                                <i class=\"bi bi-gear-fill me-1\"></i> Action
+                            </button>
+                            <ul class=\"dropdown-menu shadow-sm\">
+                                {$items}
+                            </ul>
+                        </div>";
+                    })
+                    ->rawColumns(['log_number_col', 'time_col', 'visitor_col', 'type_dept_col', 'purpose_col', 'status_col', 'actions'])
+                    ->toJson();
+            }
+
             $query = ClinicVisit::query()
                 ->with(['patient', 'clinician', 'recorder', 'medicalConsultation', 'dentalConsultation', 'emergencyRecord', 'firstAidRecord', 'physicalExamination'])
                 ->filter($request->only(['visit_type', 'patient_classification', 'status', 'disposition', 'college_id', 'date_from', 'date_to', 'patient_id']))
@@ -55,22 +179,6 @@ class ClinicVisitController extends Controller implements HasMiddleware
             $logbookFilters['log_date_from'] = Carbon::today()->startOfMonth()->toDateString();
             $logbookFilters['log_date_to'] = Carbon::today()->toDateString();
         }
-
-        $logs = ClinicLogbook::with(['patient', 'clinicVisit', 'program', 'college'])
-            ->filter([
-                'search' => $logbookFilters['log_search'] ?? null,
-                'visitor_type' => $logbookFilters['visitor_type'] ?? null,
-                'program_id' => $logbookFilters['program_id'] ?? null,
-                'purpose' => $logbookFilters['purpose'] ?? null,
-                'status' => $logbookFilters['log_status'] ?? null,
-                'date_from' => $logbookFilters['log_date_from'] ?? null,
-                'date_to' => $logbookFilters['log_date_to'] ?? null,
-            ])
-            ->orderByDesc('log_date')
-            ->orderByDesc('time_in')
-            ->orderByDesc('id')
-            ->paginate(25, ['*'], 'log_page')
-            ->withQueryString();
 
         $today = Carbon::today()->toDateString();
         $agg = ClinicLogbook::query()
@@ -112,7 +220,6 @@ class ClinicVisitController extends Controller implements HasMiddleware
         return view('clinic-visits.index', [
             'stats' => $stats,
             'logbookStats' => $logbookStats,
-            'logs' => $logs,
             'logbookFilters' => $logbookFilters,
             'activeTab' => $activeTab,
             'todayAppointments' => $todayAppointments,

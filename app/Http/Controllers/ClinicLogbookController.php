@@ -94,13 +94,29 @@ class ClinicLogbookController extends Controller
 
     public function index(Request $request): View|JsonResponse
     {
-        return app(ClinicVisitController::class)->index($request->merge([
-            'tab' => 'logbook',
-            'log_search' => $request->query('search', $request->query('log_search')),
-            'log_status' => $request->query('status', $request->query('log_status')),
-            'log_date_from' => $request->query('date_from', $request->query('log_date_from')),
-            'log_date_to' => $request->query('date_to', $request->query('log_date_to')),
-        ]));
+        if ($request->ajax() || $request->wantsJson()) {
+            return app(ClinicVisitController::class)->index($request->merge([
+                'table' => 'logbook',
+            ]));
+        }
+
+        $statsQuery = ClinicLogbook::query()->whereDate('log_date', Carbon::today());
+        $stats = [
+            'total_today' => (clone $statsQuery)->count(),
+            'currently_inside' => (clone $statsQuery)->where('status', 'inside')->count(),
+            'students_today' => (clone $statsQuery)->where('visitor_type', 'student')->count(),
+            'employees_today' => (clone $statsQuery)->whereIn('visitor_type', ['faculty', 'staff', 'employee'])->count(),
+        ];
+
+        $programs = Program::where('is_active', true)->orderBy('code')->get();
+        $totalLogs = ClinicLogbook::count();
+
+        return view('clinic-logbooks.index', [
+            'stats' => $stats,
+            'programs' => $programs,
+            'purposes' => ClinicLogbook::PURPOSES,
+            'totalLogs' => $totalLogs,
+        ]);
     }
 
     public function store(Request $request): RedirectResponse

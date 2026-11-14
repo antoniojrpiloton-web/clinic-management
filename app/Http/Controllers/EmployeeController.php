@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\College;
 use App\Models\Patient;
 use App\Services\AuditLogger;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Yajra\DataTables\Facades\DataTables;
 
 class EmployeeController extends Controller implements HasMiddleware
 {
@@ -26,27 +28,98 @@ class EmployeeController extends Controller implements HasMiddleware
         ];
     }
 
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
-        $category = $request->query('category');
-        $collegeId = $request->query('college_id');
-        $classification = $request->query('classification');
-        $search = $request->query('search');
+        if ($request->ajax()) {
+            $query = Patient::query()
+                ->employees()
+                ->with(['college'])
+                ->when($request->filled('category'), fn ($q) => $q->where('category', $request->category))
+                ->when($request->filled('college_id'), fn ($q) => $q->where('college_id', $request->college_id))
+                ->when($request->filled('classification'), fn ($q) => $q->where('employment_classification', $request->classification))
+                ->latest();
 
-        $query = Patient::query()
-            ->employees()
-            ->with(['college'])
-            ->when($category, fn ($q) => $q->where('category', $category))
-            ->when($collegeId, fn ($q) => $q->where('college_id', $collegeId))
-            ->when($classification, fn ($q) => $q->where('employment_classification', $classification))
-            ->when($search, fn ($q) => $q->search($search))
-            ->latest();
+            return DataTables::eloquent($query)
+                ->filter(function ($q) use ($request) {
+                    $term = $request->input('custom_search') ?: $request->input('search.value');
+                    if (is_string($term) && trim($term) !== '') {
+                        $q->search(trim($term));
+                    }
+                })
+                ->addColumn('employee_id_col', fn (Patient $e) => '<span class="font-monospace fw-bold text-primary">'.e($e->school_id_number ?: $e->patient_number).'</span>')
+                ->addColumn('employee_name_col', function (Patient $e) {
+                    $url = route('patients.show', $e);
+                    $name = e($e->full_name);
+                    $sub = e($e->gender).', '.($e->age ?? 'N/A').' y/o';
 
-        $employees = $query->paginate(15)->withQueryString();
+                    return "<div><a href=\"{$url}\" class=\"fw-semibold text-dark text-decoration-none\">{$name}</a><small class=\"text-muted d-block\" style=\"font-size: 0.72rem;\">{$sub}</small></div>";
+                })
+                ->addColumn('category_position_col', function (Patient $e) {
+                    $badgeColor = $e->category === 'Faculty' ? 'blue' : 'green';
+                    $cat = e($e->category ?? 'Employee');
+                    $pos = e($e->position ?? '—');
+
+                    return "<span class=\"badge badge-pill badge-soft-{$badgeColor}\">{$cat}</span><div class=\"fw-medium text-dark small mt-1\">{$pos}</div>";
+                })
+                ->addColumn('office_college_col', function (Patient $e) {
+                    $unit = e($e->office_department ?: ($e->college?->name ?? '—'));
+
+                    return "<span class=\"text-dark small\">{$unit}</span>";
+                })
+                ->addColumn('classification_col', fn (Patient $e) => '<span class="badge badge-pill badge-soft-gray">'.e($e->employment_classification ?? '—').'</span>')
+                ->addColumn('contact_col', fn (Patient $e) => '<span class="small text-muted">'.e($e->phone ?: ($e->email ?: '—')).'</span>')
+                ->addColumn('status_col', function (Patient $e) {
+                    $cls = $e->employment_status === 'active' ? 'completed' : 'pending';
+
+                    return '<span class="status-badge '.$cls.'">'.e($e->employment_status ?? 'active').'</span>';
+                })
+                ->addColumn('actions', function (Patient $e) {
+                    $showUrl = route('patients.show', $e);
+                    $editUrl = route('employees.edit', $e);
+                    $delUrl = route('employees.destroy', $e);
+                    $csrf = csrf_field();
+                    $method = method_field('DELETE');
+                    $name = e($e->full_name);
+
+                    $canEdit = auth()->user()?->can('employees.edit');
+                    $canDelete = auth()->user()?->can('employees.delete');
+
+                    $items = "<li><a class=\"dropdown-item\" href=\"{$showUrl}\"><i class=\"bi bi-eye text-primary me-2\"></i> View Profile</a></li>";
+                    if ($canEdit) {
+                        $items .= "<li><a class=\"dropdown-item\" href=\"{$editUrl}\"><i class=\"bi bi-pencil text-warning me-2\"></i> Edit</a></li>";
+                    }
+                    if ($canDelete) {
+                        $items .= "<li><hr class=\"dropdown-divider\"></li>
+                        <li>
+                            <form method=\"POST\" action=\"{$delUrl}\" onsubmit=\"return confirm('Delete employee {$name}?');\">
+                                {$csrf}
+                                {$method}
+                                <button type=\"submit\" class=\"dropdown-item text-danger\"><i class=\"bi bi-trash me-2\"></i> Delete</button>
+                            </form>
+                        </li>";
+                    }
+
+                    return "<div class=\"dropdown\">
+                        <button class=\"btn btn-sm btn-outline-secondary dropdown-toggle py-1 px-2\" type=\"button\" data-bs-toggle=\"dropdown\" aria-expanded=\"false\">
+                            <i class=\"bi bi-gear-fill me-1\"></i> Action
+                        </button>
+                        <ul class=\"dropdown-menu shadow-sm\">
+                            {$items}
+                        </ul>
+                    </div>";
+                })
+                ->rawColumns(['employee_id_col', 'employee_name_col', 'category_position_col', 'office_college_col', 'classification_col', 'contact_col', 'status_col', 'actions'])
+                ->toJson();
+        }
+
+        $totalEmployees = Patient::employees()->count();
+        $facultyCount = Patient::employees()->where('category', 'Faculty')->count();
+        $staffCount = Patient::employees()->where('category', 'Non-Teaching / Staff')->count();
+        $permanentCount = Patient::employees()->where('employment_classification', 'Permanent')->count();
 
         $colleges = College::orderBy('name')->get(['id', 'name', 'code']);
 
-        return view('employees.index', compact('employees', 'colleges', 'category', 'collegeId', 'classification', 'search'));
+        return view('employees.index', compact('colleges', 'totalEmployees', 'facultyCount', 'staffCount', 'permanentCount'));
     }
 
     public function create(): View

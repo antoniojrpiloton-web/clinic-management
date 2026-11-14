@@ -96,22 +96,22 @@ class ClinicianController extends Controller implements HasMiddleware
                     $deleteUrl = route('clinicians.destroy', $c);
                     $csrf = csrf_token();
 
-                    $buttons = "<div class=\"d-flex align-items-center justify-content-end gap-1\">
-                        <a href=\"{$editUrl}\" class=\"btn btn-sm btn-light border p-1 px-2\" title=\"Edit Provider\">
-                            <i class=\"bi bi-pencil\"></i>
-                        </a>";
-
-                    $buttons .= "<form action=\"{$deleteUrl}\" method=\"POST\" class=\"d-inline\" onsubmit=\"return confirm('Are you sure you want to remove or deactivate this healthcare provider?');\">
-                        <input type=\"hidden\" name=\"_token\" value=\"{$csrf}\">
-                        <input type=\"hidden\" name=\"_method\" value=\"DELETE\">
-                        <button type=\"submit\" class=\"btn btn-sm btn-light border text-danger p-1 px-2\" title=\"Remove Provider\">
-                            <i class=\"bi bi-trash\"></i>
+                    return "<div class=\"dropdown\">
+                        <button class=\"btn btn-sm btn-outline-secondary dropdown-toggle py-1 px-2\" type=\"button\" data-bs-toggle=\"dropdown\" aria-expanded=\"false\">
+                            <i class=\"bi bi-gear-fill me-1\"></i> Action
                         </button>
-                    </form>";
-
-                    $buttons .= '</div>';
-
-                    return $buttons;
+                        <ul class=\"dropdown-menu shadow-sm\">
+                            <li><a class=\"dropdown-item\" href=\"{$editUrl}\"><i class=\"bi bi-pencil me-2\"></i>Edit Provider</a></li>
+                            <li><hr class=\"dropdown-divider\"></li>
+                            <li>
+                                <form action=\"{$deleteUrl}\" method=\"POST\" onsubmit=\"return confirm('Are you sure you want to remove or deactivate this healthcare provider?');\">
+                                    <input type=\"hidden\" name=\"_token\" value=\"{$csrf}\">
+                                    <input type=\"hidden\" name=\"_method\" value=\"DELETE\">
+                                    <button type=\"submit\" class=\"dropdown-item text-danger\"><i class=\"bi bi-trash me-2\"></i>Remove Provider</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>";
                 })
                 ->rawColumns(['provider_card', 'license_badge', 'contact_info', 'status_badge', 'actions'])
                 ->make(true);

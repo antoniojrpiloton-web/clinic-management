@@ -33,7 +33,10 @@ class ClinicVisitService
         'remarks',
     ];
 
-    public function __construct(protected AuditLogger $auditLogger) {}
+    public function __construct(
+        protected AuditLogger $auditLogger,
+        protected SettingService $settingService,
+    ) {}
 
     public function visitRules(bool $complaintRequired = true): array
     {
@@ -274,7 +277,8 @@ class ClinicVisitService
                 </div>";
             })
             ->addColumn('visit_date_formatted', function (ClinicVisit $visit) {
-                $date = $visit->visit_date->format('M d, Y');
+                $dateFormat = $this->settingService->dateFormat();
+                $date = $visit->visit_date->format($dateFormat);
                 $time = $visit->visit_date->format('h:i A');
                 $out = $visit->time_out ? 'Out '.$visit->time_out->format('h:i A') : 'No time-out';
 

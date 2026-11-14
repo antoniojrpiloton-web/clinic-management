@@ -42,24 +42,36 @@ class PermissionController extends Controller implements HasMiddleware
                 ->addColumn('module_col', fn (Permission $permission): string => '<span class="text-capitalize">'.e(str($permission->name)->before('.')->replace('-', ' ')->toString()).'</span>')
                 ->addColumn('roles_col', fn (Permission $permission): string => (string) $permission->roles_count)
                 ->addColumn('actions_col', function (Permission $permission) use ($canEdit, $canDelete): string {
-                    $html = '<div class="d-inline-flex gap-1">';
+                    $items = '';
 
                     if ($canEdit) {
                         $editUrl = route('permissions.edit', $permission);
-                        $html .= "<a href=\"{$editUrl}\" class=\"btn btn-sm btn-light\" title=\"Edit\"><i class=\"bi bi-pencil-square\"></i></a>";
+                        $items .= "<li><a class=\"dropdown-item\" href=\"{$editUrl}\"><i class=\"bi bi-pencil-square me-2\"></i>Edit Permission</a></li>";
                     }
 
                     if ($canDelete) {
                         $deleteUrl = route('permissions.destroy', $permission);
-                        $csrf = csrf_field();
-                        $method = method_field('DELETE');
+                        $csrfToken = csrf_token();
                         $confirm = e("The permission {$permission->name} will be permanently deleted.");
-                        $html .= "<form method=\"POST\" action=\"{$deleteUrl}\" data-confirm=\"{$confirm}\">{$csrf}{$method}<button type=\"submit\" class=\"btn btn-sm btn-light text-danger\" title=\"Delete\"><i class=\"bi bi-trash\"></i></button></form>";
+
+                        if ($canEdit) {
+                            $items .= '<li><hr class="dropdown-divider"></li>';
+                        }
+                        $items .= "<li><form method=\"POST\" action=\"{$deleteUrl}\" data-confirm=\"{$confirm}\"><input type=\"hidden\" name=\"_token\" value=\"{$csrfToken}\"><input type=\"hidden\" name=\"_method\" value=\"DELETE\"><button type=\"submit\" class=\"dropdown-item text-danger\"><i class=\"bi bi-trash me-2\"></i>Delete Permission</button></form></li>";
                     }
 
-                    $html .= '</div>';
+                    if (empty($items)) {
+                        return '';
+                    }
 
-                    return $html;
+                    return "<div class=\"dropdown\">
+                        <button class=\"btn btn-sm btn-outline-secondary dropdown-toggle py-1 px-2\" type=\"button\" data-bs-toggle=\"dropdown\" aria-expanded=\"false\">
+                            <i class=\"bi bi-gear-fill me-1\"></i> Action
+                        </button>
+                        <ul class=\"dropdown-menu shadow-sm\">
+                            {$items}
+                        </ul>
+                    </div>";
                 })
                 ->orderColumn('permission_col', 'name $1')
                 ->orderColumn('module_col', 'name $1')

@@ -30,7 +30,7 @@
         <span>&gt;</span>
         <a href="{{ route('dashboard') }}">Dashboard</a>
         <span>&gt;</span>
-        <span>Reports Generation</span>
+        <span>Reports &amp; Analytics</span>
         <span>&gt;</span>
         <span>Clinic Morbidity &amp; Utilization</span>
     </div>

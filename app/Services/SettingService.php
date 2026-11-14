@@ -92,6 +92,34 @@ class SettingService
         return $this->all()[$key] ?? $default;
     }
 
+    public function dateFormat(): string
+    {
+        return (string) $this->get('date_format', 'M d, Y');
+    }
+
+    public function tablePageLength(): int
+    {
+        return (int) $this->get('table_page_length', 25);
+    }
+
+    public function formatDate(?\DateTimeInterface $date, string $fallback = '—'): string
+    {
+        if (! $date) {
+            return $fallback;
+        }
+
+        return $date->format($this->dateFormat());
+    }
+
+    public function formatDateTime(?\DateTimeInterface $date, string $fallback = '—'): string
+    {
+        if (! $date) {
+            return $fallback;
+        }
+
+        return $date->format($this->dateFormat().' h:i A');
+    }
+
     public function set(array $values): void
     {
         foreach ($values as $key => $value) {

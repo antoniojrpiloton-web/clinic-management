@@ -18,8 +18,18 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="app-default-page-length" content="{{ $appSettings['table_page_length'] ?? 25 }}">
+    <meta name="app-date-format" content="{{ $appSettings['date_format'] ?? 'M d, Y' }}">
     <title>{{ $title }} — {{ $systemName }}</title>
     <link rel="icon" href="{{ $faviconUrl }}">
+    <script>
+        (function () {
+            const saved = localStorage.getItem('clinic_theme');
+            const theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-bs-theme', theme);
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
     <link rel="stylesheet" href="{{ asset('assets/fonts/inter/inter.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/plugins/bootstrap/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/plugins/bootstrap-icons/bootstrap-icons.min.css') }}">
@@ -30,7 +40,7 @@
 </head>
 <body>
     <div class="min-vh-100 d-flex flex-column" style="background-color: var(--app-body-bg);">
-        <header class="app-topbar d-flex align-items-center justify-content-between px-3 px-lg-4 border-bottom bg-white" style="position: sticky; top: 0; z-index: 1020;">
+        <header class="app-topbar d-flex align-items-center justify-content-between px-3 px-lg-4 border-bottom" style="position: sticky; top: 0; z-index: 1020;">
             <div class="d-flex align-items-center gap-3">
                 <a href="{{ route('dashboard') }}" class="d-flex align-items-center gap-2 text-decoration-none">
                     <img src="{{ $faviconUrl }}" alt="Logo" class="rounded p-0.5" style="width: 28px; height: 28px; object-fit: contain;">
@@ -56,6 +66,18 @@
 
                 <button type="button" class="btn btn-primary btn-sm px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#bookAppointmentModal">
                     <i class="bi bi-calendar-plus me-1"></i> Book Appointment
+                </button>
+
+                <button
+                    type="button"
+                    class="btn btn-outline-secondary btn-sm p-1.5 d-inline-flex align-items-center justify-content-center theme-toggle-btn"
+                    id="theme-toggle-btn"
+                    title="Switch Theme"
+                    aria-label="Switch Theme"
+                    style="width: 32px; height: 32px; border-radius: 8px;"
+                >
+                    <i class="bi bi-moon-stars theme-icon-dark"></i>
+                    <i class="bi bi-sun-fill theme-icon-light d-none text-warning"></i>
                 </button>
 
                 <div class="vr text-muted opacity-25 d-none d-sm-block mx-1" style="height: 20px;"></div>

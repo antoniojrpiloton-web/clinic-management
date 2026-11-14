@@ -12,6 +12,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="app-default-page-length" content="{{ $appSettings['table_page_length'] ?? 25 }}">
+    <meta name="app-date-format" content="{{ $appSettings['date_format'] ?? 'M d, Y' }}">
     <title>{{ $title ? "{$title} — {$systemName}" : $systemName }}</title>
 
     @php
@@ -22,6 +24,14 @@
                 : asset('assets/images/logo.svg'));
     @endphp
     <link rel="icon" href="{{ $faviconUrl }}">
+    <script>
+        (function () {
+            const saved = localStorage.getItem('clinic_theme');
+            const theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-bs-theme', theme);
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
     <link rel="stylesheet" href="{{ asset('assets/fonts/inter/inter.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/plugins/bootstrap/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/plugins/bootstrap-icons/bootstrap-icons.min.css') }}">
@@ -43,7 +53,7 @@
                 {{ $slot }}
             </main>
 
-            <footer class="app-footer d-flex justify-content-between align-items-center border-top bg-white">
+            <footer class="app-footer d-flex justify-content-between align-items-center border-top">
                 <span>&copy; {{ now()->year }} {{ $systemName }}. All rights reserved.</span>
                 <span>Laravel v{{ Illuminate\Foundation\Application::VERSION }}</span>
             </footer>

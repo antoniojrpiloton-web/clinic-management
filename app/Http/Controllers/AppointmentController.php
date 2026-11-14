@@ -7,14 +7,20 @@ use App\Models\Appointment;
 use App\Models\Clinician;
 use App\Models\Patient;
 use App\Models\Program;
+use App\Services\SettingService;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Yajra\DataTables\Facades\DataTables;
 
 class AppointmentController extends Controller
 {
-    public function index(Request $request): View
+    public function __construct(protected SettingService $settingService) {}
+
+    public function index(Request $request): View|JsonResponse
     {
         $date = $request->query('date', Carbon::today()->toDateString());
         $clinicianId = $request->query('clinician_id');
@@ -22,17 +28,149 @@ class AppointmentController extends Controller
         $status = $request->query('status');
         $priority = $request->query('priority');
 
-        $appointments = Appointment::query()
-            ->with(['patient.college', 'patient.program', 'clinician', 'bookedBy', 'clinicVisit'])
-            ->when($date !== 'all', fn ($q) => $q->whereDate('appointment_date', $date))
-            ->when($clinicianId, fn ($q) => $q->where('clinician_id', $clinicianId))
-            ->when($serviceType, fn ($q) => $q->where('service_type', $serviceType))
-            ->when($status, fn ($q) => $q->where('status', $status))
-            ->when($priority, fn ($q) => $q->where('priority_level', $priority))
-            ->orderByRaw("CASE priority_level WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 ELSE 3 END")
-            ->orderBy('appointment_time')
-            ->paginate(25)
-            ->withQueryString();
+        if ($request->ajax()) {
+            $query = Appointment::query()
+                ->with(['patient.college', 'patient.program', 'clinician', 'bookedBy', 'clinicVisit'])
+                ->when($date !== 'all' && filled($date), fn ($q) => $q->whereDate('appointment_date', $date))
+                ->when($clinicianId, fn ($q) => $q->where('clinician_id', $clinicianId))
+                ->when($serviceType, fn ($q) => $q->where('service_type', $serviceType))
+                ->when($status, fn ($q) => $q->where('status', $status))
+                ->when($priority, fn ($q) => $q->where('priority_level', $priority))
+                ->orderByRaw("CASE priority_level WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 ELSE 3 END")
+                ->orderBy('appointment_time');
+
+            return DataTables::eloquent($query)
+                ->filter(function ($q) use ($request) {
+                    $term = $request->input('custom_search') ?: $request->input('search.value');
+                    if (is_string($term) && trim($term) !== '') {
+                        $term = trim($term);
+                        $q->where(function ($sub) use ($term) {
+                            $sub->where('appointment_number', 'like', "%{$term}%")
+                                ->orWhere('reason', 'like', "%{$term}%")
+                                ->orWhereHas('patient', function ($p) use ($term) {
+                                    $p->search($term);
+                                });
+                        });
+                    }
+                })
+                ->addColumn('time_ref_col', function (Appointment $app) {
+                    $dateFormat = $this->settingService->dateFormat();
+                    $time = e($app->appointment_time);
+                    $num = e($app->appointment_number);
+                    $dateStr = $app->appointment_date ? $app->appointment_date->format($dateFormat) : '—';
+
+                    return "<div><div class=\"fw-bold text-dark\"><i class=\"bi bi-clock me-1 text-primary\"></i>{$time}</div><div class=\"fw-mono small text-muted\">{$num} &bull; {$dateStr}</div></div>";
+                })
+                ->addColumn('priority_col', function (Appointment $app) {
+                    $cls = $app->priority_badge_class;
+                    $icon = $app->priority_level === 'urgent' ? '<i class="bi bi-exclamation-triangle-fill me-1"></i>' : '';
+                    $lbl = ucfirst($app->priority_level);
+
+                    return "<span class=\"badge {$cls}\">{$icon}{$lbl}</span>";
+                })
+                ->addColumn('patient_col', function (Appointment $app) {
+                    $p = $app->patient;
+                    if (! $p) {
+                        return '<span class="text-muted">N/A</span>';
+                    }
+                    $name = e($p->full_name);
+                    $id = e($p->primary_identifier);
+                    $typeBadge = $p->type === 'employee' ? ($p->category === 'Faculty' ? 'Faculty' : 'Staff') : ($p->type === 'visitor' ? 'Visitor' : 'Student');
+                    $progCode = $p->program ? ' &bull; '.e($p->program->code) : '';
+                    $url = route('patients.show', $p);
+
+                    return "<div><a href=\"{$url}\" class=\"fw-semibold text-dark text-decoration-none\">{$name}</a><div class=\"small text-muted\">{$id} &bull; <span class=\"badge badge-soft-blue\">{$typeBadge}</span>{$progCode}</div></div>";
+                })
+                ->addColumn('doctor_col', function (Appointment $app) {
+                    if ($app->clinician) {
+                        $name = e($app->clinician->name);
+                        $title = e($app->clinician->title);
+                        $type = e($app->clinician->type);
+
+                        return "<div><div class=\"fw-medium text-dark\">{$name}</div><div class=\"small text-muted\">{$title} ({$type})</div></div>";
+                    }
+
+                    return '<span class="text-muted fst-italic">Any Available Doctor</span>';
+                })
+                ->addColumn('reason_col', function (Appointment $app) {
+                    $reason = e($app->reason);
+                    $types = Appointment::SERVICE_TYPES;
+                    $stLabel = e($types[$app->service_type] ?? ucfirst($app->service_type));
+                    $notes = $app->notes ? '<div class="small text-muted mt-1">'.e(Str::limit($app->notes, 60)).'</div>' : '';
+
+                    return "<div><div class=\"fw-semibold text-dark\">{$reason}</div><span class=\"badge badge-soft-blue\" style=\"font-size: 0.7rem;\">{$stLabel}</span>{$notes}</div>";
+                })
+                ->addColumn('status_col', function (Appointment $app) {
+                    $cls = $app->status_badge_class;
+                    $statuses = Appointment::STATUSES;
+                    $lbl = e($statuses[$app->status] ?? ucfirst($app->status));
+                    $html = "<span class=\"badge {$cls}\">{$lbl}</span>";
+                    if ($app->clinicVisit) {
+                        $url = route('clinic-visits.show', $app->clinicVisit);
+                        $vnum = e($app->clinicVisit->visit_number);
+                        $html .= "<div class=\"mt-1\"><a href=\"{$url}\" class=\"badge badge-soft-purple text-decoration-none\"><i class=\"bi bi-link-45deg\"></i> {$vnum}</a></div>";
+                    }
+
+                    return $html;
+                })
+                ->addColumn('actions', function (Appointment $app) {
+                    $token = csrf_token();
+                    $items = '';
+
+                    if ($app->status === 'scheduled') {
+                        $checkInUrl = route('appointments.check-in', $app);
+                        $items .= "<li>
+                            <form method=\"POST\" action=\"{$checkInUrl}\">
+                                <input type=\"hidden\" name=\"_token\" value=\"{$token}\">
+                                <button type=\"submit\" class=\"dropdown-item text-primary\"><i class=\"bi bi-check2-circle text-primary me-2\"></i> Check In</button>
+                            </form>
+                        </li>";
+                    }
+
+                    if (in_array($app->status, ['scheduled', 'checked_in'])) {
+                        $startUrl = route('appointments.start-consultation', $app);
+                        $items .= "<li>
+                            <form method=\"POST\" action=\"{$startUrl}\">
+                                <input type=\"hidden\" name=\"_token\" value=\"{$token}\">
+                                <button type=\"submit\" class=\"dropdown-item text-success\"><i class=\"bi bi-clipboard2-pulse text-success me-2\"></i> Start Consultation</button>
+                            </form>
+                        </li>";
+
+                        $cancelUrl = route('appointments.cancel', $app);
+                        $ref = e($app->appointment_number);
+                        $items .= "<li><hr class=\"dropdown-divider\"></li>
+                        <li>
+                            <button type=\"button\" class=\"dropdown-item text-danger btn-open-cancel-modal\" data-action=\"{$cancelUrl}\" data-ref=\"{$ref}\">
+                                <i class=\"bi bi-x-circle text-danger me-2\"></i> Cancel Appointment
+                            </button>
+                        </li>";
+                    }
+
+                    if ($app->status === 'completed' && $app->clinicVisit) {
+                        $vUrl = route('clinic-visits.show', $app->clinicVisit);
+                        $items .= "<li><a class=\"dropdown-item\" href=\"{$vUrl}\"><i class=\"bi bi-eye text-secondary me-2\"></i> View Visit Record</a></li>";
+                    }
+
+                    if ($app->patient) {
+                        $pUrl = route('patients.show', $app->patient);
+                        if ($items !== '') {
+                            $items .= '<li><hr class="dropdown-divider"></li>';
+                        }
+                        $items .= "<li><a class=\"dropdown-item\" href=\"{$pUrl}\"><i class=\"bi bi-person-vcard text-info me-2\"></i> Patient Profile</a></li>";
+                    }
+
+                    return "<div class=\"dropdown\">
+                        <button class=\"btn btn-sm btn-outline-secondary dropdown-toggle py-1 px-2\" type=\"button\" data-bs-toggle=\"dropdown\" aria-expanded=\"false\">
+                            <i class=\"bi bi-gear-fill me-1\"></i> Action
+                        </button>
+                        <ul class=\"dropdown-menu shadow-sm\">
+                            {$items}
+                        </ul>
+                    </div>";
+                })
+                ->rawColumns(['time_ref_col', 'priority_col', 'patient_col', 'doctor_col', 'reason_col', 'status_col', 'actions'])
+                ->toJson();
+        }
 
         $today = Carbon::today()->toDateString();
         $todayCounts = Appointment::query()
@@ -51,7 +189,6 @@ class AppointmentController extends Controller
         ];
 
         return view('appointments.index', [
-            'appointments' => $appointments,
             'stats' => $stats,
             'currentDate' => $date,
             'clinicians' => Clinician::active()->orderBy('name')->get(),
@@ -129,7 +266,7 @@ class AppointmentController extends Controller
                     'doctor' => $app->clinician?->name ?? 'Any Available Doctor on Duty',
                     'service_type' => Appointment::SERVICE_TYPES[$app->service_type] ?? ucfirst($app->service_type),
                     'time' => $timeRaw,
-                    'date' => $app->appointment_date ? $app->appointment_date->format('M d, Y') : '—',
+                    'date' => $app->appointment_date ? $app->appointment_date->format($this->settingService->dateFormat()) : '—',
                     'date_raw' => $dateStr,
                     'reason' => $app->reason,
                     'notes' => $app->notes,
@@ -288,7 +425,7 @@ class AppointmentController extends Controller
 
         $patient = Patient::find($patientId);
 
-        return redirect()->back()->with('success', "Appointment {$appointment->appointment_number} booked for {$patient?->full_name} on ".Carbon::parse($appointment->appointment_date)->format('M d, Y')." at {$appointment->appointment_time}.");
+        return redirect()->back()->with('success', "Appointment {$appointment->appointment_number} booked for {$patient?->full_name} on ".Carbon::parse($appointment->appointment_date)->format($this->settingService->dateFormat())." at {$appointment->appointment_time}.");
     }
 
     public function checkIn(Appointment $appointment): RedirectResponse

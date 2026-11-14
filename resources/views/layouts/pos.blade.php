@@ -19,6 +19,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="app-default-page-length" content="{{ $appSettings['table_page_length'] ?? 25 }}">
+    <meta name="app-date-format" content="{{ $appSettings['date_format'] ?? 'M d, Y' }}">
     <title>{{ $title }} — {{ $clinicName }}</title>
     <link rel="icon" href="{{ $faviconUrl }}">
     <link rel="stylesheet" href="{{ asset('assets/fonts/inter/inter.css') }}">

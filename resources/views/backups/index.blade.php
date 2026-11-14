@@ -11,15 +11,15 @@
 
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
-            <h1 class="dashboard-heading mb-1">Database &amp; Backup Management</h1>
-            <p class="dashboard-subheading mb-0">Monitor database storage metrics, trigger snapshot backups, and restore archive files.</p>
+            <h1 class="dashboard-heading mb-1">Database Backups</h1>
+            <p class="dashboard-subheading mb-0">Create, download, and manage database backups.</p>
         </div>
 
         @can('backups.create')
             <form method="POST" action="{{ route('backups.store') }}">
                 @csrf
                 <button type="submit" class="btn btn-primary btn-sm px-3 py-2 d-flex align-items-center gap-1" data-loading-text="Queuing…">
-                    <i class="bi bi-cloud-arrow-down"></i> Create Snapshot Backup
+                    <i class="bi bi-cloud-arrow-down"></i> Create Backup
                 </button>
             </form>
         @endcan
@@ -81,7 +81,7 @@
                         <i class="bi bi-clock-history"></i>
                     </span>
                 </div>
-                <div class="kpi-value">{{ number_format($backupStats['total']) }} Snapshots</div>
+                <div class="kpi-value">{{ number_format($backupStats['total']) }} Files</div>
                 <div class="kpi-trend">
                     <span class="trend-badge up">Archives</span>
                     <span class="trend-compare">{{ number_format($backupStats['completed']) }} completed</span>
@@ -106,13 +106,13 @@
                 <table id="backups-table" class="table table-hover align-middle w-100 mb-0">
                     <thead>
                         <tr>
+                            <th style="width: 100px;">ACTION</th>
                             <th>ARCHIVE FILENAME</th>
                             <th>TRIGGER TYPE</th>
                             <th>FILE SIZE</th>
                             <th>STATUS</th>
                             <th>OPERATOR</th>
                             <th>TIMESTAMP</th>
-                            <th class="text-end">ACTIONS</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -134,16 +134,17 @@
                         processing: true,
                         serverSide: true,
                         ajax: '{{ route('backups.index') }}',
-                        pageLength: 25,
-                        order: [[5, 'desc']],
+                        pageLength: {{ (int) ($appSettings['table_page_length'] ?? 25) }},
+                        lengthMenu: [10, 25, 50, 100],
+                        order: [[6, 'desc']],
                         columns: [
+                            { data: 'actions_col', orderable: false, searchable: false },
                             { data: 'filename_col', name: 'filename' },
                             { data: 'type_col', name: 'type' },
                             { data: 'size_col', name: 'size', searchable: false },
                             { data: 'status_col', name: 'status' },
                             { data: 'operator_col', name: 'creator.name', orderable: false },
-                            { data: 'timestamp_col', name: 'created_at', searchable: false },
-                            { data: 'actions_col', orderable: false, searchable: false, className: 'text-end' }
+                            { data: 'timestamp_col', name: 'created_at', searchable: false }
                         ]
                     });
                 }

@@ -132,7 +132,7 @@
     <div class="card border">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table id="users-table" class="table table-hover align-middle mb-0 w-100" data-page-length="{{ $pageLength }}">
+                <table id="users-table" class="table table-hover align-middle mb-0 w-100" data-page-length="{{ (int) ($appSettings['table_page_length'] ?? $pageLength ?? 25) }}">
                     <thead>
                         <tr>
                             <th style="width: 130px;">ACTIONS</th>
@@ -152,19 +152,15 @@
         </div>
     </div>
 
-    @pushOnce('styles', 'datatables-styles')
-        <link rel="stylesheet" href="{{ asset('assets/plugins/datatables/dataTables.bootstrap5.min.css') }}">
-    @endPushOnce
+    @include('partials.plugins.datatables')
 
-    @pushOnce('scripts', 'datatables-scripts')
-        <script src="{{ asset('assets/plugins/datatables/dataTables.min.js') }}"></script>
-        <script src="{{ asset('assets/plugins/datatables/dataTables.bootstrap5.min.js') }}"></script>
+    @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', () => {
                 const table = $('#users-table').DataTable({
                     processing: true,
                     serverSide: true,
-                    pageLength: {{ $pageLength }},
+                    pageLength: {{ (int) ($appSettings['table_page_length'] ?? $pageLength ?? 25) }},
                     lengthMenu: [10, 25, 50, 100],
                     dom: "<'row p-3 align-items-center'<'col-sm-6'l><'col-sm-6'f>>" +
                          "<'row'<'col-sm-12'tr>>" +
@@ -211,7 +207,7 @@
                 });
             });
         </script>
-    @endPushOnce
+    @endpush
 
     @include('partials.plugins.select2')
 </x-layouts.app>

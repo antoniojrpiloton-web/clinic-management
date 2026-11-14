@@ -133,12 +133,12 @@
                 <table id="schedules-table" class="table table-hover align-middle mb-0 w-100">
                     <thead>
                         <tr>
+                            <th style="width: 100px;">ACTION</th>
                             <th>CAMPAIGN / TITLE</th>
                             <th>TARGET COHORT</th>
                             <th>SCHEDULE &amp; VENUE</th>
                             <th>EXAMINATION PROGRESS</th>
                             <th>STATUS</th>
-                            <th class="text-end pe-3" style="width: 110px;">ACTIONS</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -149,21 +149,17 @@
         </div>
     </div>
 
-    @pushOnce('styles', 'datatables-styles')
-        <link rel="stylesheet" href="{{ asset('assets/plugins/datatables/dataTables.bootstrap5.min.css') }}">
-    @endPushOnce
+    @include('partials.plugins.datatables')
 
-    @pushOnce('scripts', 'datatables-scripts')
-        <script src="{{ asset('assets/plugins/datatables/dataTables.min.js') }}"></script>
-        <script src="{{ asset('assets/plugins/datatables/dataTables.bootstrap5.min.js') }}"></script>
+    @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', () => {
                 const table = $('#schedules-table').DataTable({
                     processing: true,
                     serverSide: true,
-                    pageLength: 25,
+                    pageLength: {{ (int) ($appSettings['table_page_length'] ?? 25) }},
                     lengthMenu: [10, 25, 50, 100],
-                    order: [[2, 'desc']],
+                    order: [[3, 'desc']],
                     dom: "<'row p-3 align-items-center'<'col-sm-6'l><'col-sm-6'f>>" +
                          "<'row'<'col-sm-12'tr>>" +
                          "<'row p-3 align-items-center'<'col-sm-5'i><'col-sm-7'p>>",
@@ -177,12 +173,12 @@
                         }
                     },
                     columns: [
+                        { data: 'actions', name: 'actions', orderable: false, searchable: false },
                         { data: 'schedule_card', name: 'title' },
                         { data: 'target_group', name: 'target_classification', orderable: false, searchable: false },
                         { data: 'schedule_timing', name: 'scheduled_date', searchable: false },
                         { data: 'progress_summary', name: 'total_attendees', orderable: false, searchable: false },
-                        { data: 'status_badge', name: 'status', searchable: false },
-                        { data: 'actions', name: 'actions', orderable: false, searchable: false }
+                        { data: 'status_badge', name: 'status', searchable: false }
                     ],
                     language: {
                         search: "",
@@ -206,6 +202,6 @@
                 });
             });
         </script>
-    @endPushOnce
+    @endpush
 </x-layouts.app>
 

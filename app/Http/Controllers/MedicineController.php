@@ -113,23 +113,23 @@ class MedicineController extends Controller implements HasMiddleware
                     $deleteUrl = route('medicines.destroy', $m);
                     $csrf = csrf_token();
 
-                    return "<div class=\"d-flex align-items-center justify-content-end gap-1\">
-                        <a href=\"{$stockInUrl}\" class=\"btn btn-sm btn-light border p-1 px-2 text-success\" title=\"Receive Stock (Stock-In)\">
-                            <i class=\"bi bi-box-arrow-in-down\"></i>
-                        </a>
-                        <a href=\"{$viewUrl}\" class=\"btn btn-sm btn-light border p-1 px-2\" title=\"View Batches & History\">
-                            <i class=\"bi bi-eye\"></i>
-                        </a>
-                        <a href=\"{$editUrl}\" class=\"btn btn-sm btn-light border p-1 px-2\" title=\"Edit Medicine\">
-                            <i class=\"bi bi-pencil\"></i>
-                        </a>
-                        <form action=\"{$deleteUrl}\" method=\"POST\" class=\"d-inline\" onsubmit=\"return confirm('Are you sure you want to remove or deactivate this medicine?');\">
-                            <input type=\"hidden\" name=\"_token\" value=\"{$csrf}\">
-                            <input type=\"hidden\" name=\"_method\" value=\"DELETE\">
-                            <button type=\"submit\" class=\"btn btn-sm btn-light border text-danger p-1 px-2\" title=\"Delete\">
-                                <i class=\"bi bi-trash\"></i>
-                            </button>
-                        </form>
+                    return "<div class=\"dropdown\">
+                        <button class=\"btn btn-sm btn-outline-secondary dropdown-toggle py-1 px-2\" type=\"button\" data-bs-toggle=\"dropdown\" aria-expanded=\"false\">
+                            <i class=\"bi bi-gear-fill me-1\"></i> Action
+                        </button>
+                        <ul class=\"dropdown-menu shadow-sm\">
+                            <li><a class=\"dropdown-item text-success\" href=\"{$stockInUrl}\"><i class=\"bi bi-box-arrow-in-down me-2\"></i>Receive Stock</a></li>
+                            <li><a class=\"dropdown-item\" href=\"{$viewUrl}\"><i class=\"bi bi-eye me-2\"></i>View Details</a></li>
+                            <li><a class=\"dropdown-item\" href=\"{$editUrl}\"><i class=\"bi bi-pencil me-2\"></i>Edit Medicine</a></li>
+                            <li><hr class=\"dropdown-divider\"></li>
+                            <li>
+                                <form action=\"{$deleteUrl}\" method=\"POST\" onsubmit=\"return confirm('Are you sure you want to remove or deactivate this medicine?');\">
+                                    <input type=\"hidden\" name=\"_token\" value=\"{$csrf}\">
+                                    <input type=\"hidden\" name=\"_method\" value=\"DELETE\">
+                                    <button type=\"submit\" class=\"dropdown-item text-danger\"><i class=\"bi bi-trash me-2\"></i>Delete</button>
+                                </form>
+                            </li>
+                        </ul>
                     </div>";
                 })
                 ->rawColumns(['medicine_card', 'category_badge', 'stock_summary', 'reorder_level_formatted', 'prescription_badge', 'status_badge', 'actions'])

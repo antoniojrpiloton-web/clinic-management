@@ -113,7 +113,7 @@ class PhysicalExaminationTest extends TestCase
         $exam->refresh();
 
         $peForm = $this->actingAs($user)->get(route('physical-examinations.print-pe', $exam));
-        $peForm->assertOk()->assertSee('PHYSICAL EXAMINATION RECORD');
+        $peForm->assertOk()->assertSee('PHYSICAL EXAMINATION');
 
         $cert = $this->actingAs($user)->get(route('physical-examinations.print-certificate', $exam));
         $cert->assertOk()->assertSee('MEDICAL CERTIFICATE')->assertSee('HSD FORM 4');

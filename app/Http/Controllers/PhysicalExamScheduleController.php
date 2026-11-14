@@ -24,7 +24,10 @@ use Yajra\DataTables\Facades\DataTables;
 
 class PhysicalExamScheduleController extends Controller implements HasMiddleware
 {
-    public function __construct(protected AuditLogger $auditLogger) {}
+    public function __construct(
+        protected AuditLogger $auditLogger,
+        protected SettingService $settingService,
+    ) {}
 
     public static function middleware(): array
     {
@@ -71,7 +74,7 @@ class PhysicalExamScheduleController extends Controller implements HasMiddleware
                 })
                 ->addColumn('target_group', fn (PhysicalExamSchedule $s) => '<span class="small text-dark fw-medium">'.e($s->target_group_label).'</span>')
                 ->addColumn('schedule_timing', function (PhysicalExamSchedule $s) {
-                    $date = $s->scheduled_date->format('M d, Y');
+                    $date = $s->scheduled_date->format($this->settingService->dateFormat());
                     $time = e($s->time_range);
                     $venue = e($s->venue ?: 'Clinic Examination Room');
 
@@ -103,20 +106,22 @@ class PhysicalExamScheduleController extends Controller implements HasMiddleware
                     $csrf = csrf_field();
                     $method = method_field('DELETE');
 
-                    return "<div class=\"d-flex align-items-center justify-content-end gap-1\">
-                        <a href=\"{$showUrl}\" class=\"btn btn-sm btn-light border p-1 px-2\" title=\"View Attendees & Check-in\">
-                            <i class=\"bi bi-people\"></i>
-                        </a>
-                        <a href=\"{$editUrl}\" class=\"btn btn-sm btn-light border p-1 px-2\" title=\"Edit Schedule\">
-                            <i class=\"bi bi-pencil\"></i>
-                        </a>
-                        <form method=\"POST\" action=\"{$deleteUrl}\" class=\"d-inline\" data-confirm=\"Delete schedule {$s->schedule_number}?\">
-                            {$csrf}
-                            {$method}
-                            <button type=\"submit\" class=\"btn btn-sm btn-light border text-danger p-1 px-2\" title=\"Delete\">
-                                <i class=\"bi bi-trash\"></i>
-                            </button>
-                        </form>
+                    return "<div class=\"dropdown\">
+                        <button class=\"btn btn-sm btn-outline-secondary dropdown-toggle py-1 px-2\" type=\"button\" data-bs-toggle=\"dropdown\" aria-expanded=\"false\">
+                            <i class=\"bi bi-gear-fill me-1\"></i> Action
+                        </button>
+                        <ul class=\"dropdown-menu shadow-sm\">
+                            <li><a class=\"dropdown-item\" href=\"{$showUrl}\"><i class=\"bi bi-people me-2\"></i>Attendees & Check-in</a></li>
+                            <li><a class=\"dropdown-item\" href=\"{$editUrl}\"><i class=\"bi bi-pencil me-2\"></i>Edit Schedule</a></li>
+                            <li><hr class=\"dropdown-divider\"></li>
+                            <li>
+                                <form method=\"POST\" action=\"{$deleteUrl}\" data-confirm=\"Delete schedule {$s->schedule_number}?\">
+                                    {$csrf}
+                                    {$method}
+                                    <button type=\"submit\" class=\"dropdown-item text-danger\"><i class=\"bi bi-trash me-2\"></i>Delete</button>
+                                </form>
+                            </li>
+                        </ul>
                     </div>";
                 })
                 ->rawColumns(['schedule_card', 'target_group', 'schedule_timing', 'progress_summary', 'status_badge', 'actions'])
