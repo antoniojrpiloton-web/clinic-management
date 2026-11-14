@@ -170,6 +170,7 @@
             </ul>
         </div>
 
+        {{-- Physical Examination (Under Development) --}}
         <button
             type="button"
             @class(['nav-dropdown-toggle', 'active' => $peActive])
@@ -181,23 +182,29 @@
                 <i class="bi bi-lungs menu-icon"></i>
                 <span>Physical Examination</span>
             </div>
-            <i class="bi bi-chevron-right menu-chevron"></i>
+            <div class="d-flex align-items-center gap-1">
+                <i class="bi bi-lock-fill text-muted" style="font-size: 0.72rem;" title="Under Development"></i>
+                <i class="bi bi-chevron-right menu-chevron"></i>
+            </div>
         </button>
         <div @class(['collapse', 'show' => $peActive]) id="submenu-pe">
             <ul class="sidebar-submenu">
                 <li>
-                    <a href="{{ route('physical-exam-schedules.index') }}" @class(['submenu-link', 'active' => request()->routeIs('physical-exam-schedules.*')])>
+                    <a href="{{ route('physical-exam-schedules.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('physical-exam-schedules.*')])>
                         <span>PE Schedules &amp; Batches</span>
+                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
                 <li>
-                    <a href="{{ route('physical-examinations.index') }}" @class(['submenu-link', 'active' => request()->routeIs('physical-examinations.*')])>
+                    <a href="{{ route('physical-examinations.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('physical-examinations.*')])>
                         <span>Physical Exam Registry</span>
+                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
                 <li>
-                    <a href="{{ route('clinicians.index') }}" @class(['submenu-link', 'active' => request()->routeIs('clinicians.*')])>
+                    <a href="{{ route('clinicians.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('clinicians.*')])>
                         <span>Healthcare Providers</span>
+                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
             </ul>
@@ -205,6 +212,7 @@
 
         <div class="nav-heading">PHARMACY &amp; INVENTORY</div>
 
+        {{-- Pharmacy & Dispensing (Under Development) --}}
         <button
             type="button"
             @class(['nav-dropdown-toggle', 'active' => $dispensingActive])
@@ -216,28 +224,35 @@
                 <i class="bi bi-capsule-pill menu-icon"></i>
                 <span>Pharmacy &amp; Dispensing</span>
             </div>
-            <i class="bi bi-chevron-right menu-chevron"></i>
+            <div class="d-flex align-items-center gap-1">
+                <i class="bi bi-lock-fill text-muted" style="font-size: 0.72rem;" title="Under Development"></i>
+                <i class="bi bi-chevron-right menu-chevron"></i>
+            </div>
         </button>
         <div @class(['collapse', 'show' => $dispensingActive]) id="submenu-pharmacy-dispensing">
             <ul class="sidebar-submenu">
                 <li>
-                    <a href="{{ route('inventory.dispensings.index') }}" @class(['submenu-link', 'active' => request()->routeIs('inventory.dispensings.*')])>
+                    <a href="{{ route('inventory.dispensings.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('inventory.dispensings.*')])>
                         <span>Medicine Dispensing</span>
+                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
                 <li>
-                    <a href="{{ route('medicines.index') }}" @class(['submenu-link', 'active' => request()->routeIs('medicines.*')])>
+                    <a href="{{ route('medicines.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('medicines.*')])>
                         <span>Medicine Masterlist</span>
+                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
                 <li>
-                    <a href="{{ route('medicine-categories.index') }}" @class(['submenu-link', 'active' => request()->routeIs('medicine-categories.*')])>
+                    <a href="{{ route('medicine-categories.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('medicine-categories.*')])>
                         <span>Medicine Categories</span>
+                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
             </ul>
         </div>
 
+        {{-- Stock & Inventory (Under Development) --}}
         <button
             type="button"
             @class(['nav-dropdown-toggle', 'active' => $stockActive])
@@ -249,34 +264,43 @@
                 <i class="bi bi-boxes menu-icon"></i>
                 <span>Stock &amp; Inventory</span>
             </div>
-            <i class="bi bi-chevron-right menu-chevron"></i>
+            <div class="d-flex align-items-center gap-1">
+                <i class="bi bi-lock-fill text-muted" style="font-size: 0.72rem;" title="Under Development"></i>
+                <i class="bi bi-chevron-right menu-chevron"></i>
+            </div>
         </button>
         <div @class(['collapse', 'show' => $stockActive]) id="submenu-pharmacy-stock">
             <ul class="sidebar-submenu">
                 <li>
-                    <a href="{{ route('inventory.stock-in') }}" @class(['submenu-link', 'active' => request()->routeIs('inventory.stock-in')])>
+                    <a href="{{ route('inventory.stock-in') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('inventory.stock-in')])>
                         <span>Receive Stock (Stock-In)</span>
+                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
                 <li>
-                    <a href="{{ route('inventory.stock-out') }}" @class(['submenu-link', 'active' => request()->routeIs('inventory.stock-out')])>
+                    <a href="{{ route('inventory.stock-out') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('inventory.stock-out')])>
                         <span>Deduct Stock (Stock-Out)</span>
+                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
                 <li>
-                    <a href="{{ route('inventory.expirations') }}" @class(['submenu-link', 'active' => request()->routeIs('inventory.expirations')])>
+                    <a href="{{ route('inventory.expirations') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('inventory.expirations')])>
                         <span>Expiration Monitoring</span>
+                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
                 <li>
-                    <a href="{{ route('inventory.transactions') }}" @class(['submenu-link', 'active' => request()->routeIs('inventory.transactions')])>
+                    <a href="{{ route('inventory.transactions') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('inventory.transactions')])>
                         <span>Transaction Ledger</span>
+                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
             </ul>
         </div>
 
         <div class="nav-heading">REPORTS &amp; ANALYTICS</div>
+
+        {{-- Morbidity Reports (Under Development) --}}
         <button
             type="button"
             @class(['nav-dropdown-toggle', 'active' => $morbidityReportsActive])
@@ -288,28 +312,35 @@
                 <i class="bi bi-activity menu-icon"></i>
                 <span>Morbidity &amp; Surveillance</span>
             </div>
-            <i class="bi bi-chevron-right menu-chevron"></i>
+            <div class="d-flex align-items-center gap-1">
+                <i class="bi bi-lock-fill text-muted" style="font-size: 0.72rem;" title="Under Development"></i>
+                <i class="bi bi-chevron-right menu-chevron"></i>
+            </div>
         </button>
         <div @class(['collapse', 'show' => $morbidityReportsActive]) id="submenu-reports-morbidity">
             <ul class="sidebar-submenu">
                 <li>
-                    <a href="{{ route('reports.clinic.index') }}" @class(['submenu-link', 'active' => request()->routeIs('reports.clinic.index')])>
+                    <a href="{{ route('reports.clinic.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('reports.clinic.index')])>
                         <span>Morbidity &amp; Utilization</span>
+                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
                 <li>
-                    <a href="{{ route('reports.clinic.communicable') }}" @class(['submenu-link', 'active' => request()->routeIs('reports.clinic.communicable')])>
+                    <a href="{{ route('reports.clinic.communicable') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('reports.clinic.communicable')])>
                         <span>Communicable Diseases</span>
+                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
                 <li>
-                    <a href="{{ route('reports.clinic.non-communicable') }}" @class(['submenu-link', 'active' => request()->routeIs('reports.clinic.non-communicable')])>
+                    <a href="{{ route('reports.clinic.non-communicable') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('reports.clinic.non-communicable')])>
                         <span>Non-Communicable Diseases</span>
+                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
             </ul>
         </div>
 
+        {{-- Service Reports (Under Development) --}}
         <button
             type="button"
             @class(['nav-dropdown-toggle', 'active' => $serviceReportsActive])
@@ -321,23 +352,29 @@
                 <i class="bi bi-file-earmark-bar-graph menu-icon"></i>
                 <span>Service &amp; Inventory Logs</span>
             </div>
-            <i class="bi bi-chevron-right menu-chevron"></i>
+            <div class="d-flex align-items-center gap-1">
+                <i class="bi bi-lock-fill text-muted" style="font-size: 0.72rem;" title="Under Development"></i>
+                <i class="bi bi-chevron-right menu-chevron"></i>
+            </div>
         </button>
         <div @class(['collapse', 'show' => $serviceReportsActive]) id="submenu-reports-service">
             <ul class="sidebar-submenu">
                 <li>
-                    <a href="{{ route('reports.clinic.medical-dental') }}" @class(['submenu-link', 'active' => request()->routeIs('reports.clinic.medical-dental')])>
+                    <a href="{{ route('reports.clinic.medical-dental') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('reports.clinic.medical-dental')])>
                         <span>Medical &amp; Dental Records</span>
+                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
                 <li>
-                    <a href="{{ route('reports.clinic.login-records') }}" @class(['submenu-link', 'active' => request()->routeIs('reports.clinic.login-records')])>
+                    <a href="{{ route('reports.clinic.login-records') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('reports.clinic.login-records')])>
                         <span>Daily Log-In Records</span>
+                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
                 <li>
-                    <a href="{{ route('inventory.reports') }}" @class(['submenu-link', 'active' => request()->routeIs('inventory.reports')])>
+                    <a href="{{ route('inventory.reports') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('inventory.reports')])>
                         <span>Inventory &amp; Stock Reports</span>
+                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
             </ul>
@@ -449,6 +486,7 @@
             </ul>
         </div>
 
+        {{-- Database Backups (Under Development) --}}
         <button
             type="button"
             @class(['nav-dropdown-toggle', 'active' => $dbActive])
@@ -460,13 +498,17 @@
                 <i class="bi bi-database menu-icon"></i>
                 <span>Database</span>
             </div>
-            <i class="bi bi-chevron-right menu-chevron"></i>
+            <div class="d-flex align-items-center gap-1">
+                <i class="bi bi-lock-fill text-muted" style="font-size: 0.72rem;" title="Under Development"></i>
+                <i class="bi bi-chevron-right menu-chevron"></i>
+            </div>
         </button>
         <div @class(['collapse', 'show' => $dbActive]) id="submenu-db">
             <ul class="sidebar-submenu">
                 <li>
-                    <a href="{{ route('backups.index') }}" @class(['submenu-link', 'active' => request()->routeIs('backups.*')])>
+                    <a href="{{ route('backups.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('backups.*')])>
                         <span>Backup Management</span>
+                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
             </ul>
