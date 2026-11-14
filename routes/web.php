@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\SocialiteController;
+use App\Http\Controllers\ClinicianController;
 use App\Http\Controllers\ClinicLogbookController;
 use App\Http\Controllers\ClinicVisitController;
 use App\Http\Controllers\CollegeController;
@@ -23,6 +24,8 @@ use App\Http\Controllers\MilestoneStubController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\PhysicalExaminationController;
+use App\Http\Controllers\PhysicalExamScheduleController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\RoleController;
@@ -84,7 +87,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('medicine-batches', 'medicineBatches')->name('medicine-batches');
     });
 
-    Route::get('clinicians', [MilestoneStubController::class, 'phase3'])->name('clinicians.index');
+    Route::resource('clinicians', ClinicianController::class);
 
     Route::controller(PatientController::class)->prefix('patients')->name('patients.')->group(function () {
         Route::get('check-duplicate', 'checkDuplicate')->name('check-duplicate');
@@ -119,17 +122,13 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::put('/', 'update')->name('update');
     });
 
-    // Milestone 3 Planned: Physical Examinations (Scheduled Phase 3 Release)
-    Route::controller(MilestoneStubController::class)->prefix('physical-examinations')->name('physical-examinations.')->group(function () {
-        Route::get('/', 'phase3')->name('index');
-        Route::get('create', 'phase3')->name('create');
-        Route::get('{any}/edit', 'phase3')->name('edit');
-        Route::get('{any}/print-pe', 'phase3')->name('print-pe');
-        Route::get('{any}/print-certificate', 'phase3')->name('print-certificate');
-        Route::get('{any}/print-referral', 'phase3')->name('print-referral');
-        Route::get('{any}/print-exemption', 'phase3')->name('print-exemption');
-        Route::get('{any}', 'phase3')->name('show');
+    Route::controller(PhysicalExaminationController::class)->prefix('physical-examinations')->name('physical-examinations.')->group(function () {
+        Route::get('{physicalExamination}/print-pe', 'printPe')->name('print-pe');
+        Route::get('{physicalExamination}/print-certificate', 'printCertificate')->name('print-certificate');
+        Route::get('{physicalExamination}/print-exemption', 'printExemption')->name('print-exemption');
+        Route::get('{physicalExamination}/print-referral', 'printReferral')->name('print-referral');
     });
+    Route::resource('physical-examinations', PhysicalExaminationController::class);
 
     Route::controller(ClinicVisitController::class)->prefix('clinic-visits')->name('clinic-visits.')->group(function () {
         Route::get('{clinicVisit}/print', 'printSlip')->name('print');
@@ -152,14 +151,14 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::resource('emergency-records', EmergencyRecordController::class);
     Route::resource('first-aid-records', FirstAidRecordController::class);
 
-    // Milestone 3 Planned: Schedules & Pharmacy Operations (Scheduled Phase 3 Release)
-    Route::controller(MilestoneStubController::class)->prefix('physical-exam-schedules')->name('physical-exam-schedules.')->group(function () {
-        Route::get('/', 'phase3')->name('index');
-        Route::get('create', 'phase3')->name('create');
-        Route::get('{any}/edit', 'phase3')->name('edit');
-        Route::get('{any}/print-roster', 'phase3')->name('print-roster');
-        Route::get('{any}', 'phase3')->name('show');
+    Route::controller(PhysicalExamScheduleController::class)->prefix('physical-exam-schedules')->name('physical-exam-schedules.')->group(function () {
+        Route::get('{physicalExamSchedule}/print-roster', 'printRoster')->name('print-roster');
+        Route::post('{physicalExamSchedule}/attendees', 'addAttendee')->name('add-attendee');
+        Route::post('{physicalExamSchedule}/populate-attendees', 'populateAttendees')->name('populate-attendees');
+        Route::post('{physicalExamSchedule}/attendees/{attendee}/status', 'updateAttendeeStatus')->name('update-attendee-status');
+        Route::delete('{physicalExamSchedule}/attendees/{attendee}', 'removeAttendee')->name('remove-attendee');
     });
+    Route::resource('physical-exam-schedules', PhysicalExamScheduleController::class);
 
     Route::controller(MilestoneStubController::class)->group(function () {
         Route::get('medicine-categories', 'phase3')->name('medicine-categories.index');
