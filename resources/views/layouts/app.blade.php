@@ -50,7 +50,10 @@
 
             <main class="app-content">
                 <x-alert />
-                {{ $slot }}
+                @if (isset($slot))
+                    {{ $slot }}
+                @endif
+                @yield('content')
             </main>
 
             <footer class="app-footer d-flex justify-content-between align-items-center border-top">
