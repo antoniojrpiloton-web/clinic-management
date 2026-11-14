@@ -1,4 +1,6 @@
-<x-layouts.app :title="$title ?? 'Module Under Development'">
+@extends('layouts.app')
+@section('title', $title ?? 'Module Under Development')
+@section('content')
 <div class="container-fluid py-5">
     <div class="card border-0 shadow-sm rounded-4 p-5 text-center mx-auto" style="max-width: 620px; background: #ffffff;">
         <div class="mb-4">
@@ -25,4 +27,5 @@
         </div>
     </div>
 </div>
-</x-layouts.app>
+@endsection
+

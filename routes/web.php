@@ -120,14 +120,16 @@ Route::middleware(['auth', 'active'])->group(function () {
     });
 
     // Milestone 3 Planned: Physical Examinations (Scheduled Phase 3 Release)
-    Route::get('physical-examinations', [MilestoneStubController::class, 'phase3'])->name('physical-examinations.index');
-    Route::get('physical-examinations/create', [MilestoneStubController::class, 'phase3'])->name('physical-examinations.create');
-    Route::get('physical-examinations/{any}/edit', [MilestoneStubController::class, 'phase3'])->name('physical-examinations.edit');
-    Route::get('physical-examinations/{any}/print-pe', [MilestoneStubController::class, 'phase3'])->name('physical-examinations.print-pe');
-    Route::get('physical-examinations/{any}/print-certificate', [MilestoneStubController::class, 'phase3'])->name('physical-examinations.print-certificate');
-    Route::get('physical-examinations/{any}/print-referral', [MilestoneStubController::class, 'phase3'])->name('physical-examinations.print-referral');
-    Route::get('physical-examinations/{any}/print-exemption', [MilestoneStubController::class, 'phase3'])->name('physical-examinations.print-exemption');
-    Route::get('physical-examinations/{any}', [MilestoneStubController::class, 'phase3'])->name('physical-examinations.show');
+    Route::controller(MilestoneStubController::class)->prefix('physical-examinations')->name('physical-examinations.')->group(function () {
+        Route::get('/', 'phase3')->name('index');
+        Route::get('create', 'phase3')->name('create');
+        Route::get('{any}/edit', 'phase3')->name('edit');
+        Route::get('{any}/print-pe', 'phase3')->name('print-pe');
+        Route::get('{any}/print-certificate', 'phase3')->name('print-certificate');
+        Route::get('{any}/print-referral', 'phase3')->name('print-referral');
+        Route::get('{any}/print-exemption', 'phase3')->name('print-exemption');
+        Route::get('{any}', 'phase3')->name('show');
+    });
 
     Route::controller(ClinicVisitController::class)->prefix('clinic-visits')->name('clinic-visits.')->group(function () {
         Route::get('{clinicVisit}/print', 'printSlip')->name('print');
@@ -151,29 +153,46 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::resource('first-aid-records', FirstAidRecordController::class);
 
     // Milestone 3 Planned: Schedules & Pharmacy Operations (Scheduled Phase 3 Release)
-    Route::get('physical-exam-schedules', [MilestoneStubController::class, 'phase3'])->name('physical-exam-schedules.index');
-    Route::get('physical-exam-schedules/{any}', [MilestoneStubController::class, 'phase3'])->name('physical-exam-schedules.show');
+    Route::controller(MilestoneStubController::class)->prefix('physical-exam-schedules')->name('physical-exam-schedules.')->group(function () {
+        Route::get('/', 'phase3')->name('index');
+        Route::get('create', 'phase3')->name('create');
+        Route::get('{any}/edit', 'phase3')->name('edit');
+        Route::get('{any}/print-roster', 'phase3')->name('print-roster');
+        Route::get('{any}', 'phase3')->name('show');
+    });
 
-    Route::get('medicine-categories', [MilestoneStubController::class, 'phase3'])->name('medicine-categories.index');
-    Route::get('medicines', [MilestoneStubController::class, 'phase3'])->name('medicines.index');
-    Route::get('medicines/{any}', [MilestoneStubController::class, 'phase3'])->name('medicines.show');
+    Route::controller(MilestoneStubController::class)->group(function () {
+        Route::get('medicine-categories', 'phase3')->name('medicine-categories.index');
+        Route::get('medicines', 'phase3')->name('medicines.index');
+        Route::get('medicines/create', 'phase3')->name('medicines.create');
+        Route::get('{any}/edit', 'phase3')->name('medicines.edit');
+        Route::get('medicines/{any}', 'phase3')->name('medicines.show');
 
-    Route::get('inventory/stock-in', [MilestoneStubController::class, 'phase3'])->name('inventory.stock-in');
-    Route::get('inventory/stock-out', [MilestoneStubController::class, 'phase3'])->name('inventory.stock-out');
-    Route::get('inventory/expirations', [MilestoneStubController::class, 'phase3'])->name('inventory.expirations');
-    Route::get('inventory/transactions', [MilestoneStubController::class, 'phase3'])->name('inventory.transactions');
-    Route::get('inventory/reports', [MilestoneStubController::class, 'phase3'])->name('inventory.reports');
-    Route::get('inventory/dispensings', [MilestoneStubController::class, 'phase3'])->name('inventory.dispensings.index');
-    Route::get('inventory/dispensings/create', [MilestoneStubController::class, 'phase3'])->name('inventory.dispensings.create');
-    Route::get('inventory/dispensings/{any}/print', [MilestoneStubController::class, 'phase3'])->name('inventory.dispensings.print');
-    Route::get('inventory/dispensings/{any}', [MilestoneStubController::class, 'phase3'])->name('inventory.dispensings.show');
+        Route::get('inventory/stock-in', 'phase3')->name('inventory.stock-in');
+        Route::get('inventory/stock-out', 'phase3')->name('inventory.stock-out');
+        Route::get('inventory/expirations', 'phase3')->name('inventory.expirations');
+        Route::get('inventory/transactions', 'phase3')->name('inventory.transactions');
+        Route::get('inventory/reports', 'phase3')->name('inventory.reports');
+
+        Route::get('inventory/dispensings', 'phase3')->name('inventory.dispensings.index');
+        Route::get('inventory/dispensings/create', 'phase3')->name('inventory.dispensings.create');
+        Route::get('inventory/dispensings/{any}/print', 'phase3')->name('inventory.dispensings.print');
+        Route::get('inventory/dispensings/{any}', 'phase3')->name('inventory.dispensings.show');
+    });
 
     // Milestone 4 Planned: Reports, Statistics & Official Records (Scheduled Phase 4 Release)
-    Route::get('reports/clinic', [MilestoneStubController::class, 'phase4'])->name('reports.clinic.index');
-    Route::get('reports/clinic/medical-dental-records', [MilestoneStubController::class, 'phase4'])->name('reports.clinic.medical-dental');
-    Route::get('reports/clinic/login-records', [MilestoneStubController::class, 'phase4'])->name('reports.clinic.login-records');
-    Route::get('reports/clinic/communicable-diseases', [MilestoneStubController::class, 'phase4'])->name('reports.clinic.communicable');
-    Route::get('reports/clinic/non-communicable-diseases', [MilestoneStubController::class, 'phase4'])->name('reports.clinic.non-communicable');
+    Route::controller(MilestoneStubController::class)->prefix('reports/clinic')->name('reports.clinic.')->group(function () {
+        Route::get('/', 'phase4')->name('index');
+        Route::get('medical-dental-records', 'phase4')->name('medical-dental');
+        Route::get('login-records', 'phase4')->name('login-records');
+        Route::get('communicable-diseases', 'phase4')->name('communicable');
+        Route::get('non-communicable-diseases', 'phase4')->name('non-communicable');
+        Route::get('print-pdf', 'phase4')->name('print-pdf');
+        Route::get('print-medical-dental-records', 'phase4')->name('print-medical-dental-records');
+        Route::get('print-login-records', 'phase4')->name('print-login-records');
+        Route::get('print-communicable-diseases', 'phase4')->name('print-communicable-diseases');
+        Route::get('print-non-communicable-diseases', 'phase4')->name('print-non-communicable-diseases');
+    });
 
     Route::post('academic-years/{academicYear}/set-current', [AcademicYearController::class, 'setCurrent'])->name('academic-years.set-current');
     Route::resource('academic-years', AcademicYearController::class)->except(['create', 'edit', 'show']);
