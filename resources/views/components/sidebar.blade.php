@@ -182,7 +182,7 @@
                 <i class="bi bi-lungs menu-icon"></i>
                 <span>Physical Examination</span>
             </div>
-            <div class="d-flex align-items-center gap-1">
+            <div class="d-flex align-items-center gap-1 flex-shrink-0 ms-2">
                 <i class="bi bi-lock-fill text-muted" style="font-size: 0.72rem;" title="Under Development"></i>
                 <i class="bi bi-chevron-right menu-chevron"></i>
             </div>
@@ -192,19 +192,19 @@
                 <li>
                     <a href="{{ route('physical-exam-schedules.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('physical-exam-schedules.*')])>
                         <span>PE Schedules &amp; Batches</span>
-                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
+                        <i class="bi bi-lock-fill text-muted flex-shrink-0 ms-2" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
                 <li>
                     <a href="{{ route('physical-examinations.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('physical-examinations.*')])>
                         <span>Physical Exam Registry</span>
-                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
+                        <i class="bi bi-lock-fill text-muted flex-shrink-0 ms-2" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
                 <li>
                     <a href="{{ route('clinicians.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('clinicians.*')])>
                         <span>Healthcare Providers</span>
-                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
+                        <i class="bi bi-lock-fill text-muted flex-shrink-0 ms-2" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
             </ul>
@@ -224,7 +224,7 @@
                 <i class="bi bi-capsule-pill menu-icon"></i>
                 <span>Pharmacy &amp; Dispensing</span>
             </div>
-            <div class="d-flex align-items-center gap-1">
+            <div class="d-flex align-items-center gap-1 flex-shrink-0 ms-2">
                 <i class="bi bi-lock-fill text-muted" style="font-size: 0.72rem;" title="Under Development"></i>
                 <i class="bi bi-chevron-right menu-chevron"></i>
             </div>
@@ -234,19 +234,19 @@
                 <li>
                     <a href="{{ route('inventory.dispensings.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('inventory.dispensings.*')])>
                         <span>Medicine Dispensing</span>
-                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
+                        <i class="bi bi-lock-fill text-muted flex-shrink-0 ms-2" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
                 <li>
                     <a href="{{ route('medicines.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('medicines.*')])>
                         <span>Medicine Masterlist</span>
-                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
+                        <i class="bi bi-lock-fill text-muted flex-shrink-0 ms-2" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
                 <li>
                     <a href="{{ route('medicine-categories.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('medicine-categories.*')])>
                         <span>Medicine Categories</span>
-                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
+                        <i class="bi bi-lock-fill text-muted flex-shrink-0 ms-2" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
             </ul>
@@ -264,7 +264,7 @@
                 <i class="bi bi-boxes menu-icon"></i>
                 <span>Stock &amp; Inventory</span>
             </div>
-            <div class="d-flex align-items-center gap-1">
+            <div class="d-flex align-items-center gap-1 flex-shrink-0 ms-2">
                 <i class="bi bi-lock-fill text-muted" style="font-size: 0.72rem;" title="Under Development"></i>
                 <i class="bi bi-chevron-right menu-chevron"></i>
             </div>
@@ -274,25 +274,25 @@
                 <li>
                     <a href="{{ route('inventory.stock-in') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('inventory.stock-in')])>
                         <span>Receive Stock (Stock-In)</span>
-                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
+                        <i class="bi bi-lock-fill text-muted flex-shrink-0 ms-2" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
                 <li>
                     <a href="{{ route('inventory.stock-out') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('inventory.stock-out')])>
                         <span>Deduct Stock (Stock-Out)</span>
-                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
+                        <i class="bi bi-lock-fill text-muted flex-shrink-0 ms-2" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
                 <li>
                     <a href="{{ route('inventory.expirations') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('inventory.expirations')])>
                         <span>Expiration Monitoring</span>
-                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
+                        <i class="bi bi-lock-fill text-muted flex-shrink-0 ms-2" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
                 <li>
                     <a href="{{ route('inventory.transactions') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('inventory.transactions')])>
                         <span>Transaction Ledger</span>
-                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
+                        <i class="bi bi-lock-fill text-muted flex-shrink-0 ms-2" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
             </ul>
@@ -312,7 +312,7 @@
                 <i class="bi bi-activity menu-icon"></i>
                 <span>Morbidity &amp; Surveillance</span>
             </div>
-            <div class="d-flex align-items-center gap-1">
+            <div class="d-flex align-items-center gap-1 flex-shrink-0 ms-2">
                 <i class="bi bi-lock-fill text-muted" style="font-size: 0.72rem;" title="Under Development"></i>
                 <i class="bi bi-chevron-right menu-chevron"></i>
             </div>
@@ -322,19 +322,19 @@
                 <li>
                     <a href="{{ route('reports.clinic.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('reports.clinic.index')])>
                         <span>Morbidity &amp; Utilization</span>
-                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
+                        <i class="bi bi-lock-fill text-muted flex-shrink-0 ms-2" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
                 <li>
                     <a href="{{ route('reports.clinic.communicable') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('reports.clinic.communicable')])>
                         <span>Communicable Diseases</span>
-                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
+                        <i class="bi bi-lock-fill text-muted flex-shrink-0 ms-2" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
                 <li>
                     <a href="{{ route('reports.clinic.non-communicable') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('reports.clinic.non-communicable')])>
                         <span>Non-Communicable Diseases</span>
-                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
+                        <i class="bi bi-lock-fill text-muted flex-shrink-0 ms-2" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
             </ul>
@@ -352,7 +352,7 @@
                 <i class="bi bi-file-earmark-bar-graph menu-icon"></i>
                 <span>Service &amp; Inventory Logs</span>
             </div>
-            <div class="d-flex align-items-center gap-1">
+            <div class="d-flex align-items-center gap-1 flex-shrink-0 ms-2">
                 <i class="bi bi-lock-fill text-muted" style="font-size: 0.72rem;" title="Under Development"></i>
                 <i class="bi bi-chevron-right menu-chevron"></i>
             </div>
@@ -362,19 +362,19 @@
                 <li>
                     <a href="{{ route('reports.clinic.medical-dental') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('reports.clinic.medical-dental')])>
                         <span>Medical &amp; Dental Records</span>
-                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
+                        <i class="bi bi-lock-fill text-muted flex-shrink-0 ms-2" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
                 <li>
                     <a href="{{ route('reports.clinic.login-records') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('reports.clinic.login-records')])>
                         <span>Daily Log-In Records</span>
-                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
+                        <i class="bi bi-lock-fill text-muted flex-shrink-0 ms-2" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
                 <li>
                     <a href="{{ route('inventory.reports') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('inventory.reports')])>
                         <span>Inventory &amp; Stock Reports</span>
-                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
+                        <i class="bi bi-lock-fill text-muted flex-shrink-0 ms-2" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
             </ul>
@@ -498,7 +498,7 @@
                 <i class="bi bi-database menu-icon"></i>
                 <span>Database</span>
             </div>
-            <div class="d-flex align-items-center gap-1">
+            <div class="d-flex align-items-center gap-1 flex-shrink-0 ms-2">
                 <i class="bi bi-lock-fill text-muted" style="font-size: 0.72rem;" title="Under Development"></i>
                 <i class="bi bi-chevron-right menu-chevron"></i>
             </div>
@@ -508,7 +508,7 @@
                 <li>
                     <a href="{{ route('backups.index') }}" @class(['submenu-link d-flex justify-content-between align-items-center', 'active' => request()->routeIs('backups.*')])>
                         <span>Backup Management</span>
-                        <i class="bi bi-lock-fill text-muted" style="font-size: 0.65rem;"></i>
+                        <i class="bi bi-lock-fill text-muted flex-shrink-0 ms-2" style="font-size: 0.65rem;"></i>
                     </a>
                 </li>
             </ul>
