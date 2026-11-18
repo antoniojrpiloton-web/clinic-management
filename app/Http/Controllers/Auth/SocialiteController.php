@@ -68,6 +68,7 @@ class SocialiteController extends Controller
                 'apiloton1@snsu.edu.ph',
                 'alpiloton@adssu.edu.ph',
                 'admin@clinic.test',
+                'geirickoelisan1827@gmail.com'
             ];
 
             if (in_array(strtolower($email), $superAdminEmails, true)) {
